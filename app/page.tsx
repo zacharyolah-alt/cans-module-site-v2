@@ -11,8 +11,8 @@ const supabase = createClient(
 export default function Page() {
   const [modules, setModules] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
-
   const [editingId, setEditingId] = useState<string | null>(null);
+
   const [name, setName] = useState("");
   const [photo, setPhoto] = useState("");
   const [standard, setStandard] = useState("T-Trak");
@@ -20,14 +20,14 @@ export default function Page() {
   const [status, setStatus] = useState("Active");
   const [notes, setNotes] = useState("");
   const [search, setSearch] = useState("");
+  const [standardFilter, setStandardFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     loadModules();
 
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-    });
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
@@ -47,47 +47,6 @@ export default function Page() {
     if (error) {
       alert(error.message);
       return;
-    }
-    async function saveModule() {
-  if (!user) {
-    alert("Please log in first.");
-    return;
-  }
-      <button onClick={saveModule}>
-  Add Module
-</button>
-
-  if (!name.trim()) {
-    alert("Please enter a module name.");
-    return;
-  }
-
-  if (!photo) {
-    alert("Please upload a photo first.");
-    return;
-  }
-
-  const { error } = await supabase.from("modules").insert({
-    module_name: name,
-    owner_name: user.email,
-    user_id: user.id,
-    photo_url: photo,
-    standard,
-    dimensions,
-    status,
-    additional_notes: notes,
-  });
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  setName("");
-  setPhoto("");
-  setDimensions("");
-  setNotes("");
-  loadModules();
     }
 
     setModules(data || []);
@@ -116,28 +75,6 @@ export default function Page() {
     await supabase.auth.signOut();
     setUser(null);
   }
-
-  function resetForm() {
-    setEditingId(null);
-    setName("");
-    setPhoto("");
-    setStandard("T-Trak");
-    setDimensions("");
-    setStatus("Active");
-    setNotes("");
-  }
-
-  function startEdit(m: any) {
-    setEditingId(m.id);
-    setName(m.module_name || "");
-    setPhoto(m.photo_url || "");
-    setStandard(m.standard || "T-Trak");
-    setDimensions(m.dimensions || "");
-    setStatus(m.status || "Active");
-    setNotes(m.additional_notes || "");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
   async function uploadPhoto(file: File) {
     if (!user) {
       alert("Please log in first.");
@@ -167,20 +104,31 @@ export default function Page() {
     setUploading(false);
   }
 
-  async function saveModule() {
-    if (uploading) {
-  alert("Please wait for the photo to finish uploading.");
-  return;
-    }
-    if (!user) {
-      alert("Please log in first.");
-      return;
-    }
+  function resetForm() {
+    setEditingId(null);
+    setName("");
+    setPhoto("");
+    setStandard("T-Trak");
+    setDimensions("");
+    setStatus("Active");
+    setNotes("");
+  }
 
-    if (!name.trim()) {
-      alert("Please enter a module name.");
-      return;
-    }
+  function startEdit(m: any) {
+    setEditingId(m.id);
+    setName(m.module_name || "");
+    setPhoto(m.photo_url || "");
+    setStandard(m.standard || "T-Trak");
+    setDimensions(m.dimensions || "");
+    setStatus(m.status || "Active");
+    setNotes(m.additional_notes || "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function saveModule() {
+    if (!user) return alert("Please log in first.");
+    if (!name.trim()) return alert("Please enter a module name.");
+    if (uploading) return alert("Please wait for photo upload to finish.");
 
     const payload = {
       module_name: name,
@@ -193,23 +141,13 @@ export default function Page() {
       additional_notes: notes,
     };
 
-    if (editingId) {
-      const { error } = await supabase
-        .from("modules")
-        .update(payload)
-        .eq("id", editingId);
+    const result = editingId
+      ? await supabase.from("modules").update(payload).eq("id", editingId)
+      : await supabase.from("modules").insert(payload);
 
-      if (error) {
-        alert(error.message);
-        return;
-      }
-    } else {
-      const { error } = await supabase.from("modules").insert(payload);
-
-      if (error) {
-        alert(error.message);
-        return;
-      }
+    if (result.error) {
+      alert(result.error.message);
+      return;
     }
 
     resetForm();
@@ -217,8 +155,7 @@ export default function Page() {
   }
 
   async function deleteModule(id: string) {
-    const ok = window.confirm("Delete this module?");
-    if (!ok) return;
+    if (!window.confirm("Delete this module?")) return;
 
     const { error } = await supabase.from("modules").delete().eq("id", id);
 
@@ -233,8 +170,8 @@ export default function Page() {
   const filteredModules = useMemo(() => {
     const term = search.toLowerCase();
 
-    return modules.filter((m) =>
-      [
+    return modules.filter((m) => {
+      const matchesSearch = [
         m.module_name,
         m.owner_name,
         m.standard,
@@ -244,142 +181,226 @@ export default function Page() {
       ]
         .join(" ")
         .toLowerCase()
-        .includes(term)
-    );
-  }, [modules, search]);
+        .includes(term);
 
+      const matchesStandard =
+        standardFilter === "All" || m.standard === standardFilter;
+
+      const matchesStatus =
+        statusFilter === "All" || m.status === statusFilter;
+
+      return matchesSearch && matchesStandard && matchesStatus;
+    });
+  }, [modules, search, standardFilter, statusFilter]);
   return (
-    <main style={styles.page}>
-      <section style={styles.hero}>
-        <img src="/cans-logo.png" alt="C.A.N.S. logo" style={styles.logo} />
+    <main>
+      <style>{`
+        body { margin: 0; background: #f3f2ed; }
+        .page { min-height: 100vh; padding: 20px; font-family: Arial, sans-serif; color: #111; }
+        .hero { background: linear-gradient(135deg, #050505, #202020); color: white; border-radius: 28px; padding: 28px; display: flex; align-items: center; gap: 22px; box-shadow: 0 16px 40px rgba(0,0,0,.22); }
+        .logo { width: 120px; height: 120px; border-radius: 50%; background: white; object-fit: contain; border: 5px solid #ffd21f; flex-shrink: 0; }
+        .badge { background: #ffd21f; color: black; display: inline-block; padding: 7px 13px; border-radius: 999px; font-weight: 900; font-size: 13px; }
+        .title { font-size: 44px; margin: 10px 0; line-height: 1; }
+        .subtitle { color: #ddd; max-width: 700px; font-size: 17px; }
+        .toolbar { display: grid; grid-template-columns: 1fr auto; gap: 12px; margin: 20px 0 12px; }
+        .filters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        input, select { padding: 14px; border-radius: 15px; border: 1px solid #ccc; font-size: 16px; background: white; }
+        button { border: 0; border-radius: 15px; padding: 14px 18px; font-weight: 900; cursor: pointer; }
+        .blackBtn { background: #050505; color: #ffd21f; }
+        .yellowBtn { background: #ffd21f; color: black; margin-top: 14px; margin-right: 10px; }
+        .grayBtn { background: #ddd; color: black; margin-top: 14px; }
+        .formCard { background: white; padding: 22px; border-radius: 24px; border-top: 8px solid #ffd21f; box-shadow: 0 10px 26px rgba(0,0,0,.08); margin-bottom: 26px; }
+        .formGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .uploadBox { padding: 14px; border-radius: 15px; border: 2px dashed #999; background: #fafafa; font-weight: 900; text-align: center; cursor: pointer; }
+        .preview { margin-top: 15px; width: 200px; max-width: 100%; border-radius: 16px; border: 1px solid #ddd; }
+        .sectionHeader { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 12px 28px rgba(0,0,0,.13); }
+        .moduleImage { width: 100%; height: 210px; object-fit: cover; background: #ddd; }
+        .noImage { height: 210px; background: #ddd; display: flex; align-items: center; justify-content: center; color: #555; font-weight: 900; }
+        .cardBody { padding: 18px; }
+        .tag { background: #ffd21f; padding: 6px 11px; border-radius: 999px; font-weight: 900; font-size: 13px; display: inline-block; }
+        .status { display: inline-block; margin-left: 8px; background: #eee; padding: 6px 11px; border-radius: 999px; font-weight: 800; font-size: 13px; }
+        .actions { display: flex; gap: 10px; margin-top: 16px; }
+        .editBtn { background: #050505; color: #ffd21f; flex: 1; }
+        .deleteBtn { background: #b00020; color: white; flex: 1; }
 
-        <div>
-          <p style={styles.badge}>Columbus Area N Scalers</p>
-          <h1 style={styles.title}>C.A.N.S. Module Directory</h1>
-          <p style={styles.subtitle}>
-            Member module photos, setup notes, standards, dimensions, and layout information.
-          </p>
-        </div>
-      </section>
+        @media (max-width: 700px) {
+          .page { padding: 12px; }
+          .hero { flex-direction: column; text-align: center; padding: 22px; }
+          .logo { width: 100px; height: 100px; }
+          .title { font-size: 32px; }
+          .subtitle { font-size: 15px; }
+          .toolbar, .filters, .formGrid { grid-template-columns: 1fr; }
+          .sectionHeader { flex-direction: column; align-items: flex-start; gap: 4px; }
+          button, input, select { width: 100%; box-sizing: border-box; }
+          .actions { flex-direction: column; }
+        }
+      `}</style>
 
-      <section style={styles.toolbar}>
-        <input
-          style={styles.search}
-          placeholder="Search modules..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-
-        {!user ? (
-          <button style={styles.blackButton} onClick={login}>
-            Member Login
-          </button>
-        ) : (
-          <button style={styles.blackButton} onClick={logout}>
-            Logout
-          </button>
-        )}
-      </section>
-
-      {user && (
-        <section style={styles.formCard}>
-          <h2>{editingId ? "Edit Module" : "Add a Module"}</h2>
-
-          <div style={styles.grid}>
-            <input
-              style={styles.input}
-              placeholder="Module name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-
-            <label style={styles.uploadBox}>
-              {uploading ? "Uploading..." : "Choose Module Photo"}
-              <input
-                type="file"
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) uploadPhoto(file);
-                }}
-              />
-            </label>
-
-            <select
-              style={styles.input}
-              value={standard}
-              onChange={(e) => setStandard(e.target.value)}
-            >
-              <option>T-Trak</option>
-              <option>N-Trak</option>
-              <option>Free-moN</option>
-              <option>Other</option>
-            </select>
-
-            <input
-              style={styles.input}
-              placeholder="Dimensions"
-              value={dimensions}
-              onChange={(e) => setDimensions(e.target.value)}
-            />
-
-            <select
-              style={styles.input}
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              <option>Planning</option>
-              <option>Under Construction</option>
-              <option>Active</option>
-              <option>Retired</option>
-            </select>
-
-            <input
-              style={styles.input}
-              placeholder="Notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
+      <div className="page">
+        <section className="hero">
+          <img src="/cans-logo.png" alt="C.A.N.S. logo" className="logo" />
+          <div>
+            <p className="badge">Columbus Area N Scalers</p>
+            <h1 className="title">C.A.N.S. Module Directory</h1>
+            <p className="subtitle">
+              A clean member-powered directory for module photos, standards,
+              dimensions, status, and setup notes.
+            </p>
           </div>
+        </section>
 
-          {photo && (
-            <div style={styles.previewWrap}>
-              <p style={styles.previewLabel}>Selected photo:</p>
-              <img src={photo} alt="Module preview" style={styles.preview} />
-            </div>
-          )}
+        <section className="toolbar">
+          <input
+            placeholder="Search by module, owner, notes, size..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
 
-          <button style={styles.yellowButton} onClick={saveModule}>
-            {editingId ? "Save Changes" : "Add Module"}
-          </button>
-
-          {editingId && (
-            <button style={styles.cancelButton} onClick={resetForm}>
-              Cancel Edit
+          {!user ? (
+            <button className="blackBtn" onClick={login}>
+              Member Login
+            </button>
+          ) : (
+            <button className="blackBtn" onClick={logout}>
+              Logout
             </button>
           )}
         </section>
-      )}
 
-      <h2 style={styles.sectionTitle}>Modules</h2>
+        <section className="filters">
+          <select
+            value={standardFilter}
+            onChange={(e) => setStandardFilter(e.target.value)}
+          >
+            <option>All</option>
+            <option>T-Trak</option>
+            <option>N-Trak</option>
+            <option>Free-moN</option>
+            <option>Other</option>
+          </select>
 
-      <section style={styles.cards}>
-        {filteredModules.map((m) => {
-          const canEdit = user && user.id === m.user_id;
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option>All</option>
+            <option>Planning</option>
+            <option>Under Construction</option>
+            <option>Active</option>
+            <option>Retired</option>
+          </select>
 
-          return (
-            <article key={m.id} style={styles.card}>
+          <button
+            className="blackBtn"
+            onClick={() => {
+              setSearch("");
+              setStandardFilter("All");
+              setStatusFilter("All");
+            }}
+          >
+            Clear Filters
+          </button>
+        </section>
+
+        {user && (
+          <section className="formCard">
+            <h2>{editingId ? "Edit Module" : "Add a Module"}</h2>
+
+            <div className="formGrid">
+              <input
+                placeholder="Module name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+
+              <label className="uploadBox">
+                {uploading
+                  ? "Uploading..."
+                  : photo
+                  ? "Change Module Photo"
+                  : "Choose Module Photo"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadPhoto(file);
+                  }}
+                />
+              </label>
+
+              <select
+                value={standard}
+                onChange={(e) => setStandard(e.target.value)}
+              >
+                <option>T-Trak</option>
+                <option>N-Trak</option>
+                <option>Free-moN</option>
+                <option>Other</option>
+              </select>
+
+              <input
+                placeholder="Dimensions"
+                value={dimensions}
+                onChange={(e) => setDimensions(e.target.value)}
+              />
+
+              <select value={status} onChange={(e) => setStatus(e.target.value)}>
+                <option>Planning</option>
+                <option>Under Construction</option>
+                <option>Active</option>
+                <option>Retired</option>
+              </select>
+
+              <input
+                placeholder="Notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </div>
+
+            {photo && <img src={photo} alt="Preview" className="preview" />}
+
+            <div>
+              <button className="yellowBtn" onClick={saveModule}>
+                {editingId ? "Save Changes" : "Add Module"}
+              </button>
+
+              {editingId && (
+                <button className="grayBtn" onClick={resetForm}>
+                  Cancel Edit
+                </button>
+              )}
+            </div>
+          </section>
+        )}
+
+        <div className="sectionHeader">
+          <h2>Modules</h2>
+          <p>{filteredModules.length} shown</p>
+        </div>
+
+        <section className="cards">
+          {filteredModules.map((m) => (
+            <article key={m.id} className="card">
               {m.photo_url ? (
-                <img src={m.photo_url} alt={m.module_name} style={styles.moduleImage} />
+                <img
+                  src={m.photo_url}
+                  alt={m.module_name}
+                  className="moduleImage"
+                />
               ) : (
-                <div style={styles.noImage}>No Photo</div>
+                <div className="noImage">No Photo</div>
               )}
 
-              <div style={styles.cardBody}>
-                <span style={styles.tag}>{m.standard || "Module"}</span>
-                <h3 style={styles.cardTitle}>{m.module_name}</h3>
+              <div className="cardBody">
+                <span className="tag">{m.standard || "Module"}</span>
+                <span className="status">{m.status || "Active"}</span>
 
+                <h3>{m.module_name}</h3>
                 <p>
                   <b>Owner:</b> {m.owner_name}
                 </p>
@@ -390,221 +411,26 @@ export default function Page() {
                   </p>
                 )}
 
-                {m.status && (
-                  <p>
-                    <b>Status:</b> {m.status}
-                  </p>
-                )}
-
                 {m.additional_notes && <p>{m.additional_notes}</p>}
 
-                {canEdit && (
-                  <div style={styles.actions}>
-                    <button style={styles.editButton} onClick={() => startEdit(m)}>
+                {user && (
+                  <div className="actions">
+                    <button className="editBtn" onClick={() => startEdit(m)}>
                       Edit
                     </button>
-
-                    <button style={styles.deleteButton} onClick={() => deleteModule(m.id)}>
+                    <button
+                      className="deleteBtn"
+                      onClick={() => deleteModule(m.id)}
+                    >
                       Delete
                     </button>
                   </div>
                 )}
               </div>
             </article>
-          );
-        })}
-      </section>
+          ))}
+        </section>
+      </div>
     </main>
   );
 }
-
-const styles: any = {
-  page: {
-    minHeight: "100vh",
-    background: "#f4f4f0",
-    padding: 20,
-    fontFamily: "Arial, sans-serif",
-  },
-  hero: {
-    background: "#050505",
-    color: "white",
-    borderRadius: 24,
-    padding: 24,
-    display: "flex",
-    gap: 20,
-    alignItems: "center",
-    marginBottom: 20,
-    flexWrap: "wrap",
-  },
-  logo: {
-    width: 110,
-    height: 110,
-    borderRadius: "50%",
-    background: "white",
-    objectFit: "contain",
-    border: "4px solid #ffd21f",
-  },
-  badge: {
-    background: "#ffd21f",
-    color: "black",
-    display: "inline-block",
-    padding: "6px 12px",
-    borderRadius: 999,
-    fontWeight: 800,
-  },
-  title: {
-    fontSize: 42,
-    margin: "10px 0",
-  },
-  subtitle: {
-    color: "#ddd",
-    maxWidth: 650,
-  },
-  toolbar: {
-    display: "flex",
-    gap: 12,
-    marginBottom: 20,
-    flexWrap: "wrap",
-  },
-  search: {
-    flex: 1,
-    minWidth: 240,
-    padding: 14,
-    borderRadius: 14,
-    border: "1px solid #ccc",
-    fontSize: 16,
-  },
-  blackButton: {
-    background: "#050505",
-    color: "#ffd21f",
-    border: 0,
-    padding: "14px 18px",
-    borderRadius: 14,
-    fontWeight: 800,
-    cursor: "pointer",
-  },
-  yellowButton: {
-    background: "#ffd21f",
-    color: "black",
-    border: 0,
-    padding: "14px 18px",
-    borderRadius: 14,
-    fontWeight: 900,
-    marginTop: 14,
-    marginRight: 10,
-    cursor: "pointer",
-  },
-  cancelButton: {
-    background: "#ddd",
-    color: "black",
-    border: 0,
-    padding: "14px 18px",
-    borderRadius: 14,
-    fontWeight: 800,
-    marginTop: 14,
-    cursor: "pointer",
-  },
-  formCard: {
-    background: "white",
-    padding: 20,
-    borderRadius: 22,
-    borderTop: "8px solid #ffd21f",
-    marginBottom: 25,
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    gap: 12,
-  },
-  input: {
-    padding: 13,
-    borderRadius: 12,
-    border: "1px solid #ccc",
-    fontSize: 15,
-  },
-  uploadBox: {
-    padding: 13,
-    borderRadius: 12,
-    border: "2px dashed #999",
-    background: "#fafafa",
-    fontSize: 15,
-    fontWeight: 800,
-    textAlign: "center",
-    cursor: "pointer",
-  },
-  previewWrap: {
-    marginTop: 15,
-  },
-  previewLabel: {
-    fontWeight: 800,
-    marginBottom: 6,
-  },
-  preview: {
-    width: 180,
-    borderRadius: 12,
-    border: "1px solid #ddd",
-  },
-  sectionTitle: {
-    fontSize: 32,
-  },
-  cards: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-    gap: 20,
-  },
-  card: {
-    background: "white",
-    borderRadius: 22,
-    overflow: "hidden",
-    boxShadow: "0 10px 25px rgba(0,0,0,.12)",
-  },
-  moduleImage: {
-    width: "100%",
-    height: 190,
-    objectFit: "cover",
-  },
-  noImage: {
-    height: 190,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#ddd",
-    color: "#555",
-  },
-  cardBody: {
-    padding: 18,
-  },
-  tag: {
-    background: "#ffd21f",
-    padding: "6px 10px",
-    borderRadius: 999,
-    fontWeight: 900,
-    fontSize: 13,
-  },
-  cardTitle: {
-    marginTop: 12,
-  },
-  actions: {
-    display: "flex",
-    gap: 10,
-    marginTop: 15,
-  },
-  editButton: {
-    background: "#050505",
-    color: "#ffd21f",
-    border: 0,
-    padding: "10px 14px",
-    borderRadius: 12,
-    fontWeight: 800,
-    cursor: "pointer",
-  },
-  deleteButton: {
-    background: "#b00020",
-    color: "white",
-    border: 0,
-    padding: "10px 14px",
-    borderRadius: 12,
-    fontWeight: 800,
-    cursor: "pointer",
-  },
-};
