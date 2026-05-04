@@ -317,18 +317,7 @@ corner_size: cornerSize,
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
-      <select
-  value={moduleType}
-  onChange={(e) => {
-    setModuleType(e.target.value);
-    setCornerSize("");
-  }}
->
-  <option>Straight</option>
-  <option>Inside Corner</option>
-  <option>Outside Corner</option>
-  <option>Bridge</option>
-</select>
+
               <label className="uploadBox">
                 {uploading
                   ? "Uploading..."
@@ -355,8 +344,19 @@ corner_size: cornerSize,
                 <option>Free-moN</option>
                 <option>Other</option>
               </select>
-    {(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
-  <div>
+<select
+  value={moduleType}
+  onChange={(e) => {
+    setModuleType(e.target.value);
+    setCornerSize("");
+  }}
+>
+  <option>Straight</option>
+  <option>Inside Corner</option>
+  <option>Outside Corner</option>
+  <option>Bridge</option>
+</select>
+              {(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
   <select
     value={cornerSize}
     onChange={(e) => setCornerSize(e.target.value)}
@@ -372,7 +372,6 @@ corner_size: cornerSize,
     <option>Large Radius - 381 mm / 414 mm</option>
     <option>Large Radius - 447 mm / 480 mm</option>
   </select>
-  </div>
 )}
               <select
   value={dimensions}
@@ -389,8 +388,6 @@ corner_size: cornerSize,
   <option>Interchange Triple - 474 mm x 928 mm (18.66" x 36.54")</option>
   <option>Other / custom</option>
 </select>
-  </div>
-  )}
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option>Planning</option>
                 <option>Under Construction</option>
