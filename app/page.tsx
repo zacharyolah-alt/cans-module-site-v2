@@ -355,18 +355,6 @@ corner_size: cornerSize,
                 <option>Free-moN</option>
                 <option>Other</option>
               </select>
-<select
-  value={moduleType}
-  onChange={(e) => {
-    setModuleType(e.target.value);
-    setCornerSize("");
-  }}
->
-  <option>Straight</option>
-  <option>Inside Corner</option>
-  <option>Outside Corner</option>
-  <option>Bridge</option>
-</select>
     {(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
   <div>
   <select
