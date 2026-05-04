@@ -36,7 +36,12 @@ export default function Page() {
   async function login() {
     const email = window.prompt("Enter your email");
     if (!email) return;
-    await supabase.auth.signInWithOtp({ email });
+    await supabase.auth.signInWithOtp({
+  email,
+  options: {
+    emailRedirectTo: "https://cans-module-site-v2.vercel.app",
+  },
+});
     alert("Check your email for the login link.");
   }
 
