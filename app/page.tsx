@@ -51,7 +51,7 @@ export default function Page() {
     setPhoto("");
     loadModules();
   }
-
+  }
   return (
     <div style={{ padding: 20, fontFamily: "Arial, sans-serif" }}>
       <h1>C.A.N.S. Module Directory</h1>
