@@ -344,7 +344,8 @@ corner_size: cornerSize,
                 <option>Free-moN</option>
                 <option>Other</option>
               </select>
-<select
+<div>
+              <select
   value={moduleType}
   onChange={(e) => {
     setModuleType(e.target.value);
@@ -356,7 +357,9 @@ corner_size: cornerSize,
   <option>Outside Corner</option>
   <option>Bridge</option>
 </select>
+</div>
               {(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
+  <div>
   <select
     value={cornerSize}
     onChange={(e) => setCornerSize(e.target.value)}
@@ -388,6 +391,8 @@ corner_size: cornerSize,
   <option>Interchange Triple - 474 mm x 928 mm (18.66" x 36.54")</option>
   <option>Other / custom</option>
 </select>
+  </div>
+  )}
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option>Planning</option>
                 <option>Under Construction</option>
