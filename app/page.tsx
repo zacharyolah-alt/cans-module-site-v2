@@ -123,7 +123,32 @@ export default function Page() {
 
           <div style={styles.grid}>
             <input style={styles.input} placeholder="Module name" value={name} onChange={(e) => setName(e.target.value)} />
-            <input style={styles.input} placeholder="Photo URL" value={photo} onChange={(e) => setPhoto(e.target.value)} />
+            <input
+  style={styles.input}
+  type="file"
+  accept="image/*"
+  onChange={async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return alert("Please log in first.");
+
+    const fileName = `${user.id}/${Date.now()}-${file.name}`;
+
+    const { error } = await supabase.storage
+      .from("module-photos")
+      .upload(fileName, file);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    const { data } = supabase.storage
+      .from("module-photos")
+      .getPublicUrl(fileName);
+
+    setPhoto(data.publicUrl);
+  }}
+/>
             <select style={styles.input} value={standard} onChange={(e) => setStandard(e.target.value)}>
               <option>T-Trak</option>
               <option>N-Trak</option>
