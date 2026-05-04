@@ -194,9 +194,9 @@ export default function Page() {
     });
   }, [modules, search, standardFilter, statusFilter]);
   return (
-  <>
+
     <main>
-      <style jsx>{`
+      <style>{`
         body { margin: 0; background: #f3f2ed; }
         .page { min-height: 100vh; padding: 20px; font-family: Arial, sans-serif; color: #111; }
         .hero { background: linear-gradient(135deg, #050505, #202020); color: white; border-radius: 28px; padding: 28px; display: flex; align-items: center; gap: 22px; box-shadow: 0 16px 40px rgba(0,0,0,.22); }
@@ -489,7 +489,7 @@ export default function Page() {
     background: #ffd21f;
     border-color: #000;
   }
-`}</style>
 </div>
+</main>
 );
 }
