@@ -23,6 +23,7 @@ export default function Page() {
   const [standardFilter, setStandardFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [uploading, setUploading] = useState(false);
+  const [customDimensions, setCustomDimensions] = useState("");
 
   useEffect(() => {
     loadModules();
@@ -341,12 +342,40 @@ export default function Page() {
                 <option>Free-moN</option>
                 <option>Other</option>
               </select>
+<div className="dimensionGroup">
+  <p className="dimensionTitle">Module Size</p>
 
-              <input
-                placeholder="Dimensions"
-                value={dimensions}
-                onChange={(e) => setDimensions(e.target.value)}
-              />
+  {[
+    "Single - 308 mm",
+    "Double - 618 mm",
+    "Triple - 928 mm",
+    "Quad - 1238 mm",
+    "Corner - 365.1 mm x 365.1 mm",
+    "End Cap - 731.8 mm x 365.1 mm",
+    "Interchange Double - 390 mm x 618 mm",
+    "Interchange Triple - 474 mm x 928 mm",
+    "Other",
+  ].map((size) => (
+    <button
+      key={size}
+      type="button"
+      className={dimensions === size ? "sizeBtn activeSizeBtn" : "sizeBtn"}
+      onClick={() => {
+        setDimensions(size);
+        if (size !== "Other") setCustomDimensions("");
+      }}
+    >
+      {size}
+    </button>
+  ))}
+
+  {dimensions === "Other" && (
+  <input
+    placeholder="Enter custom dimensions"
+    value={customDimensions}
+    onChange={(e) => setCustomDimensions(e.target.value)}
+  />
+)}
 
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option>Planning</option>
