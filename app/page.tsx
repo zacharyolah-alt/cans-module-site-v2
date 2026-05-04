@@ -317,19 +317,7 @@ corner_size: cornerSize,
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
-              <select
-  value={moduleType}
-  onChange={(e) => {
-    setModuleType(e.target.value);
-    setCornerSize("");
-  }}
->
-  <option>Straight</option>
-  <option>Inside Corner</option>
-  <option>Outside Corner</option>
-  <option>Bridge</option>
-</select>
-
+              
               <label className="uploadBox">
                 {uploading
                   ? "Uploading..."
