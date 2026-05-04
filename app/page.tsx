@@ -194,6 +194,7 @@ export default function Page() {
     });
   }, [modules, search, standardFilter, statusFilter]);
   return (
+  <div>
     <main>
       <style>{`
         body { margin: 0; background: #f3f2ed; }
