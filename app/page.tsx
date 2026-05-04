@@ -141,7 +141,6 @@ export default function Page() {
       module_name: name,
       owner_name: user.email,
       user_id: user.id,
-      photo_url: photo,
       standard,
       dimensions,
       status,
