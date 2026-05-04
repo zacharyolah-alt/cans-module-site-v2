@@ -48,6 +48,47 @@ export default function Page() {
       alert(error.message);
       return;
     }
+    async function saveModule() {
+  if (!user) {
+    alert("Please log in first.");
+    return;
+  }
+      <button onClick={saveModule}>
+  Add Module
+</button>
+
+  if (!name.trim()) {
+    alert("Please enter a module name.");
+    return;
+  }
+
+  if (!photo) {
+    alert("Please upload a photo first.");
+    return;
+  }
+
+  const { error } = await supabase.from("modules").insert({
+    module_name: name,
+    owner_name: user.email,
+    user_id: user.id,
+    photo_url: photo,
+    standard,
+    dimensions,
+    status,
+    additional_notes: notes,
+  });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  setName("");
+  setPhoto("");
+  setDimensions("");
+  setNotes("");
+  loadModules();
+    }
 
     setModules(data || []);
   }
