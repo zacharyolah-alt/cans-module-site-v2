@@ -127,6 +127,10 @@ export default function Page() {
   }
 
   async function saveModule() {
+    if (uploading) {
+  alert("Please wait for the photo to finish uploading.");
+  return;
+    }
     if (!user) {
       alert("Please log in first.");
       return;
@@ -141,6 +145,7 @@ export default function Page() {
       module_name: name,
       owner_name: user.email,
       user_id: user.id,
+      photo_url: photo,
       standard,
       dimensions,
       status,
