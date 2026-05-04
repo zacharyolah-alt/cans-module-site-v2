@@ -23,7 +23,8 @@ export default function Page() {
   const [standardFilter, setStandardFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [uploading, setUploading] = useState(false);
-
+const [moduleType, setModuleType] = useState("Straight");
+const [cornerSize, setCornerSize] = useState("");
   useEffect(() => {
     loadModules();
 
@@ -136,6 +137,8 @@ export default function Page() {
       user_id: user.id,
       photo_url: photo,
       standard,
+      module_type: moduleType,
+corner_size: cornerSize,
       dimensions,
       status,
       additional_notes: notes,
@@ -341,7 +344,35 @@ export default function Page() {
                 <option>Free-moN</option>
                 <option>Other</option>
               </select>
-
+<select
+  value={moduleType}
+  onChange={(e) => {
+    setModuleType(e.target.value);
+    setCornerSize("");
+  }}
+>
+  <option>Straight</option>
+  <option>Inside Corner</option>
+  <option>Outside Corner</option>
+  <option>Bridge</option>
+</select>
+              {(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
+  <select
+    value={cornerSize}
+    onChange={(e) => setCornerSize(e.target.value)}
+  >
+    <option value="">Select corner size</option>
+    <option>Small Inside Corner - 195 mm / 220 mm</option>
+    <option>Medium Inside Corner - 220 mm / 245 mm</option>
+    <option>Large Inside Corner - 245 mm / 270 mm</option>
+    <option>Standard Corner - 365 mm (14.37")</option>
+    <option>End Cap - 365 mm x 732 mm (14.37" x 28.82")</option>
+    <option>Large Radius - 315 mm / 348 mm</option>
+    <option>Large Radius - 348 mm / 381 mm</option>
+    <option>Large Radius - 381 mm / 414 mm</option>
+    <option>Large Radius - 447 mm / 480 mm</option>
+  </select>
+)}
               <select
   value={dimensions}
   onChange={(e) => setDimensions(e.target.value)}
