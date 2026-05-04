@@ -462,4 +462,33 @@ export default function Page() {
       </div>
     </main>
   );
+        <style jsx>{`
+  .dimensionGroup {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .dimensionTitle {
+    grid-column: 1 / -1;
+    font-weight: 900;
+    margin-bottom: 4px;
+  }
+
+  .sizeBtn {
+    background: #f5f5f5;
+    border: 2px solid #ddd;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .activeSizeBtn {
+    background: #ffd21f;
+    border-color: #000;
+  }
+`}</style>
 }
