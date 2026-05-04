@@ -1,5 +1,5 @@
 "use client";
-// test update
+
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -51,7 +51,7 @@ export default function Page() {
     setPhoto("");
     loadModules();
   }
-  }
+
   return (
     <div style={{ padding: 20, fontFamily: "Arial, sans-serif" }}>
       <h1>C.A.N.S. Module Directory</h1>
@@ -97,4 +97,3 @@ export default function Page() {
     </div>
   );
 }
- 
