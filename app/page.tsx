@@ -342,12 +342,21 @@ export default function Page() {
                 <option>Other</option>
               </select>
 
-              <input
-                placeholder="Dimensions"
-                value={dimensions}
-                onChange={(e) => setDimensions(e.target.value)}
-              />
-
+              <select
+  value={dimensions}
+  onChange={(e) => setDimensions(e.target.value)}
+>
+  <option value="">Select module size</option>
+  <option>Single - 308 mm</option>
+  <option>Double - 618 mm</option>
+  <option>Triple - 928 mm</option>
+  <option>Quad - 1238 mm</option>
+  <option>Corner - 365.1 mm x 365.1 mm</option>
+  <option>End Cap - 731.8 mm x 365.1 mm</option>
+  <option>Interchange Double - 390 mm x 618 mm</option>
+  <option>Interchange Triple - 474 mm x 928 mm</option>
+  <option>Other / custom</option>
+</select>
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option>Planning</option>
                 <option>Under Construction</option>
