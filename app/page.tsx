@@ -167,31 +167,31 @@ export default function Page() {
 
     loadModules();
   }
+      const filteredModules = useMemo(() => {
+  const term = search.toLowerCase();
 
-  const filteredModules = useMemo(() => {
-    const term = search.toLowerCase();
+  return modules.filter((m) => {
+    const matchesSearch = [
+      m.module_name,
+      m.owner_name,
+      m.standard,
+      m.dimensions,
+      m.status,
+      m.additional_notes,
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(term);
 
-    return modules.filter((m) => {
-      const matchesSearch = [
-        m.module_name,
-        m.owner_name,
-        m.standard,
-        m.dimensions,
-        m.status,
-        m.additional_notes,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(term);
+    const matchesStandard =
+      standardFilter === "All" || m.standard === standardFilter;
 
-      const matchesStandard =
-        standardFilter === "All" || m.standard === standardFilter;
+    const matchesStatus =
+      statusFilter === "All" || m.status === statusFilter;
 
-      const matchesStatus =
-        statusFilter === "All" || m.status === statusFilter;
-
-      return matchesSearch && matchesStandard && matchesStatus;
-   }, [modules, search, standardFilter, statusFilter]); 
+    return matchesSearch && matchesStandard && matchesStatus;
+  });
+}, [modules, search, standardFilter, statusFilter]); 
   return (
    <main>
     <div className="page">
