@@ -191,11 +191,9 @@ export default function Page() {
         statusFilter === "All" || m.status === statusFilter;
 
       return matchesSearch && matchesStandard && matchesStatus;
-    });
-  }, [modules, search, standardFilter, statusFilter]);
+   }, [modules, search, standardFilter, statusFilter]); 
   return (
-
-    <main>
+   <main>
       <style>{`
         body { margin: 0; background: #f3f2ed; }
         .page { min-height: 100vh; padding: 20px; font-family: Arial, sans-serif; color: #111; }
