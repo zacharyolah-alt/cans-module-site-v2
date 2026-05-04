@@ -373,6 +373,7 @@ corner_size: cornerSize,
     <option>Large Radius - 381 mm / 414 mm</option>
     <option>Large Radius - 447 mm / 480 mm</option>
   </select>
+  </div>
 )}
               <select
   value={dimensions}
