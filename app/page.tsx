@@ -137,7 +137,7 @@ export default function Page() {
       user_id: user.id,
       photo_url: photo,
       standard,
-      dimensions,
+     dimensions: dimensions === "Other" ? customDimensions : dimensions, 
       status,
       additional_notes: notes,
     };
