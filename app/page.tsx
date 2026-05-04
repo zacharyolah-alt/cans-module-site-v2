@@ -460,9 +460,7 @@ export default function Page() {
           ))}
         </section>
       </div>
-    </main>
-  );
-        <style jsx>{`
+  <style jsx>{`
   .dimensionGroup {
     grid-column: 1 / -1;
     display: grid;
@@ -491,4 +489,6 @@ export default function Page() {
     border-color: #000;
   }
 `}</style>
+</div>
+);
 }
