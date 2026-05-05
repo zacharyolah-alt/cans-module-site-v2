@@ -25,8 +25,6 @@ export default function Page() {
   const [uploading, setUploading] = useState(false);
 const [moduleType, setModuleType] = useState("Straight");
 const [cornerSize, setCornerSize] = useState("");
-  const [typeFilter, setTypeFilter] = useState("All");
-const [dimensionFilter, setDimensionFilter] = useState("All");
   useEffect(() => {
     loadModules();
 
@@ -170,33 +168,34 @@ corner_size: cornerSize,
     }
 
     loadModules();
+  }
 
-const filteredModules = useMemo(() => {
-  return modules.filter((m) => {
-    const matchesSearch = true;
+  const filteredModules = useMemo(() => {
+    const term = search.toLowerCase();
 
-    const matchesStandard =
-      standardFilter === "All" || m.standard === standardFilter;
+    return modules.filter((m) => {
+      const matchesSearch = [
+        m.module_name,
+        m.owner_name,
+        m.standard,
+        m.dimensions,
+        m.status,
+        m.additional_notes,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(term);
 
-    const matchesStatus =
-      statusFilter === "All" || m.status === statusFilter;
+      const matchesStandard =
+        standardFilter === "All" || m.standard === standardFilter;
 
-    const matchesType =
-      typeFilter === "All" || m.module_type === typeFilter;
+      const matchesStatus =
+        statusFilter === "All" || m.status === statusFilter;
 
-    const matchesSize =
-      dimensionFilter === "All" ||
-      m.dimensions?.toLowerCase().includes(dimensionFilter.toLowerCase());
-
-    return (
-      matchesSearch &&
-      matchesStandard &&
-      matchesStatus &&
-      matchesType &&
-      matchesSize
-    );
-  });
-}, [modules, standardFilter, statusFilter, typeFilter, dimensionFilter]);
+      return matchesSearch && matchesStandard && matchesStatus;
+    });
+  }, [modules, search, standardFilter, statusFilter]);
+  return (
     <main>
       <style>{`
         body { margin: 0; background: #f3f2ed; }
@@ -254,74 +253,15 @@ const filteredModules = useMemo(() => {
             </p>
           </div>
         </section>
-   <div className="filters">
 
-  {/* TYPE FILTER */}
-  <select
-    value={typeFilter}
-    onChange={(e) => setTypeFilter(e.target.value)}
-  >
-    <option value="All">All Types</option>
-    <option value="Straight">Straight</option>
-    <option value="Inside Corner">Inside Corner</option>
-    <option value="Outside Corner">Outside Corner</option>
-    <option value="Bridge">Bridge</option>
-  </select>
+        <section className="toolbar">
+          <input
+            placeholder="Search by module, owner, notes, size..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
 
-  {/* STANDARD FILTER */}
-  <select
-    value={standardFilter}
-    onChange={(e) => setStandardFilter(e.target.value)}
-  >
-    <option value="All">All Standards</option>
-    <option value="T-Trak">T-Trak</option>
-    <option value="N-Trak">N-Trak</option>
-    <option value="Free-moN">Free-moN</option>
-    <option value="Other">Other</option>
-  </select>
-
-  {/* STATUS FILTER */}
-  <select
-    value={statusFilter}
-    onChange={(e) => setStatusFilter(e.target.value)}
-  >
-    <option value="All">All Status</option>
-    <option value="Active">Active</option>
-    <option value="Planning">Planning</option>
-    <option value="Under Construction">Under Construction</option>
-    <option value="Retired">Retired</option>
-  </select>
-
-  {/* SIZE FILTER */}
-  <select
-    value={dimensionFilter}
-    onChange={(e) => setDimensionFilter(e.target.value)}
-  >
-    <option value="All">All Sizes</option>
-    <option value="Single">Single</option>
-    <option value="Double">Double</option>
-    <option value="Triple">Triple</option>
-    <option value="Quad">Quad</option>
-    <option value="Corner">Corner</option>
-    <option value="End Cap">End Cap</option>
-    <option value="Interchange">Interchange</option>
-  </select>
-
-  {/* CLEAR BUTTON */}
-  <button
-    className="blackBtn"
-    onClick={() => {
-      setTypeFilter("All");
-      setStandardFilter("All");
-      setStatusFilter("All");
-      setDimensionFilter("All");
-    }}
-  >
-    Clear Filters
-  </button>
-
-</div>
-        {!user ? (
+          {!user ? (
             <button className="blackBtn" onClick={login}>
               Member Login
             </button>
