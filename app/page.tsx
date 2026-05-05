@@ -27,6 +27,7 @@ const [moduleType, setModuleType] = useState("Straight");
 const [cornerSize, setCornerSize] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
 const [dimensionFilter, setDimensionFilter] = useState("All");
+  const [ownerName, setOwnerName] = useState("");
   useEffect(() => {
     loadModules();
 
@@ -110,6 +111,7 @@ const [dimensionFilter, setDimensionFilter] = useState("All");
   function resetForm() {
     setEditingId(null);
     setName("");
+    setOwnerName("");
     setPhoto("");
     setStandard("T-Trak");
     setDimensions("");
@@ -135,7 +137,7 @@ const [dimensionFilter, setDimensionFilter] = useState("All");
 
     const payload = {
       module_name: name,
-      owner_name: user.email,
+      owner_name: ownerName || user.email,
       user_id: user.id,
       photo_url: photo,
       standard,
@@ -399,6 +401,11 @@ corner_size: cornerSize,
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
+              <input
+  placeholder="Member name"
+  value={ownerName}
+  onChange={(e) => setOwnerName(e.target.value)}
+/>
 
               <label className="uploadBox">
                 {uploading
