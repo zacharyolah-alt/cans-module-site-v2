@@ -255,12 +255,7 @@ corner_size: cornerSize,
         </section>
 
         <section className="toolbar">
-          <input
-            placeholder="Search by module, owner, notes, size..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-
+          
           {!user ? (
             <button className="blackBtn" onClick={login}>
               Member Login
