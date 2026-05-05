@@ -173,7 +173,6 @@ corner_size: cornerSize,
   }
 
   const filteredModules = useMemo(() => {
-    const term = search.toLowerCase();
 
     return modules.filter((m) => {
       const matchesSearch = true;
