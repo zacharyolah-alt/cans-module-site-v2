@@ -183,7 +183,7 @@ corner_size: cornerSize,
       statusFilter === "All" || m.status === statusFilter;
 
     const matchesType =
-      typeFilter === "All" || m.moduleType === typeFilter;
+      typeFilter === "All" || m.module_type === typeFilter;
 
     const matchesSize =
       dimensionFilter === "All" ||
