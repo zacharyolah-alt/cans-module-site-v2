@@ -239,7 +239,12 @@ corner_size: cornerSize,
   font-weight: 900;
   margin-bottom: 6px;
 }
-
+.filterGroup button {
+  width: auto;
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  font-size: 13px;
+}
 .buttonRow {
   display: flex;
   flex-wrap: wrap;
@@ -279,7 +284,14 @@ corner_size: cornerSize,
           
           .toolbar, .filters, .formGrid { grid-template-columns: 1fr; }
           .sectionHeader { flex-direction: column; align-items: flex-start; gap: 4px; }
-          button, input, select { width: 100%; box-sizing: border-box; }
+          input, select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+button {
+  box-sizing: border-box;
+}
           .actions { flex-direction: column; }
         }
       `}</style>
