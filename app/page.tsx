@@ -198,7 +198,6 @@ const filteredModules = useMemo(() => {
     );
   });
 }, [modules, standardFilter, statusFilter, typeFilter, dimensionFilter]);
-  return (
     <main>
       <style>{`
         body { margin: 0; background: #f3f2ed; }
