@@ -229,14 +229,7 @@ corner_size: cornerSize,
         .actions { display: flex; gap: 10px; margin-top: 16px; }
         .editBtn { background: #050505; color: #ffd21f; flex: 1; }
         .deleteBtn { background: #b00020; color: white; flex: 1; }
-
-        @media (max-width: 700px) {
-          .page { padding: 12px; }
-          .hero { flex-direction: column; text-align: center; padding: 22px; }
-          .logo { width: 100px; height: 100px; }
-          .title { font-size: 32px; }
-          .subtitle { font-size: 15px; }
-          .filterGroup {
+.filterGroup {
   margin-bottom: 16px;
 }
 
@@ -248,7 +241,7 @@ corner_size: cornerSize,
 .buttonRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .activeBtn {
@@ -268,6 +261,13 @@ corner_size: cornerSize,
   font-weight: 700;
   border: none;
 }
+        @media (max-width: 700px) {
+          .page { padding: 12px; }
+          .hero { flex-direction: column; text-align: center; padding: 22px; }
+          .logo { width: 100px; height: 100px; }
+          .title { font-size: 32px; }
+          .subtitle { font-size: 15px; }
+          
           .toolbar, .filters, .formGrid { grid-template-columns: 1fr; }
           .sectionHeader { flex-direction: column; align-items: flex-start; gap: 4px; }
           button, input, select { width: 100%; box-sizing: border-box; }
