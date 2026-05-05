@@ -25,6 +25,8 @@ export default function Page() {
   const [uploading, setUploading] = useState(false);
 const [moduleType, setModuleType] = useState("Straight");
 const [cornerSize, setCornerSize] = useState("");
+  const [typeFilter, setTypeFilter] = useState("All");
+const [dimensionFilter, setDimensionFilter] = useState("All");
   useEffect(() => {
     loadModules();
 
@@ -254,6 +256,20 @@ corner_size: cornerSize,
           </div>
         </section>
    <div className="filters">
+
+  {/* TYPE FILTER */}
+  <select
+    value={typeFilter}
+    onChange={(e) => setTypeFilter(e.target.value)}
+  >
+    <option value="All">All Types</option>
+    <option value="Straight">Straight</option>
+    <option value="Inside Corner">Inside Corner</option>
+    <option value="Outside Corner">Outside Corner</option>
+    <option value="Bridge">Bridge</option>
+  </select>
+
+  {/* STANDARD FILTER */}
   <select
     value={standardFilter}
     onChange={(e) => setStandardFilter(e.target.value)}
@@ -265,6 +281,7 @@ corner_size: cornerSize,
     <option value="Other">Other</option>
   </select>
 
+  {/* STATUS FILTER */}
   <select
     value={statusFilter}
     onChange={(e) => setStatusFilter(e.target.value)}
@@ -275,6 +292,35 @@ corner_size: cornerSize,
     <option value="Under Construction">Under Construction</option>
     <option value="Retired">Retired</option>
   </select>
+
+  {/* SIZE FILTER */}
+  <select
+    value={dimensionFilter}
+    onChange={(e) => setDimensionFilter(e.target.value)}
+  >
+    <option value="All">All Sizes</option>
+    <option value="Single">Single</option>
+    <option value="Double">Double</option>
+    <option value="Triple">Triple</option>
+    <option value="Quad">Quad</option>
+    <option value="Corner">Corner</option>
+    <option value="End Cap">End Cap</option>
+    <option value="Interchange">Interchange</option>
+  </select>
+
+  {/* CLEAR BUTTON */}
+  <button
+    className="blackBtn"
+    onClick={() => {
+      setTypeFilter("All");
+      setStandardFilter("All");
+      setStatusFilter("All");
+      setDimensionFilter("All");
+    }}
+  >
+    Clear Filters
+  </button>
+
 </div>
         {!user ? (
             <button className="blackBtn" onClick={login}>
