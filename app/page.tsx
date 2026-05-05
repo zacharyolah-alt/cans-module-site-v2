@@ -177,17 +177,7 @@ corner_size: cornerSize,
 
     return modules.filter((m) => {
       const matchesSearch = true;
-        m.module_name,
-        m.owner_name,
-        m.standard,
-        m.dimensions,
-        m.status,
-        m.additional_notes,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(term);
-
+      
       const matchesStandard =
   standardFilter === "All" || m.standard === standardFilter;
 
