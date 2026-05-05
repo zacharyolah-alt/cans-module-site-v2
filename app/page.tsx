@@ -261,6 +261,13 @@ corner_size: cornerSize,
   font-weight: 700;
   border: none;
 }
+
+.clearBtn {
+  width: auto;
+  align-self: flex-start;
+  padding: 10px 16px;
+  margin-top: 10px;
+}
         @media (max-width: 700px) {
           .page { padding: 12px; }
           .hero { flex-direction: column; text-align: center; padding: 22px; }
@@ -369,16 +376,16 @@ corner_size: cornerSize,
 
   {/* CLEAR */}
   <button
-    className="blackBtn"
-    onClick={() => {
-      setStandardFilter("All");
-      setStatusFilter("All");
-      setTypeFilter("All");
-      setDimensionFilter("All");
-    }}
-  >
-    Clear Filters
-  </button>
+  className="blackBtn clearBtn"
+  onClick={() => {
+    setStandardFilter("All");
+    setStatusFilter("All");
+    setTypeFilter("All");
+    setDimensionFilter("All");
+  }}
+>
+  Clear Filters
+</button>
 
 </section>
 
