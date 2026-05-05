@@ -189,13 +189,25 @@ corner_size: cornerSize,
         .includes(term);
 
       const matchesStandard =
-        standardFilter === "All" || m.standard === standardFilter;
+  standardFilter === "All" || m.standard === standardFilter;
 
-      const matchesStatus =
-        statusFilter === "All" || m.status === statusFilter;
+const matchesStatus =
+  statusFilter === "All" || m.status === statusFilter;
 
-      return matchesSearch && matchesStandard && matchesStatus;
-    });
+const matchesType =
+  typeFilter === "All" || m.moduleType === typeFilter;
+
+const matchesSize =
+  dimensionFilter === "All" ||
+  m.dimensions?.toLowerCase().includes(dimensionFilter.toLowerCase());
+
+      return (
+  matchesSearch &&
+  matchesStandard &&
+  matchesStatus &&
+  matchesType &&
+  matchesSize
+);
   }, [modules, search, standardFilter, statusFilter]);
   return (
     <main>
