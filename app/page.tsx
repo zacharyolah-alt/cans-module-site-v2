@@ -171,7 +171,7 @@ corner_size: cornerSize,
   }
 
   const filteredModules = useMemo(() => {
-    const term = search.toLowerCase();
+    const term = "";
 
     return modules.filter((m) => {
       const matchesSearch = [
@@ -253,15 +253,30 @@ corner_size: cornerSize,
             </p>
           </div>
         </section>
+   <div className="filters">
+  <select
+    value={standardFilter}
+    onChange={(e) => setStandardFilter(e.target.value)}
+  >
+    <option value="All">All Standards</option>
+    <option value="T-Trak">T-Trak</option>
+    <option value="N-Trak">N-Trak</option>
+    <option value="Free-moN">Free-moN</option>
+    <option value="Other">Other</option>
+  </select>
 
-        <section className="toolbar">
-          <input
-            placeholder="Search by module, owner, notes, size..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-
-          {!user ? (
+  <select
+    value={statusFilter}
+    onChange={(e) => setStatusFilter(e.target.value)}
+  >
+    <option value="All">All Status</option>
+    <option value="Active">Active</option>
+    <option value="Planning">Planning</option>
+    <option value="Under Construction">Under Construction</option>
+    <option value="Retired">Retired</option>
+  </select>
+</div>
+        {!user ? (
             <button className="blackBtn" onClick={login}>
               Member Login
             </button>
