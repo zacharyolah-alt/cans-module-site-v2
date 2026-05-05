@@ -170,7 +170,6 @@ corner_size: cornerSize,
     }
 
     loadModules();
-  }
 
 const filteredModules = useMemo(() => {
   return modules.filter((m) => {
