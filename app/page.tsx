@@ -236,6 +236,38 @@ corner_size: cornerSize,
           .logo { width: 100px; height: 100px; }
           .title { font-size: 32px; }
           .subtitle { font-size: 15px; }
+          .filterGroup {
+  margin-bottom: 16px;
+}
+
+.filterGroup p {
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.activeBtn {
+  background: #ffd21f;
+  color: black;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 900;
+  border: none;
+}
+
+.grayBtn {
+  background: #eee;
+  color: #333;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 700;
+  border: none;
+}
           .toolbar, .filters, .formGrid { grid-template-columns: 1fr; }
           .sectionHeader { flex-direction: column; align-items: flex-start; gap: 4px; }
           button, input, select { width: 100%; box-sizing: border-box; }
@@ -270,50 +302,72 @@ corner_size: cornerSize,
         </section>
 
         <section className="filters">
-  <select
-    value={standardFilter}
-    onChange={(e) => setStandardFilter(e.target.value)}
-  >
-    <option value="All">All Standards</option>
-    <option value="T-Trak">T-Trak</option>
-    <option value="N-Trak">N-Trak</option>
-    <option value="Free-moN">Free-moN</option>
-    <option value="Other">Other</option>
-  </select>
 
-  <select
-    value={statusFilter}
-    onChange={(e) => setStatusFilter(e.target.value)}
-  >
-    <option value="All">All Status</option>
-    <option value="Planning">Planning</option>
-    <option value="Under Construction">Under Construction</option>
-    <option value="Active">Active</option>
-    <option value="Retired">Retired</option>
-  </select>
+  {/* STANDARD */}
+  <div className="filterGroup">
+    <p>Standard</p>
+    <div className="buttonRow">
+      {["All", "T-Trak", "N-Trak", "Free-moN", "Other"].map((s) => (
+        <button
+          key={s}
+          className={standardFilter === s ? "activeBtn" : "grayBtn"}
+          onClick={() => setStandardFilter(s)}
+        >
+          {s}
+        </button>
+      ))}
+    </div>
+  </div>
 
-  <select
-    value={typeFilter}
-    onChange={(e) => setTypeFilter(e.target.value)}
-  >
-    <option value="All">All Types</option>
-    <option value="Straight">Straight</option>
-    <option value="Inside Corner">Inside Corner</option>
-    <option value="Outside Corner">Outside Corner</option>
-    <option value="Bridge">Bridge</option>
-  </select>
+  {/* STATUS */}
+  <div className="filterGroup">
+    <p>Status</p>
+    <div className="buttonRow">
+      {["All", "Planning", "Under Construction", "Active", "Retired"].map((s) => (
+        <button
+          key={s}
+          className={statusFilter === s ? "activeBtn" : "grayBtn"}
+          onClick={() => setStatusFilter(s)}
+        >
+          {s}
+        </button>
+      ))}
+    </div>
+  </div>
 
-  <select
-    value={dimensionFilter}
-    onChange={(e) => setDimensionFilter(e.target.value)}
-  >
-    <option value="All">All Sizes</option>
-    <option value="Single">Single</option>
-    <option value="Double">Double</option>
-    <option value="Triple">Triple</option>
-    <option value="Quad">Quad</option>
-  </select>
+  {/* TYPE */}
+  <div className="filterGroup">
+    <p>Type</p>
+    <div className="buttonRow">
+      {["All", "Straight", "Inside Corner", "Outside Corner", "Bridge"].map((t) => (
+        <button
+          key={t}
+          className={typeFilter === t ? "activeBtn" : "grayBtn"}
+          onClick={() => setTypeFilter(t)}
+        >
+          {t}
+        </button>
+      ))}
+    </div>
+  </div>
 
+  {/* SIZE */}
+  <div className="filterGroup">
+    <p>Size</p>
+    <div className="buttonRow">
+      {["All", "Single", "Double", "Triple", "Quad"].map((d) => (
+        <button
+          key={d}
+          className={dimensionFilter === d ? "activeBtn" : "grayBtn"}
+          onClick={() => setDimensionFilter(d)}
+        >
+          {d}
+        </button>
+      ))}
+    </div>
+  </div>
+
+  {/* CLEAR */}
   <button
     className="blackBtn"
     onClick={() => {
@@ -325,6 +379,7 @@ corner_size: cornerSize,
   >
     Clear Filters
   </button>
+
 </section>
 
         {user && (
