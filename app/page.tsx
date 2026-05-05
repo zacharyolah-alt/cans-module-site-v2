@@ -209,7 +209,7 @@ const matchesSize =
   matchesSize
 );
     });
-  }, [modules, search, standardFilter, statusFilter]);
+  }, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
   return (
     <main>
       <style>{`
