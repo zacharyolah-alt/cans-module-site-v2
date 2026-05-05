@@ -192,11 +192,22 @@ corner_size: cornerSize,
 
       const matchesStandard =
         standardFilter === "All" || m.standard === standardFilter;
+const matchesType =
+  typeFilter === "All" || m.module_type === typeFilter;
 
+const matchesSize =
+  dimensionFilter === "All" ||
+  m.dimensions?.startsWith(dimensionFilter + " -");
       const matchesStatus =
         statusFilter === "All" || m.status === statusFilter;
 
-      return matchesSearch && matchesStandard && matchesStatus;
+      return (
+  matchesSearch &&
+  matchesStandard &&
+  matchesStatus &&
+  matchesType &&
+  matchesSize
+);
     });
   }, [modules, search, standardFilter, statusFilter]);
   return (
