@@ -173,30 +173,29 @@ corner_size: cornerSize,
   }
 
   const filteredModules = useMemo(() => {
+  return modules.filter((m) => {
+    const matchesSearch = true;
 
-    return modules.filter((m) => {
-      const matchesSearch = true;
-      
-      const matchesStandard =
-  standardFilter === "All" || m.standard === standardFilter;
+    const matchesStandard =
+      standardFilter === "All" || m.standard === standardFilter;
 
-const matchesStatus =
-  statusFilter === "All" || m.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "All" || m.status === statusFilter;
 
-const matchesType =
-  typeFilter === "All" || m.moduleType === typeFilter;
+    const matchesType =
+      typeFilter === "All" || m.moduleType === typeFilter;
 
-const matchesSize =
-  dimensionFilter === "All" ||
-  m.dimensions?.toLowerCase().includes(dimensionFilter.toLowerCase());
+    const matchesSize =
+      dimensionFilter === "All" ||
+      m.dimensions?.toLowerCase().includes(dimensionFilter.toLowerCase());
 
-      return (
-  matchesSearch &&
-  matchesStandard &&
-  matchesStatus &&
-  matchesType &&
-  matchesSize
-);
+    return (
+      matchesSearch &&
+      matchesStandard &&
+      matchesStatus &&
+      matchesType &&
+      matchesSize
+    );
   });
 }, [modules, standardFilter, statusFilter, typeFilter, dimensionFilter]);
   return (
