@@ -25,6 +25,8 @@ export default function Page() {
   const [uploading, setUploading] = useState(false);
 const [moduleType, setModuleType] = useState("Straight");
 const [cornerSize, setCornerSize] = useState("");
+  const [typeFilter, setTypeFilter] = useState("All");
+const [dimensionFilter, setDimensionFilter] = useState("All");
   useEffect(() => {
     loadModules();
 
@@ -268,39 +270,62 @@ corner_size: cornerSize,
         </section>
 
         <section className="filters">
-          <select
-            value={standardFilter}
-            onChange={(e) => setStandardFilter(e.target.value)}
-          >
-            <option>All</option>
-            <option>T-Trak</option>
-            <option>N-Trak</option>
-            <option>Free-moN</option>
-            <option>Other</option>
-          </select>
+  <select
+    value={standardFilter}
+    onChange={(e) => setStandardFilter(e.target.value)}
+  >
+    <option value="All">All Standards</option>
+    <option value="T-Trak">T-Trak</option>
+    <option value="N-Trak">N-Trak</option>
+    <option value="Free-moN">Free-moN</option>
+    <option value="Other">Other</option>
+  </select>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option>All</option>
-            <option>Planning</option>
-            <option>Under Construction</option>
-            <option>Active</option>
-            <option>Retired</option>
-          </select>
+  <select
+    value={statusFilter}
+    onChange={(e) => setStatusFilter(e.target.value)}
+  >
+    <option value="All">All Status</option>
+    <option value="Planning">Planning</option>
+    <option value="Under Construction">Under Construction</option>
+    <option value="Active">Active</option>
+    <option value="Retired">Retired</option>
+  </select>
 
-          <button
-            className="blackBtn"
-            onClick={() => {
-              setSearch("");
-              setStandardFilter("All");
-              setStatusFilter("All");
-            }}
-          >
-            Clear Filters
-          </button>
-        </section>
+  <select
+    value={typeFilter}
+    onChange={(e) => setTypeFilter(e.target.value)}
+  >
+    <option value="All">All Types</option>
+    <option value="Straight">Straight</option>
+    <option value="Inside Corner">Inside Corner</option>
+    <option value="Outside Corner">Outside Corner</option>
+    <option value="Bridge">Bridge</option>
+  </select>
+
+  <select
+    value={dimensionFilter}
+    onChange={(e) => setDimensionFilter(e.target.value)}
+  >
+    <option value="All">All Sizes</option>
+    <option value="Single">Single</option>
+    <option value="Double">Double</option>
+    <option value="Triple">Triple</option>
+    <option value="Quad">Quad</option>
+  </select>
+
+  <button
+    className="blackBtn"
+    onClick={() => {
+      setStandardFilter("All");
+      setStatusFilter("All");
+      setTypeFilter("All");
+      setDimensionFilter("All");
+    }}
+  >
+    Clear Filters
+  </button>
+</section>
 
         {user && (
           <section className="formCard">
