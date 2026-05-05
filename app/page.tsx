@@ -173,10 +173,10 @@ corner_size: cornerSize,
   }
 
   const filteredModules = useMemo(() => {
-    const term = "";
+    const term = search.toLowerCase();
 
     return modules.filter((m) => {
-      const matchesSearch = [
+      const matchesSearch = true;
         m.module_name,
         m.owner_name,
         m.standard,
@@ -209,7 +209,7 @@ const matchesSize =
   matchesSize
 );
   });
-}, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
+}, [modules, standardFilter, statusFilter, typeFilter, dimensionFilter]);
   return (
     <main>
       <style>{`
