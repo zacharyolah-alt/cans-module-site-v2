@@ -26,6 +26,7 @@ export default function Page() {
 const [moduleType, setModuleType] = useState("Straight");
 const [cornerSize, setCornerSize] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
+  const [selectedImage, setSelectedImage] = useState(null);
 const [dimensionFilter, setDimensionFilter] = useState("All");
   const [ownerName, setOwnerName] = useState("");
   useEffect(() => {
@@ -540,10 +541,12 @@ button {
             <article key={m.id} className="card">
               {m.photo_url ? (
                 <img
-                  src={m.photo_url}
-                  alt={m.module_name}
-                  className="moduleImage"
-                />
+  src={m.photo_url}
+  alt={m.module_name}
+  className="moduleImage cursor-pointer"
+  onClick={() => setSelectedImage(m.photo_url)}
+/>
+                  
               ) : (
                 <div className="noImage">No Photo</div>
               )}
@@ -561,12 +564,7 @@ button {
                   <p>
                     <b>Size:</b> {m.dimensions}
                   </p>
-                )}
-
-                {m.additional_notes && <p>{m.additional_notes}</p>}
-
-                {user && (
-                  <div className="actions">
+                )}                  <div className="actions">
                     <button className="editBtn" onClick={() => startEdit(m)}>
                       Edit
                     </button>
@@ -582,6 +580,44 @@ button {
             </article>
           ))}
         </section>
+        {selectedImage && (
+  <div
+    className="imageModal"
+    onClick={() => setSelectedImage(null)}
+  >
+    <button
+      className="imageModalClose"
+      onClick={() => setSelectedImage(null)}
+    >
+      ×
+    </button>
+
+    <img
+      src={selectedImage}
+      alt="Full size module"
+      className="imageModalPhoto"
+    />
+  </div>
+)}
+        {selectedImage && (
+  <div
+    className="imageModal"
+    onClick={() => setSelectedImage(null)}
+  >
+    <button
+      className="imageModalClose"
+      onClick={() => setSelectedImage(null)}
+    >
+      ×
+    </button>
+
+    <img
+      src={selectedImage}
+      alt="Full size module"
+      className="imageModalPhoto"
+    />
+  </div>
+)}
       </div>
     </main>
   );
