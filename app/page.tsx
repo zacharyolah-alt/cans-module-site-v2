@@ -599,25 +599,6 @@ button {
     />
   </div>
 )}
-        {selectedImage && (
-  <div
-    className="imageModal"
-    onClick={() => setSelectedImage(null)}
-  >
-    <button
-      className="imageModalClose"
-      onClick={() => setSelectedImage(null)}
-    >
-      ×
-    </button>
-
-    <img
-      src={selectedImage}
-      alt="Full size module"
-      className="imageModalPhoto"
-    />
-  </div>
-)}
       </div>
     </main>
   );
