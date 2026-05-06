@@ -575,7 +575,6 @@ button {
                       Delete
                     </button>
                   </div>
-                )}
               </div>
             </article>
           ))}
