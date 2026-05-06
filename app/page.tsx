@@ -543,8 +543,12 @@ button {
                 <img
   src={m.photo_url}
   alt={m.module_name}
-  className="moduleImage cursor-pointer"
-  onClick={() => setSelectedImage(m.photo_url)}
+  className="moduleImage"
+  style={{ cursor: "pointer" }}
+  onClick={() => {
+    console.log("clicked image", m.photo_url);
+    setSelectedImage(m.photo_url);
+  }}
 />
                   
               ) : (
