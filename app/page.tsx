@@ -306,6 +306,40 @@ button {
 }
           .actions { flex-direction: column; }
         }
+        .imageModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+}
+
+.imageModalPhoto {
+  max-width: 92vw;
+  max-height: 82vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.imageModalClose {
+  position: fixed;
+  top: 12px;
+  right: 18px;
+  background: black;
+  border: 2px solid white;
+  color: white;
+  font-size: 32px;
+  line-height: 1;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+}
       `}</style>
 
       <div className="page">
