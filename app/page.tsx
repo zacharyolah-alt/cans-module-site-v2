@@ -602,6 +602,11 @@ button {
                   <p>
                     <b>Size:</b> {m.dimensions}
                   </p>
+              {m.additional_notes && (
+  <p>
+    <strong>Notes:</strong> {m.additional_notes}
+  </p>
+)}
                 )}                  <div className="actions">
                     <button className="editBtn" onClick={() => startEdit(m)}>
                       Edit
