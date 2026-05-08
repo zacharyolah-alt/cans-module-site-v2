@@ -176,41 +176,37 @@ corner_size: cornerSize,
   }
 
   const filteredModules = useMemo(() => {
+  return modules.filter((m) => {
     const term = search.toLowerCase();
 
-    return modules.filter((m) => {
-      const matchesSearch = [
-        m.module_name,
-        m.owner_name,
-        m.standard,
-        m.dimensions,
-        m.status,
-        m.additional_notes,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(term);
+    const matchesSearch = [
+      m.module_name,
+      m.owner_name,
+      m.standard,
+      m.dimensions,
+      m.status,
+      m.additional_notes,
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(term);
 
-      const matchesStandard =
-        standardFilter === "All" || m.standard === standardFilter;
-const matchesType =
-  typeFilter === "All" || m.module_type === typeFilter;
+    const matchesStandard =
+      standardFilter === "All" || m.standard === standardFilter;
 
-const matchesSize =
-  dimensionFilter === "All" ||
-  m.dimensions?.startsWith(dimensionFilter + " -");
-      const matchesStatus =
-        statusFilter === "All" || m.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "All" || m.status === statusFilter;
 
-      return (
-  matchesSearch &&
-  matchesStandard &&
-  matchesStatus &&
-  matchesType &&
-  matchesSize
-);
-    });
-  }, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
+    const matchesType =
+      typeFilter === "All" || m.module_type === typeFilter;
+
+    const matchesSize =
+      dimensionFilter === "All" ||
+      m.dimensions?.startsWith(dimensionFilter + " -");
+
+    return matchesSearch && matchesStandard && matchesStatus && matchesType && matchesSize;
+  });
+}, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
   return (
     <main>
       <style>{`
