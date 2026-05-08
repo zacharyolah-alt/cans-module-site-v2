@@ -604,7 +604,7 @@ button {
     <strong>Notes:</strong> {m.additional_notes}
   </p>
 )}
-                )}                  <div className="actions">
+                    <div className="actions">
                     <button className="editBtn" onClick={() => startEdit(m)}>
                       Edit
                     </button>
