@@ -598,6 +598,7 @@ button {
                   <p>
                     <b>Size:</b> {m.dimensions}
                   </p>
+              )}
               {m.additional_notes && (
   <p>
     <strong>Notes:</strong> {m.additional_notes}
