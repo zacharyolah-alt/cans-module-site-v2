@@ -593,7 +593,11 @@ button {
                 <p>
                   <b>Owner:</b> {m.owner_name}
                 </p>
-
+{m.module_type && (
+  <p>
+    <b>Type:</b> {m.module_type}
+  </p>
+)}
                 {m.dimensions && (
                   <p>
                     <b>Size:</b> {m.dimensions}
