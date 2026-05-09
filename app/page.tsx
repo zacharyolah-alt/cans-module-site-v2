@@ -245,38 +245,36 @@ function exportToCSV() {
 window.addEventListener("pointerup", upHandler);
 }
 
-const filteredModules = useMemo(() => {
-  return modules.filter((m) => {
-    const term = search.toLowerCase();
+const term = search.toLowerCase();
 
-    const matchesSearch = [
-      m.module_name,
-      m.owner_name,
-      m.standard,
-      m.dimensions,
-      m.status,
-      m.additional_notes,
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(term);
+const filteredModules = modules.filter((m) => {
+  const matchesSearch = [
+    m.module_name,
+    m.owner_name,
+    m.standard,
+    m.dimensions,
+    m.status,
+    m.additional_notes,
+  ]
+    .join(" ")
+    .toLowerCase()
+    .includes(term);
 
-    const matchesStandard =
-      standardFilter === "All" || m.standard === standardFilter;
+  const matchesStandard =
+    standardFilter === "All" || m.standard === standardFilter;
 
-    const matchesStatus =
-      statusFilter === "All" || m.status === statusFilter;
+  const matchesStatus =
+    statusFilter === "All" || m.status === statusFilter;
 
-    const matchesType =
-      typeFilter === "All" || m.module_type === typeFilter;
+  const matchesType =
+    typeFilter === "All" || m.module_type === typeFilter;
 
-    const matchesSize =
-      dimensionFilter === "All" ||
-      m.dimensions?.startsWith(dimensionFilter + " -");
+  const matchesSize =
+    dimensionFilter === "All" ||
+    m.dimensions?.startsWith(dimensionFilter + " -");
 
-    return matchesSearch && matchesStandard && matchesStatus && matchesType && matchesSize;
-  });
-}, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
+  return matchesSearch && matchesStandard && matchesStatus && matchesType && matchesSize;
+});
   return (
     <main>
       <style>{`
