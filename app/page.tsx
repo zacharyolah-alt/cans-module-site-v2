@@ -33,6 +33,11 @@ const [dimensionFilter, setDimensionFilter] = useState("All");
   const [mobileEditMode, setMobileEditMode] = useState(false);
 
 const [layoutTables, setLayoutTables] = useState<any[]>([]);
+  const [layoutOverrides, setLayoutOverrides] = useState<any>({});
+const [layoutIncluded, setLayoutIncluded] = useState<any>({});
+const [gridWidthFeet, setGridWidthFeet] = useState(20);
+const [gridDepthFeet, setGridDepthFeet] = useState(20);
+const [layoutZoom, setLayoutZoom] = useState(25);
 const svgPlannerRef = useRef<SVGSVGElement | null>(null);
 const LAYOUT_SCALE = 1;
   useEffect(() => {
