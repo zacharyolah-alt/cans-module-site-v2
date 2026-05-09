@@ -7,7 +7,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 );
-
 export default function Page() {
   const [viewMode, setViewMode] = useState("directory");
   const [modules, setModules] = useState<any[]>([]);
@@ -68,8 +67,7 @@ const [dimensionFilter, setDimensionFilter] = useState("All");
         emailRedirectTo: "https://cans-module-site-v2.vercel.app",
       },
     });
-
-    if (error) {
+if (error) {
       alert(error.message);
       return;
     }
@@ -195,6 +193,7 @@ function exportToCSV() {
     m.status || "",
     m.additional_notes || "",
   ]);
+  
 
   const csv = [headers, ...rows]
     .map((row) =>
@@ -203,8 +202,7 @@ function exportToCSV() {
         .join(",")
     )
     .join("\n");
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
 
   const link = document.createElement("a");
@@ -438,8 +436,10 @@ button {
 }
 
 .layoutBlock {
+  --track-y: 28px;
+  --rail-gap: 7px;
   position: relative;
-  background: rgba(255,255,255,.88);
+  background: rgba(255,255,255,.9);
   color: #111;
   border: 2px solid #7a3f18;
   border-radius: 3px;
@@ -453,7 +453,7 @@ button {
   position: absolute;
   left: -2px;
   right: -2px;
-  top: 20px;
+  top: var(--track-y);
   border-top: 2px solid #333;
 }
 
@@ -462,7 +462,7 @@ button {
   position: absolute;
   left: -2px;
   right: -2px;
-  top: 27px;
+  top: calc(var(--track-y) + var(--rail-gap));
   border-top: 2px solid #333;
 }
 
@@ -494,25 +494,29 @@ button {
 .cornerBlock::before {
   content: "";
   position: absolute;
-  left: 10px;
-  top: 10px;
+  left: 11px;
+  top: 11px;
   width: 48px;
   height: 48px;
   border-top: 2px solid #333;
   border-right: 2px solid #333;
+  border-bottom: none;
+  border-left: none;
   border-radius: 0 52px 0 0;
 }
 
 .cornerBlock::after {
   content: "";
   position: absolute;
-  left: 16px;
-  top: 16px;
-  width: 36px;
-  height: 36px;
+  left: 18px;
+  top: 18px;
+  width: 34px;
+  height: 34px;
   border-top: 2px solid #333;
   border-right: 2px solid #333;
-  border-radius: 0 42px 0 0;
+  border-bottom: none;
+  border-left: none;
+  border-radius: 0 44px 0 0;
 }
 
 .bridgeBlock {
@@ -1015,5 +1019,6 @@ button {
     </main>
   );
 }
+
 
 
