@@ -236,6 +236,32 @@ corner_size: cornerSize,
         .cardBody { padding: 18px; }
         .tag { background: #ffd21f; padding: 6px 11px; border-radius: 999px; font-weight: 900; font-size: 13px; display: inline-block; }
         .status { display: inline-block; margin-left: 8px; background: #eee; padding: 6px 11px; border-radius: 999px; font-weight: 800; font-size: 13px; }
+        .badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.typeTag {
+  background: #050505;
+  color: white;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 13px;
+}
+.cardBody h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.cardBody p {
+  margin: 8px 0;
+  line-height: 1.45;
+}
         .actions { display: flex; gap: 10px; margin-top: 16px; }
         .editBtn { background: #050505; color: #ffd21f; flex: 1; }
         .deleteBtn { background: #b00020; color: white; flex: 1; }
@@ -586,9 +612,15 @@ button {
               )}
 
               <div className="cardBody">
-                <span className="tag">{m.standard || "Module"}</span>
-                <span className="status">{m.status || "Active"}</span>
+                <div className="badgeRow">
+  <span className="tag">{m.standard || "Module"}</span>
 
+  {m.module_type && (
+    <span className="typeTag">{m.module_type}</span>
+  )}
+
+  <span className="status">{m.status || "Active"}</span>
+</div>
                 <h3>{m.module_name}</h3>
                 <p>
                   <b>Owner:</b> {m.owner_name}
