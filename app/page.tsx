@@ -12,7 +12,7 @@ export default function Page() {
   const [viewMode, setViewMode] = useState("directory");
   const svgPlannerRef = useRef<SVGSVGElement | null>(null);
   const [layoutOverrides, setLayoutOverrides] = useState<any>({});
-  const [layoutExcluded, setLayoutExcluded] = useState<any>({});
+  const [layoutIncluded, setLayoutIncluded] = useState<any>({});
   const [gridWidthFeet, setGridWidthFeet] = useState(20);
   const [gridDepthFeet, setGridDepthFeet] = useState(20);
   const [modules, setModules] = useState<any[]>([]);
@@ -253,8 +253,8 @@ function exportToCSV() {
 }, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
 
   const layoutModules = useMemo(() => {
-    return filteredModules.filter((m) => !layoutExcluded[m.id]);
-  }, [filteredModules, layoutExcluded]);
+    return filteredModules.filter((m) => layoutIncluded[m.id]);
+  }, [filteredModules, layoutIncluded]);
 
   const moduleNumberMap = useMemo(() => {
     const sortedModules = [...modules].sort((a, b) => {
@@ -271,15 +271,14 @@ function exportToCSV() {
   }, [modules]);
 
   const LAYOUT_SCALE = 10; // 10 SVG pixels = 1 inch
-  const FRONT_TRACK_FRONT_EDGE = 15;
-  const TRACK_WIDTH = 10;
-  const TRACK_CENTER_SPACING = 13;
+  const FRONT_TRACK_FRONT_EDGE = 15; // 1.5 inches from module front to front edge of front track
+  const TRACK_WIDTH = 10; // each track shown as 1 inch wide
+  const TRACK_CENTER_SPACING = 13; // 33 mm center-to-center is about 1.3 inches
 
   const gridWidthInches = gridWidthFeet * 12;
   const gridDepthInches = gridDepthFeet * 12;
-
-  const gridSvgWidth = gridWidthInches * 5;
-  const gridSvgHeight = gridDepthInches * 5;
+  const gridSvgWidth = gridWidthInches * LAYOUT_SCALE;
+  const gridSvgHeight = gridDepthInches * LAYOUT_SCALE;
 
   function getLayoutKind(m: any) {
     if (m.module_type === "Inside Corner") return "insideCorner";
@@ -385,108 +384,6 @@ function exportToCSV() {
     return [frontRail1, frontRail2, rearRail1, rearRail2];
   }
 
-  function getMainTrackCenters() {
-    const frontTrackCenter = FRONT_TRACK_FRONT_EDGE + TRACK_WIDTH / 2;
-    const rearTrackCenter = frontTrackCenter + TRACK_CENTER_SPACING;
-
-    return [frontTrackCenter, rearTrackCenter];
-  }
-
-  function rotatePoint(x: number, y: number, rotation: number, size: any) {
-    if (rotation === 90) {
-      return { x: size.height - y, y: x };
-    }
-
-    if (rotation === 180) {
-      return { x: size.width - x, y: size.height - y };
-    }
-
-    if (rotation === 270) {
-      return { x: y, y: size.width - x };
-    }
-
-    return { x, y };
-  }
-
-  function getTrackEndpointsForSlot(slot: any, size: any) {
-    const rails = getMainTrackCenters();
-    const rotation = slot.rotation || 0;
-
-    if (isCornerKind(slot.kind)) {
-      // Snap corners by their two main exits.
-      const outer = FRONT_TRACK_FRONT_EDGE + TRACK_WIDTH / 2;
-      const inner = outer + TRACK_CENTER_SPACING;
-      const localPoints = [
-        { x: 0, y: outer },
-        { x: size.width - outer, y: size.height },
-        { x: 0, y: inner },
-        { x: size.width - inner, y: size.height },
-      ];
-
-      return localPoints.map((point) => {
-        const rotated = rotatePoint(point.x, point.y, rotation, size);
-        return { x: slot.x + rotated.x, y: slot.y + rotated.y };
-      });
-    }
-
-    const localPoints = rails.flatMap((rail) => [
-      { x: 0, y: rail },
-      { x: size.width, y: rail },
-    ]);
-
-    return localPoints.map((point) => {
-      const rotated = rotatePoint(point.x, point.y, rotation, size);
-      return { x: slot.x + rotated.x, y: slot.y + rotated.y };
-    });
-  }
-
-  function applyTrackSnap(candidateSlot: any, movingModuleId: string, movingIndex: number) {
-    const movingModule = layoutModules[movingIndex];
-    const movingKind = candidateSlot.kind || getLayoutKind(movingModule);
-    const movingSize = getLayoutSize(movingModule, candidateSlot);
-    const movingEndpoints = getTrackEndpointsForSlot(
-      { ...candidateSlot, kind: movingKind },
-      movingSize
-    );
-
-    let bestSnap: any = null;
-    const snapDistance = 12; // SVG units; slightly over 1 inch
-
-    layoutModules.forEach((otherModule: any, otherIndex: number) => {
-      if (otherModule.id === movingModuleId) return;
-
-      const otherSlot = getPlacedSlot(otherModule, otherIndex);
-      const otherKind = otherSlot.kind || getLayoutKind(otherModule);
-      const otherSize = getLayoutSize(otherModule, otherSlot);
-      const otherEndpoints = getTrackEndpointsForSlot(
-        { ...otherSlot, kind: otherKind },
-        otherSize
-      );
-
-      movingEndpoints.forEach((movingEndpoint) => {
-        otherEndpoints.forEach((otherEndpoint) => {
-          const dx = otherEndpoint.x - movingEndpoint.x;
-          const dy = otherEndpoint.y - movingEndpoint.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance <= snapDistance && (!bestSnap || distance < bestSnap.distance)) {
-            bestSnap = { distance, dx, dy };
-          }
-        });
-      });
-    });
-
-    if (!bestSnap) {
-      return candidateSlot;
-    }
-
-    return {
-      ...candidateSlot,
-      x: snapToGrid(candidateSlot.x + bestSnap.dx),
-      y: snapToGrid(candidateSlot.y + bestSnap.dy),
-    };
-  }
-
   function getNumberPosition(slot: any, size: any) {
     /*
       The number belongs at the back of the module, away from the front edge/tracks.
@@ -563,7 +460,8 @@ function exportToCSV() {
       } catch (_error) {}
     }
 
-    const startingSlot = getPlacedSlot(m, index);
+    const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
+    const startingSlot = getPlacedSlot(m, permanentIndex);
     const startingPoint = getSvgPoint(event);
     const startingX = startingSlot.x;
     const startingY = startingSlot.y;
@@ -571,20 +469,13 @@ function exportToCSV() {
     function moveHandler(moveEvent: any) {
       const currentPoint = getSvgPoint(moveEvent);
 
-      const candidateSlot = {
-        ...startingSlot,
-        x: snapToGrid(startingX + currentPoint.x - startingPoint.x),
-        y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
-      };
-
-      const snappedSlot = applyTrackSnap(candidateSlot, m.id, index);
-
       setLayoutOverrides((prev: any) => ({
         ...prev,
         [m.id]: {
           ...startingSlot,
           ...(prev[m.id] || {}),
-          ...snappedSlot,
+          x: snapToGrid(startingX + currentPoint.x - startingPoint.x),
+          y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
         },
       }));
     }
@@ -602,7 +493,8 @@ function exportToCSV() {
     event.preventDefault();
     event.stopPropagation();
 
-    const currentSlot = getPlacedSlot(m, index);
+    const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
+    const currentSlot = getPlacedSlot(m, permanentIndex);
     const nextRotation = ((currentSlot.rotation || 0) + 90) % 360;
 
     setLayoutOverrides((prev: any) => ({
@@ -815,8 +707,7 @@ button {
 }
 
 .svgPlanner {
-  width: 100%;
-  min-width: 1250px;
+  width: auto;
   height: auto;
   display: block;
   background: #fafafa;
@@ -1366,7 +1257,6 @@ button {
           <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
             <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#dddddd" strokeWidth="1" />
           </pattern>
-
           <pattern id="largeGrid" width="60" height="60" patternUnits="userSpaceOnUse">
             <rect width="60" height="60" fill="url(#smallGrid)" />
             <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#c9c9c9" strokeWidth="1.2" />
@@ -1384,8 +1274,9 @@ button {
         </g>
 
         {layoutModules.map((m, index) => {
-          const slot = getPlacedSlot(m, index);
-          const kind = slot.kind || getLayoutKind(m);
+          const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
+          const slot = getPlacedSlot(m, permanentIndex);
+          const kind = getLayoutKind(m);
           const size = getLayoutSize(m, slot);
           const rails = getTrackRails();
           const moduleTransform = getModuleTransform(slot, size);
@@ -1454,7 +1345,7 @@ button {
               </g>
 
               <text className="svgNumberText" x={numberPosition.x} y={numberPosition.y}>
-                {moduleNumberMap[m.id] || index + 1}
+                {index + 1}
               </text>
 
               <g
@@ -1476,7 +1367,7 @@ button {
     <div className="layoutLegend">
       <h3 className="legendTitle">Module Key</h3>
       {filteredModules.map((m) => {
-        const isIncluded = !layoutExcluded[m.id];
+        const isIncluded = !!layoutIncluded[m.id];
         const permanentNumber = moduleNumberMap[m.id];
 
         return (
@@ -1488,9 +1379,9 @@ button {
               onChange={(event) => {
                 const checked = event.target.checked;
 
-                setLayoutExcluded((prev: any) => ({
+                setLayoutIncluded((prev: any) => ({
                   ...prev,
-                  [m.id]: !checked,
+                  [m.id]: checked,
                 }));
               }}
             />
