@@ -694,7 +694,8 @@ button {
             </div>
           </section>
         )}
-
+{viewMode === "directory" && (
+  <>
         <div className="sectionHeader">
           <h2>Modules</h2>
           <p>{filteredModules.length} shown</p>
@@ -765,6 +766,14 @@ button {
             </article>
           ))}
         </section>
+    </>
+)}
+        {viewMode === "layout" && (
+  <section className="formCard">
+    <h2>Layout View</h2>
+    <p>This will become the visual module layout planner.</p>
+  </section>
+)}
         {selectedImage && (
   <div
     className="imageModal"
