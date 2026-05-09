@@ -15,6 +15,7 @@ export default function Page() {
   const [layoutIncluded, setLayoutIncluded] = useState<any>({});
   const [gridWidthFeet, setGridWidthFeet] = useState(20);
   const [gridDepthFeet, setGridDepthFeet] = useState(20);
+  const [layoutZoom, setLayoutZoom] = useState(50);
   const [modules, setModules] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -279,6 +280,8 @@ function exportToCSV() {
   const gridDepthInches = gridDepthFeet * 12;
   const gridSvgWidth = gridWidthInches * LAYOUT_SCALE;
   const gridSvgHeight = gridDepthInches * LAYOUT_SCALE;
+  const displaySvgWidth = Math.round(gridSvgWidth * (layoutZoom / 100));
+  const displaySvgHeight = Math.round(gridSvgHeight * (layoutZoom / 100));
 
   function getLayoutKind(m: any) {
     if (m.module_type === "Inside Corner") return "insideCorner";
@@ -686,8 +689,7 @@ button {
   max-width: 100%;
   max-height: 80vh;
   -webkit-overflow-scrolling: touch;
-
-  touch-action: pan-x pan-y;
+  touch-action: auto;
 }
 
 .layoutControls {
@@ -761,7 +763,7 @@ button {
 }
 
 .svgPlanner {
-  touch-action: pan-x pan-y;
+  touch-action: auto;
 }
 
 .svgModuleGroup {
@@ -1244,13 +1246,24 @@ button {
             <option value={50}>50 ft</option>
           </select>
         </label>
+
+        <label>
+          Zoom:
+          <select value={layoutZoom} onChange={(event) => setLayoutZoom(Number(event.target.value))}>
+            <option value={25}>25%</option>
+            <option value={40}>40%</option>
+            <option value={50}>50%</option>
+            <option value={75}>75%</option>
+            <option value={100}>100%</option>
+          </select>
+        </label>
       </div>
 
       <svg
         ref={svgPlannerRef}
         className="svgPlanner"
-        width={gridSvgWidth}
-        height={gridSvgHeight}
+        width={displaySvgWidth}
+        height={displaySvgHeight}
         viewBox={`0 0 ${gridSvgWidth} ${gridSvgHeight}`}
         role="img"
         aria-label="C.A.N.S. module layout planner"
@@ -1347,7 +1360,7 @@ button {
               </g>
 
               <text className="svgNumberText" x={numberPosition.x} y={numberPosition.y}>
-                {index + 1}
+                {moduleNumberMap[m.id] || index + 1}
               </text>
 
               <g
@@ -1439,6 +1452,5 @@ button {
     </main>
   );
 }
-
 
 
