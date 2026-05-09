@@ -439,108 +439,155 @@ button {
 
 .layoutBlock {
   position: relative;
-  background: #202020;
-  color: white;
-  border-left: 4px solid #ffd21f;
-  border-radius: 10px;
-  padding: 8px;
-  min-height: 52px;
-  box-shadow: 0 4px 10px rgba(0,0,0,.18);
+  background: rgba(255,255,255,.88);
+  color: #111;
+  border: 2px solid #7a3f18;
+  border-radius: 3px;
+  box-shadow: 0 2px 5px rgba(0,0,0,.10);
   overflow: hidden;
+  box-sizing: border-box;
 }
 
-.layoutBlock::after {
+.layoutBlock:not(.cornerBlock)::before {
   content: "";
   position: absolute;
-  left: 8px;
-  right: 8px;
-  top: 18px;
-  height: 8px;
-  border-top: 2px solid #f8f8f8;
-  border-bottom: 2px solid #f8f8f8;
-  opacity: .9;
+  left: -2px;
+  right: -2px;
+  top: 20px;
+  border-top: 2px solid #333;
+}
+
+.layoutBlock:not(.cornerBlock)::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 27px;
+  border-top: 2px solid #333;
 }
 
 .singleBlock {
-  width: 70px;
-  height: 52px;
+  width: 61px;
+  height: 72px;
 }
 
 .doubleBlock {
-  width: 140px;
-  height: 52px;
+  width: 122px;
+  height: 72px;
 }
 
 .tripleBlock {
-  width: 210px;
-  height: 52px;
+  width: 183px;
+  height: 72px;
 }
 
 .quadBlock {
-  width: 280px;
-  height: 52px;
+  width: 244px;
+  height: 72px;
 }
 
 .cornerBlock {
-  width: 90px;
-  height: 90px;
-  border-radius: 18px 18px 18px 6px;
-  border-left: 4px solid #ffd21f;
+  width: 72px;
+  height: 72px;
+}
+
+.cornerBlock::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  width: 48px;
+  height: 48px;
+  border-top: 2px solid #333;
+  border-right: 2px solid #333;
+  border-radius: 0 52px 0 0;
 }
 
 .cornerBlock::after {
   content: "";
   position: absolute;
-  left: 18px;
-  top: 18px;
-  width: 46px;
-  height: 46px;
-  border-top: 4px double #f8f8f8;
-  border-right: 4px double #f8f8f8;
-  border-bottom: none;
-  border-left: none;
+  left: 16px;
+  top: 16px;
+  width: 36px;
+  height: 36px;
+  border-top: 2px solid #333;
+  border-right: 2px solid #333;
   border-radius: 0 42px 0 0;
-  opacity: .9;
 }
 
 .bridgeBlock {
-  width: 150px;
-  height: 46px;
-  border-left: 4px solid #999;
-}
-
-.bridgeBlock::before {
-  content: "";
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 8px;
-  height: 8px;
-  border-top: 2px dashed #aaa;
-  border-bottom: 2px dashed #aaa;
+  width: 122px;
+  height: 60px;
+  border-color: #6b4b20;
 }
 
 .customBlock {
-  width: 100px;
-  height: 60px;
-  border-left: 4px solid #b00020;
+  width: 90px;
+  height: 72px;
+  border-color: #b00020;
 }
 
-.layoutTitle {
-  position: relative;
-  z-index: 1;
+.moduleNumber {
+  position: absolute;
+  left: 5px;
+  bottom: 5px;
+  z-index: 2;
+  background: #050505;
+  color: #ffd21f;
+  border-radius: 999px;
+  min-width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 12px;
   font-weight: 900;
-  margin-top: 24px;
-  line-height: 1.05;
+  line-height: 1;
 }
 
-.layoutMeta {
-  position: relative;
-  z-index: 1;
-  font-size: 10px;
-  opacity: 0.9;
-  margin-top: 3px;
+.layoutLegend {
+  margin-top: 18px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #ddd;
+  overflow: hidden;
+}
+
+.legendTitle {
+  margin: 0;
+  padding: 12px 14px;
+  background: #050505;
+  color: #ffd21f;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.legendRow {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid #eee;
+  align-items: start;
+}
+
+.legendNumber {
+  background: #ffd21f;
+  color: #050505;
+  border-radius: 999px;
+  font-weight: 900;
+  text-align: center;
+  padding: 5px 0;
+}
+
+.legendText {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.legendText strong {
+  display: block;
+  font-size: 15px;
 }
         .imageModal {
   position: fixed;
@@ -898,16 +945,19 @@ button {
   <section className="formCard">
     <h2>Layout View</h2>
     <p>
-      Scaled planning view: singles, doubles, triples, quads, corners, bridges, and custom modules.
+      Scaled planning view. Modules are numbered on the grid, with details listed below.
     </p>
 
     <div className="layoutCanvas">
       <div className="layoutGrid">
-        {filteredModules.map((m) => (
+        {filteredModules.map((m, index) => (
           <div
             key={m.id}
+            title={`${index + 1}. ${m.module_name || "Module"} - ${m.module_type || "Module"} - ${m.dimensions || "Custom Size"}`}
             className={`layoutBlock ${
-              m.module_type === "Inside Corner" || m.module_type === "Outside Corner"
+              m.module_type === "Inside Corner" ||
+              m.module_type === "Outside Corner" ||
+              m.dimensions?.startsWith("Corner")
                 ? "cornerBlock"
                 : m.module_type === "Bridge"
                 ? "bridgeBlock"
@@ -922,12 +972,23 @@ button {
                 : "customBlock"
             }`}
           >
-            <div className="layoutTitle">{m.module_name}</div>
-            <div className="layoutMeta">{m.module_type || "Module"}</div>
-            <div className="layoutMeta">{m.dimensions || "Custom Size"}</div>
+            <span className="moduleNumber">{index + 1}</span>
           </div>
         ))}
       </div>
+    </div>
+
+    <div className="layoutLegend">
+      <h3 className="legendTitle">Module Key</h3>
+      {filteredModules.map((m, index) => (
+        <div key={m.id} className="legendRow">
+          <div className="legendNumber">{index + 1}</div>
+          <div className="legendText">
+            <strong>{m.module_name || "Unnamed Module"}</strong>
+            {m.module_type || "Module"} — {m.dimensions || "Custom Size"} — {m.owner_name || "Unknown Owner"}
+          </div>
+        </div>
+      ))}
     </div>
   </section>
 )}
