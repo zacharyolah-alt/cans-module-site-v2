@@ -10,7 +10,6 @@ const supabase = createClient(
 
 export default function Page() {
   const [viewMode, setViewMode] = useState("directory");
-  const [layoutPositions, setLayoutPositions] = useState<any>({});
   const [modules, setModules] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -198,14 +197,12 @@ function exportToCSV() {
   ]);
 
   const csv = [headers, ...rows]
-  .map((row) => {
-    return row
-      .map((cell) => {
-        return '"' + String(cell).replace(/"/g, '""') + '"';
-      })
-      .join(",");
-  })
-  .join("\n");
+    .map((row) =>
+      row
+        .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+        .join(",")
+    )
+    .join("\n");
 
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -217,37 +214,38 @@ function exportToCSV() {
 
   URL.revokeObjectURL(url);
 }
-  
-const term = search.toLowerCase();
+  const filteredModules = useMemo(() => {
+  return modules.filter((m) => {
+    const term = search.toLowerCase();
 
-const filteredModules = modules.filter((m) => {
-  const matchesSearch = [
-    m.module_name,
-    m.owner_name,
-    m.standard,
-    m.dimensions,
-    m.status,
-    m.additional_notes,
-  ]
-    .join(" ")
-    .toLowerCase()
-    .includes(term);
+    const matchesSearch = [
+      m.module_name,
+      m.owner_name,
+      m.standard,
+      m.dimensions,
+      m.status,
+      m.additional_notes,
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(term);
 
-  const matchesStandard =
-    standardFilter === "All" || m.standard === standardFilter;
+    const matchesStandard =
+      standardFilter === "All" || m.standard === standardFilter;
 
-  const matchesStatus =
-    statusFilter === "All" || m.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "All" || m.status === statusFilter;
 
-  const matchesType =
-    typeFilter === "All" || m.module_type === typeFilter;
+    const matchesType =
+      typeFilter === "All" || m.module_type === typeFilter;
 
-  const matchesSize =
-    dimensionFilter === "All" ||
-    m.dimensions?.startsWith(dimensionFilter + " -");
+    const matchesSize =
+      dimensionFilter === "All" ||
+      m.dimensions?.startsWith(dimensionFilter + " -");
 
-  return matchesSearch && matchesStandard && matchesStatus && matchesType && matchesSize;
-});
+    return matchesSearch && matchesStandard && matchesStatus && matchesType && matchesSize;
+  });
+}, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
   return (
     <main>
       <style>{`
@@ -417,60 +415,6 @@ button {
 
 .moduleImage {
   height: 180px;
-}
-.layoutCanvas {
-  position: relative;
-  min-height: 700px;
-  background-color: #fafafa;
-  background-image:
-    linear-gradient(#ddd 1px, transparent 1px),
-    linear-gradient(90deg, #ddd 1px, transparent 1px);
-  background-size: 40px 40px;
-  border-radius: 20px;
-  border: 1px solid #ddd;
-  overflow: auto;
-  touch-action: none;
-}
-
-.movableBlock {
-  position: absolute;
-  cursor: grab;
-  user-select: none;
-  touch-action: none;
-}
-
-.movableBlock:active {
-  cursor: grabbing;
-}
-
-.layoutCanvas .singleBlock {
-  width: 150px;
-  height: 90px;
-}
-
-.layoutCanvas .doubleBlock {
-  width: 240px;
-  height: 90px;
-}
-
-.layoutCanvas .tripleBlock {
-  width: 330px;
-  height: 90px;
-}
-
-.layoutCanvas .quadBlock {
-  width: 420px;
-  height: 90px;
-}
-
-.layoutCanvas .cornerBlock {
-  width: 180px;
-  height: 180px;
-}
-
-.layoutCanvas .bridgeBlock {
-  width: 260px;
-  height: 80px;
 }
 .layoutGrid {
   display: grid;
@@ -883,42 +827,9 @@ button {
         {viewMode === "layout" && (
   <section className="formCard">
     <h2>Layout View</h2>
-    <div className="layoutCanvas">
-  {filteredModules.map((m, index) => {
-    const pos = layoutPositions[m.id] || {
-      x: 20 + (index % 2) * 220,
-      y: 20 + Math.floor(index / 2) * 140,
-    };
-
-    return (
-      <div
-        key={m.id}
-        className={`layoutBlock movableBlock ${
-          m.module_type === "Inside Corner" || m.module_type === "Outside Corner"
-            ? "cornerBlock"
-            : m.module_type === "Bridge"
-            ? "bridgeBlock"
-            : m.dimensions?.startsWith("Single")
-            ? "singleBlock"
-            : m.dimensions?.startsWith("Double")
-            ? "doubleBlock"
-            : m.dimensions?.startsWith("Triple")
-            ? "tripleBlock"
-            : m.dimensions?.startsWith("Quad")
-            ? "quadBlock"
-            : "customBlock"
-        }`}
-        style={{
-          transform: `translate(${pos.x}px, ${pos.y}px)`,
-        }}
-      >
-        <div className="layoutTitle">{m.module_name}</div>
-        <div className="layoutMeta">{m.module_type || "Module"}</div>
-        <div className="layoutMeta">{m.dimensions || "Custom Size"}</div>
-      </div>
-    );
-  })}
-</div>
+    <div className="layoutGrid">
+  {filteredModules.map((m) => (
+    <div
   key={m.id}
   className={`layoutBlock ${
     m.module_type === "Inside Corner" || m.module_type === "Outside Corner"
