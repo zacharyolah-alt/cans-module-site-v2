@@ -362,6 +362,12 @@ function exportToCSV() {
   padding: 10px 16px;
   margin-top: 10px;
 }
+.viewToggle {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0;
+  flex-wrap: wrap;
+}
         @media (max-width: 700px) {
           .page { padding: 12px; }
           .hero { flex-direction: column; text-align: center; padding: 22px; }
@@ -458,7 +464,21 @@ button {
             </p>
           </div>
         </section>
+<div className="viewToggle">
+  <button
+    className={viewMode === "directory" ? "activeBtn" : "grayBtn"}
+    onClick={() => setViewMode("directory")}
+  >
+    Directory View
+  </button>
 
+  <button
+    className={viewMode === "layout" ? "activeBtn" : "grayBtn"}
+    onClick={() => setViewMode("layout")}
+  >
+    Layout View
+  </button>
+</div>
         <section className="toolbar">
           <button className="yellowBtn" onClick={exportToCSV}>
   Export Spreadsheet
