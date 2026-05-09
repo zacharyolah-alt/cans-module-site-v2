@@ -416,6 +416,34 @@ button {
 .moduleImage {
   height: 180px;
 }
+.layoutGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.layoutBlock {
+  background: #202020;
+  color: white;
+  border-left: 6px solid #ffd21f;
+  border-radius: 18px;
+  padding: 16px;
+  min-height: 100px;
+  box-shadow: 0 8px 18px rgba(0,0,0,.18);
+}
+
+.layoutTitle {
+  font-size: 18px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.layoutMeta {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 6px;
+}
         .imageModal {
   position: fixed;
   inset: 0;
@@ -771,7 +799,23 @@ button {
         {viewMode === "layout" && (
   <section className="formCard">
     <h2>Layout View</h2>
-    <p>This will become the visual module layout planner.</p>
+    <div className="layoutGrid">
+  {filteredModules.map((m) => (
+    <div key={m.id} className="layoutBlock">
+      <div className="layoutTitle">
+        {m.module_name}
+      </div>
+
+      <div className="layoutMeta">
+        {m.module_type || "Module"}
+      </div>
+
+      <div className="layoutMeta">
+        {m.dimensions || "Custom Size"}
+      </div>
+    </div>
+  ))}
+</div>
   </section>
 )}
         {selectedImage && (
