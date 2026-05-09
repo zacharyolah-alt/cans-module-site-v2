@@ -1765,57 +1765,60 @@ button {
             onPointerDown={(event) => handleTablePointerDown(event, table)}
           >
             <g transform={getTableTransform(table)}>
-              <rect
-                className="svgTable"
-                x="0"
-                y="0"
-                width={table.width}
-                height={table.height}
-                rx="4"
-              />
-              <text className="svgTableLabel" x={table.width / 2} y={table.height / 2}>
-                {table.kind === "6ft" ? "6 ft Table" : "8 ft Table"}
-              </text>
-            </g>
+  <rect
+    className="svgTable"
+    x="0"
+    y="0"
+    width={table.width}
+    height={table.height}
+    rx="4"
+  />
 
-            <g
-              onPointerDown={(event) => event.stopPropagation()}
-              onClick={(event) => rotateTable(event, table)}
-              style={{ cursor: layoutLocks[table.id] ? "not-allowed" : "pointer" }}
-            >
-              <circle className="svgRotateCircle" cx={table.x + 28} cy={table.y + 28} r="13" />
-              <text className="svgRotateText" x={table.x + 28} y={table.y + 28}>
-                ↻
-              </text>
-            </g>
+  <text className="svgTableLabel" x={table.width / 2} y={table.height / 2}>
+    {table.kind === "6ft" ? "6 ft Table" : "8 ft Table"}
+  </text>
 
-            <g
-              onPointerDown={(event) => event.stopPropagation()}
-              onClick={() => toggleLayoutLock(table.id)}
-              style={{ cursor: "pointer" }}
-            >
-              <circle
-                className={`svgLockCircle ${layoutLocks[table.id] ? "locked" : ""}`}
-                cx={table.x + table.width - 28}
-                cy={table.y + 28}
-                r="12"
-              />
-              <text className="svgLockText" x={table.x + table.width - 28} y={table.y + 28}>
-                {layoutLocks[table.id] ? "L" : "●"}
-              </text>
-            </g>
+  <g
+    onPointerDown={(event) => event.stopPropagation()}
+    onClick={(event) => rotateTable(event, table)}
+    style={{ cursor: layoutLocks[table.id] ? "not-allowed" : "pointer" }}
+  >
+    <circle className="svgRotateCircle" cx="28" cy="28" r="13" />
+    <text className="svgRotateText" x="28" y="28">↻</text>
+  </g>
 
-            <g
-              onPointerDown={(event) => event.stopPropagation()}
-              onClick={() => deleteLayoutTable(table.id)}
-              style={{ cursor: "pointer" }}
-            >
-              <circle className="svgDeleteCircle" cx={table.x + table.width - 28} cy={table.y + table.height - 28} r="12" />
-              <text className="svgDeleteText" x={table.x + table.width - 28} y={table.y + table.height - 28}>
-                ×
-              </text>
-            </g>
-          </g>
+  <g
+    onPointerDown={(event) => event.stopPropagation()}
+    onClick={() => toggleLayoutLock(table.id)}
+    style={{ cursor: "pointer" }}
+  >
+    <circle
+      className={`svgLockCircle ${layoutLocks[table.id] ? "locked" : ""}`}
+      cx={table.width - 28}
+      cy="28"
+      r="12"
+    />
+    <text className="svgLockText" x={table.width - 28} y="28">
+      {layoutLocks[table.id] ? "L" : "●"}
+    </text>
+  </g>
+
+  <g
+    onPointerDown={(event) => event.stopPropagation()}
+    onClick={() => deleteLayoutTable(table.id)}
+    style={{ cursor: "pointer" }}
+  >
+    <circle
+      className="svgDeleteCircle"
+      cx={table.width - 28}
+      cy={table.height - 28}
+      r="12"
+    />
+    <text className="svgDeleteText" x={table.width - 28} y={table.height - 28}>
+      ×
+    </text>
+  </g>
+</g>
         ))}
 
         {layoutModules.map((m, index) => {
