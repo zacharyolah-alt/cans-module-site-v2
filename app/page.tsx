@@ -226,7 +226,7 @@ function exportToCSV() {
     y: 20 + Math.floor(index / 2) * 140,
   };
 
-  function moveHandler(moveEvent: any) {
+  const moveHandler = (moveEvent: any) => {
     setLayoutPositions((prev: any) => ({
       ...prev,
       [m.id]: {
@@ -234,17 +234,16 @@ function exportToCSV() {
         y: current.y + moveEvent.clientY - startY,
       },
     }));
-  }
+  };
 
-  function upHandler() {
+  const upHandler = () => {
     window.removeEventListener("pointermove", moveHandler);
     window.removeEventListener("pointerup", upHandler);
+  };
+
+  window.addEventListener("pointermove", moveHandler);
+  window.addEventListener("pointerup", upHandler);
   }
-
- window.addEventListener("pointermove", moveHandler);
-window.addEventListener("pointerup", upHandler);
-}
-
 const term = search.toLowerCase();
 
 const filteredModules = modules.filter((m) => {
