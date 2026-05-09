@@ -430,6 +430,14 @@ const layoutModules = modules.filter(
   function moduleNumber(module: any, index: number) {
   return module.module_number || module.id || index + 1;
   }
+  function getPlacedSlot(m: any, index: number) {
+  return {
+    x: 80 + (index % 5) * 160,
+    y: 140 + Math.floor(index / 5) * 160,
+    rotation: 0,
+    ...(layoutOverrides[m.id] || {}),
+  };
+  }
   return (
     <main>
       <style>{`
