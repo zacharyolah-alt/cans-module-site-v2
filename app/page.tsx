@@ -11,12 +11,11 @@ const supabase = createClient(
 export default function Page() {
   const [viewMode, setViewMode] = useState("directory");
   const svgPlannerRef = useRef<SVGSVGElement | null>(null);
-  const layoutCanvasRef = useRef<HTMLDivElement | null>(null);
   const [layoutOverrides, setLayoutOverrides] = useState<any>({});
   const [layoutIncluded, setLayoutIncluded] = useState<any>({});
   const [gridWidthFeet, setGridWidthFeet] = useState(20);
   const [gridDepthFeet, setGridDepthFeet] = useState(20);
-  const [layoutZoom, setLayoutZoom] = useState(25);
+  const [layoutZoom, setLayoutZoom] = useState(50);
   const [modules, setModules] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -260,14 +259,10 @@ function exportToCSV() {
 
   const moduleNumberMap = useMemo(() => {
     const sortedModules = [...modules].sort((a, b) => {
-      const aTime = Date.parse(a.created_at || "");
-      const bTime = Date.parse(b.created_at || "");
+      const aTime = new Date(a.created_at || 0).getTime();
+      const bTime = new Date(b.created_at || 0).getTime();
 
-      if (!Number.isNaN(aTime) && !Number.isNaN(bTime) && aTime !== bTime) {
-        return aTime - bTime;
-      }
-
-      return String(a.id || "").localeCompare(String(b.id || ""));
+      return aTime - bTime;
     });
 
     return sortedModules.reduce((map: any, module: any, index: number) => {
@@ -462,6 +457,10 @@ function exportToCSV() {
     event.preventDefault();
     event.stopPropagation();
 
+    if (event.pointerType === "touch" && !mobileEditMode) {
+      return;
+    }
+
     if (event.currentTarget?.setPointerCapture && event.pointerId !== undefined) {
       try {
         event.currentTarget.setPointerCapture(event.pointerId);
@@ -515,20 +514,129 @@ function exportToCSV() {
     }));
   }
 
-  function panLayout(dx: number, dy: number) {
-    layoutCanvasRef.current?.scrollBy({
-      left: dx,
-      top: dy,
-      behavior: "smooth",
-    });
+  function addLayoutTable(kind: "6ft" | "8ft") {
+    const width = kind === "6ft" ? 72 * LAYOUT_SCALE : 96 * LAYOUT_SCALE;
+    const height = 30 * LAYOUT_SCALE;
+
+    setLayoutTables((current) => [
+      ...current,
+      {
+        id: `table-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        kind,
+        x: 120,
+        y: 120 + current.length * 40,
+        width,
+        height,
+        rotation: 0,
+      },
+    ]);
   }
 
-  function zoomLayout(direction: "in" | "out") {
-    setLayoutZoom((current) => {
-      const next = direction === "in" ? current + 10 : current - 10;
-      return Math.min(100, Math.max(15, next));
-    });
+  function getTableTransform(table: any) {
+    if (table.rotation === 90) {
+      return `translate(${table.x + table.height}, ${table.y}) rotate(90)`;
+    }
+
+    if (table.rotation === 180) {
+      return `translate(${table.x + table.width}, ${table.y + table.height}) rotate(180)`;
+    }
+
+    if (table.rotation === 270) {
+      return `translate(${table.x}, ${table.y + table.width}) rotate(270)`;
+    }
+
+    return `translate(${table.x}, ${table.y})`;
   }
+
+  function handleTablePointerDown(event: any, table: any) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (event.pointerType === "touch" && !mobileEditMode) {
+      return;
+    }
+
+    const startingPoint = getSvgPoint(event);
+    const startingX = table.x;
+    const startingY = table.y;
+
+    function moveHandler(moveEvent: any) {
+      const currentPoint = getSvgPoint(moveEvent);
+
+      setLayoutTables((current) =>
+        current.map((item) =>
+          item.id === table.id
+            ? {
+                ...item,
+                x: snapToGrid(startingX + currentPoint.x - startingPoint.x),
+                y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
+              }
+            : item
+        )
+      );
+    }
+
+    function upHandler() {
+      window.removeEventListener("pointermove", moveHandler);
+      window.removeEventListener("pointerup", upHandler);
+    }
+
+    window.addEventListener("pointermove", moveHandler);
+    window.addEventListener("pointerup", upHandler);
+  }
+
+  function rotateTable(event: any, table: any) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setLayoutTables((current) =>
+      current.map((item) =>
+        item.id === table.id
+          ? {
+              ...item,
+              rotation: ((item.rotation || 0) + 90) % 360,
+            }
+          : item
+      )
+    );
+  }
+
+  function saveLayoutDesign() {
+    const savedLayout = {
+      layoutOverrides,
+      layoutIncluded,
+      gridWidthFeet,
+      gridDepthFeet,
+      layoutZoom,
+      layoutTables,
+    };
+
+    window.localStorage.setItem("cans-layout-design-v1", JSON.stringify(savedLayout));
+    alert("Layout saved on this device.");
+  }
+
+  function loadLayoutDesign() {
+    const saved = window.localStorage.getItem("cans-layout-design-v1");
+
+    if (!saved) {
+      alert("No saved layout found on this device.");
+      return;
+    }
+
+    const parsed = JSON.parse(saved);
+
+    setLayoutOverrides(parsed.layoutOverrides || {});
+    setLayoutIncluded(parsed.layoutIncluded || {});
+    setGridWidthFeet(parsed.gridWidthFeet || 20);
+    setGridDepthFeet(parsed.gridDepthFeet || 20);
+    setLayoutZoom(parsed.layoutZoom || 25);
+    setLayoutTables(parsed.layoutTables || []);
+  }
+
+  function exportLayoutPDF() {
+    window.print();
+  }
+
 
   return (
     <main>
@@ -707,7 +815,7 @@ button {
   overflow: auto;
   padding: 8px;
   max-width: 100%;
-  height: 72vh;
+
   max-height: 80vh;
   -webkit-overflow-scrolling: touch;
   touch-action: auto;
@@ -729,26 +837,6 @@ button {
   width: auto;
   min-width: 130px;
   padding: 10px 12px;
-}
-
-.layoutControlBtn {
-  background: #050505;
-  color: #ffd21f;
-  padding: 10px 12px;
-  border-radius: 12px;
-  min-width: 44px;
-}
-
-.layoutControlBtn.small {
-  min-width: 38px;
-  padding: 8px 10px;
-}
-
-.layoutZoomLabel {
-  font-weight: 900;
-  background: #eee;
-  border-radius: 999px;
-  padding: 8px 12px;
 }
 
 .svgPlanner {
@@ -852,6 +940,67 @@ button {
   text-anchor: middle;
   dominant-baseline: central;
   pointer-events: none;
+}
+
+.layoutCanvas.editMode {
+  touch-action: none;
+}
+
+.layoutCanvas.editMode .svgPlanner {
+  touch-action: none;
+}
+
+.svgTableGroup {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.svgTable {
+  fill: rgba(70, 155, 255, .28);
+  stroke: #1f6fbf;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgTableLabel {
+  fill: #14508a;
+  font-size: 18px;
+  font-weight: 900;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .layoutPrintArea, .layoutPrintArea * {
+    visibility: visible;
+  }
+
+  .layoutPrintArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .layoutControls,
+  .layoutLegend,
+  .filtersPanel,
+  .toolbar,
+  .viewToggle,
+  .hero {
+    display: none !important;
+  }
+
+  .layoutCanvas {
+    max-height: none;
+    overflow: visible;
+    border: 0;
+  }
 }
 
 .svgScaleKey {
@@ -1261,10 +1410,10 @@ button {
     </>
 )}
         {viewMode === "layout" && (
-  <section className="formCard">
+  <section className="formCard layoutPrintArea">
     <h2>Layout View</h2>
 
-    <div className="layoutCanvas" ref={layoutCanvasRef}>
+    <div className="layoutCanvas">
       <div className="layoutControls">
         <label>
           Grid width:
@@ -1296,6 +1445,19 @@ button {
         <button className="layoutControlBtn" onClick={() => panLayout(300, 0)}>→</button>
         <button className="layoutControlBtn" onClick={() => panLayout(0, -300)}>↑</button>
         <button className="layoutControlBtn" onClick={() => panLayout(0, 300)}>↓</button>
+
+        <button
+          className={mobileEditMode ? "activeBtn" : "grayBtn"}
+          onClick={() => setMobileEditMode((current) => !current)}
+        >
+          Mobile Edit {mobileEditMode ? "On" : "Off"}
+        </button>
+
+        <button className="layoutControlBtn" onClick={() => addLayoutTable("6ft")}>Add 6 ft Table</button>
+        <button className="layoutControlBtn" onClick={() => addLayoutTable("8ft")}>Add 8 ft Table</button>
+        <button className="layoutControlBtn" onClick={saveLayoutDesign}>Save Layout</button>
+        <button className="layoutControlBtn" onClick={loadLayoutDesign}>Load Layout</button>
+        <button className="layoutControlBtn" onClick={exportLayoutPDF}>Export PDF</button>
       </div>
 
       <svg
@@ -1326,6 +1488,39 @@ button {
           <text className="svgKeyText" x="36" y="84">1 large square = 6 inches</text>
           <text className="svgKeyText" x="36" y="104">2 x 2 large squares = 1 sq ft</text>
         </g>
+
+        {layoutTables.map((table) => (
+          <g
+            key={table.id}
+            className="svgTableGroup"
+            onPointerDown={(event) => handleTablePointerDown(event, table)}
+          >
+            <g transform={getTableTransform(table)}>
+              <rect
+                className="svgTable"
+                x="0"
+                y="0"
+                width={table.width}
+                height={table.height}
+                rx="4"
+              />
+              <text className="svgTableLabel" x={table.width / 2} y={table.height / 2}>
+                {table.kind === "6ft" ? "6 ft Table" : "8 ft Table"}
+              </text>
+            </g>
+
+            <g
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => rotateTable(event, table)}
+              style={{ cursor: "pointer" }}
+            >
+              <circle className="svgRotateCircle" cx={table.x + 28} cy={table.y + 28} r="13" />
+              <text className="svgRotateText" x={table.x + 28} y={table.y + 28}>
+                ↻
+              </text>
+            </g>
+          </g>
+        ))}
 
         {layoutModules.map((m, index) => {
           const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
@@ -1399,7 +1594,7 @@ button {
               </g>
 
               <text className="svgNumberText" x={numberPosition.x} y={numberPosition.y}>
-                {moduleNumberMap[m.id] ?? ""}
+                {moduleNumberMap[m.id] || index + 1}
               </text>
 
               <g
@@ -1491,6 +1686,7 @@ button {
     </main>
   );
 }
+
 
 
 
