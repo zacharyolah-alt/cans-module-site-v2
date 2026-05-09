@@ -218,6 +218,20 @@ corner_size: cornerSize,
         .title { font-size: 44px; margin: 10px 0; line-height: 1; }
         .subtitle { color: #ddd; max-width: 700px; font-size: 17px; }
         .toolbar { display: grid; grid-template-columns: 1fr auto; gap: 12px; margin: 20px 0 12px; }
+        .filtersPanel {
+  background: white;
+  border-radius: 24px;
+  padding: 22px;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 26px rgba(0,0,0,.08);
+  border-top: 8px solid #ffd21f;
+}
+
+.filtersTitle {
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 28px;
+}
         .filters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
         input, select { padding: 14px; border-radius: 15px; border: 1px solid #ccc; font-size: 16px; background: white; }
         button { border: 0; border-radius: 15px; padding: 14px 18px; font-weight: 900; cursor: pointer; }
@@ -390,7 +404,10 @@ button {
           )}
         </section>
 
-        <section className="filters">
+        <section className="filtersPanel">
+  <h2 className="filtersTitle">Filter Modules</h2>
+
+  <section className="filters">
 
   {/* STANDARD */}
   <div className="filterGroup">
@@ -470,6 +487,7 @@ button {
 </button>
 
 </section>
+          </section>
 
         {user && (
           <section className="formCard">
