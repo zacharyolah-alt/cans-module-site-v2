@@ -40,7 +40,6 @@ const [gridDepthFeet, setGridDepthFeet] = useState(20);
 const [layoutZoom, setLayoutZoom] = useState(25);
 const svgPlannerRef = useRef<SVGSVGElement | null>(null);
   const layoutCanvasRef = useRef<HTMLDivElement | null>(null);
-const LAYOUT_SCALE = 1;
   useEffect(() => {
     loadModules();
 
@@ -257,6 +256,224 @@ function exportToCSV() {
     return matchesSearch && matchesStandard && matchesStatus && matchesType && matchesSize;
   });
 }, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
+
+  const LAYOUT_SCALE = 10;
+  const FRONT_TRACK_FRONT_EDGE = 15;
+  const TRACK_WIDTH = 10;
+  const TRACK_CENTER_SPACING = 13;
+
+  const moduleNumberMap = useMemo(() => {
+    const sortedModules = [...modules].sort((a, b) => {
+      const aTime = Date.parse(a.created_at || "");
+      const bTime = Date.parse(b.created_at || "");
+
+      if (!Number.isNaN(aTime) && !Number.isNaN(bTime) && aTime !== bTime) {
+        return aTime - bTime;
+      }
+
+      return String(a.id || "").localeCompare(String(b.id || ""));
+    });
+
+    return sortedModules.reduce((map: any, module: any, index: number) => {
+      map[module.id] = index + 1;
+      return map;
+    }, {});
+  }, [modules]);
+
+  const layoutModules = useMemo(() => {
+    return filteredModules.filter((module: any) => layoutIncluded[module.id]);
+  }, [filteredModules, layoutIncluded]);
+
+  const gridWidthInches = gridWidthFeet * 12;
+  const gridDepthInches = gridDepthFeet * 12;
+  const gridSvgWidth = gridWidthInches * LAYOUT_SCALE;
+  const gridSvgHeight = gridDepthInches * LAYOUT_SCALE;
+  const displaySvgWidth = Math.round(gridSvgWidth * (layoutZoom / 100));
+  const displaySvgHeight = Math.round(gridSvgHeight * (layoutZoom / 100));
+
+  function getLayoutKind(m: any) {
+    if (m.module_type === "Inside Corner") return "insideCorner";
+    if (m.module_type === "Outside Corner") return "outsideCorner";
+    if (m.dimensions?.startsWith("Corner")) return "outsideCorner";
+    if (m.module_type === "Bridge") return "bridge";
+    if (m.dimensions?.startsWith("Single")) return "single";
+    if (m.dimensions?.startsWith("Double")) return "double";
+    if (m.dimensions?.startsWith("Triple")) return "triple";
+    if (m.dimensions?.startsWith("Quad")) return "quad";
+    return "custom";
+  }
+
+  function getLayoutSize(m: any) {
+    const kind = getLayoutKind(m);
+
+    if (kind === "insideCorner" || kind === "outsideCorner") {
+      return { width: 144, height: 144 };
+    }
+
+    if (kind === "single") return { width: 121, height: 144 };
+    if (kind === "double") return { width: 243, height: 144 };
+    if (kind === "triple") return { width: 365, height: 144 };
+    if (kind === "quad") return { width: 487, height: 144 };
+    if (kind === "bridge") return { width: 243, height: 110 };
+
+    return { width: 160, height: 144 };
+  }
+
+  function getTemplateSlot(index: number) {
+    return {
+      x: 80 + (index % 5) * 190,
+      y: 140 + Math.floor(index / 5) * 180,
+      rotation: 0,
+    };
+  }
+
+  function getPlacedSlot(m: any, index: number) {
+    const baseSlot = getTemplateSlot(index);
+    const savedSlot = layoutOverrides[m.id];
+
+    return {
+      ...baseSlot,
+      ...(savedSlot || {}),
+    };
+  }
+
+  function getModuleTransform(slot: any, size: any) {
+    if (slot.rotation === 90) {
+      return `translate(${slot.x + size.height}, ${slot.y}) rotate(90)`;
+    }
+
+    if (slot.rotation === 180) {
+      return `translate(${slot.x + size.width}, ${slot.y + size.height}) rotate(180)`;
+    }
+
+    if (slot.rotation === 270) {
+      return `translate(${slot.x}, ${slot.y + size.width}) rotate(270)`;
+    }
+
+    return `translate(${slot.x}, ${slot.y})`;
+  }
+
+  function isCornerKind(kind: string) {
+    return kind === "insideCorner" || kind === "outsideCorner";
+  }
+
+  function getTrackRails() {
+    const frontRail1 = FRONT_TRACK_FRONT_EDGE;
+    const frontRail2 = FRONT_TRACK_FRONT_EDGE + TRACK_WIDTH;
+    const rearTrackFrontEdge =
+      FRONT_TRACK_FRONT_EDGE + TRACK_CENTER_SPACING - TRACK_WIDTH / 2;
+    const rearRail1 = rearTrackFrontEdge;
+    const rearRail2 = rearTrackFrontEdge + TRACK_WIDTH;
+
+    return [frontRail1, frontRail2, rearRail1, rearRail2];
+  }
+
+  function getNumberPosition(slot: any, size: any) {
+    const margin = 18;
+
+    if (slot.rotation === 0) {
+      return { x: slot.x + margin, y: slot.y + size.height - margin };
+    }
+
+    if (slot.rotation === 90) {
+      return { x: slot.x + size.height - margin, y: slot.y + margin };
+    }
+
+    if (slot.rotation === 180) {
+      return { x: slot.x + size.width - margin, y: slot.y + margin };
+    }
+
+    if (slot.rotation === 270) {
+      return { x: slot.x + margin, y: slot.y + size.width - margin };
+    }
+
+    return { x: slot.x + margin, y: slot.y + size.height - margin };
+  }
+
+  function snapToGrid(value: number) {
+    return Math.round(value / 10) * 10;
+  }
+
+  function getSvgPoint(event: any) {
+    const svg = svgPlannerRef.current;
+
+    if (!svg) {
+      return { x: 0, y: 0 };
+    }
+
+    const point = svg.createSVGPoint();
+    point.x = event.clientX;
+    point.y = event.clientY;
+
+    const matrix = svg.getScreenCTM();
+
+    if (!matrix) {
+      return { x: 0, y: 0 };
+    }
+
+    const transformed = point.matrixTransform(matrix.inverse());
+
+    return {
+      x: transformed.x,
+      y: transformed.y,
+    };
+  }
+
+  function handleModulePointerDown(event: any, m: any, index: number) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (event.pointerType === "touch" && !mobileEditMode) {
+      return;
+    }
+
+    const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
+    const startingSlot = getPlacedSlot(m, permanentIndex);
+    const startingPoint = getSvgPoint(event);
+    const startingX = startingSlot.x;
+    const startingY = startingSlot.y;
+
+    function moveHandler(moveEvent: any) {
+      const currentPoint = getSvgPoint(moveEvent);
+
+      setLayoutOverrides((prev: any) => ({
+        ...prev,
+        [m.id]: {
+          ...startingSlot,
+          ...(prev[m.id] || {}),
+          x: snapToGrid(startingX + currentPoint.x - startingPoint.x),
+          y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
+        },
+      }));
+    }
+
+    function upHandler() {
+      window.removeEventListener("pointermove", moveHandler);
+      window.removeEventListener("pointerup", upHandler);
+    }
+
+    window.addEventListener("pointermove", moveHandler);
+    window.addEventListener("pointerup", upHandler);
+  }
+
+  function rotateModule(event: any, m: any, index: number) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
+    const currentSlot = getPlacedSlot(m, permanentIndex);
+    const nextRotation = ((currentSlot.rotation || 0) + 90) % 360;
+
+    setLayoutOverrides((prev: any) => ({
+      ...prev,
+      [m.id]: {
+        ...currentSlot,
+        ...(prev[m.id] || {}),
+        rotation: nextRotation,
+      },
+    }));
+  }
+
   function addLayoutTable(kind: "6ft" | "8ft") {
     const width = kind === "6ft" ? 72 * LAYOUT_SCALE : 96 * LAYOUT_SCALE;
     const height = 30 * LAYOUT_SCALE;
@@ -290,30 +507,7 @@ function exportToCSV() {
 
     return `translate(${table.x}, ${table.y})`;
   }
-function getSvgPoint(event: any) {
-  const svg = svgPlannerRef.current;
-  
-  if (!svg) {
-    return { x: 0, y: 0 };
-  }
 
-  const point = svg.createSVGPoint();
-
-  point.x = event.clientX;
-  point.y = event.clientY;
-
-  const transformedPoint = point.matrixTransform(
-    svg.getScreenCTM()?.inverse()
-  );
-
-  return {
-    x: transformedPoint.x,
-    y: transformedPoint.y,
-  };
-}
-  function snapToGrid(value: number) {
-  return Math.round(value / 10) * 10;
-  }
   function handleTablePointerDown(event: any, table: any) {
     event.preventDefault();
     event.stopPropagation();
@@ -366,22 +560,22 @@ function getSvgPoint(event: any) {
       )
     );
   }
-function zoomLayout(direction: "in" | "out") {
-  setLayoutZoom((current) => {
-    if (direction === "in") {
-      return Math.min(current + 5, 60);
-    }
 
-    return Math.max(current - 5, 10);
-  });
-}
-  function panLayout(dx: number, dy: number) {
-  layoutCanvasRef.current?.scrollBy({
-    left: dx,
-    top: dy,
-    behavior: "smooth",
-  });
+  function zoomLayout(direction: "in" | "out") {
+    setLayoutZoom((current) => {
+      const next = direction === "in" ? current + 10 : current - 10;
+      return Math.min(100, Math.max(15, next));
+    });
   }
+
+  function panLayout(dx: number, dy: number) {
+    layoutCanvasRef.current?.scrollBy({
+      left: dx,
+      top: dy,
+      behavior: "smooth",
+    });
+  }
+
   function saveLayoutDesign() {
     const savedLayout = {
       layoutOverrides,
@@ -419,36 +613,7 @@ function zoomLayout(direction: "in" | "out") {
   function exportLayoutPDF() {
     window.print();
   }
-const displaySvgWidth = gridWidthFeet * 12 * layoutZoom;
-const displaySvgHeight = gridDepthFeet * 12 * layoutZoom;
 
-const gridSvgWidth = gridWidthFeet * 12;
-const gridSvgHeight = gridDepthFeet * 12;
-const layoutModules = modules.filter(
-  (module: any) => layoutIncluded[module.id]
-);
-  function moduleNumber(module: any, index: number) {
-  return module.module_number || module.id || index + 1;
-  }
-  function getPlacedSlot(m: any, index: number) {
-  return {
-    x: 80 + (index % 5) * 160,
-    y: 140 + Math.floor(index / 5) * 160,
-    rotation: 0,
-    ...(layoutOverrides[m.id] || {}),
-  };
-  }
-  function getLayoutKind(moduleType: string) {
-  if (
-    moduleType?.toLowerCase().includes("corner") ||
-    moduleType?.toLowerCase().includes("inside") ||
-    moduleType?.toLowerCase().includes("outside")
-  ) {
-    return "corner";
-  }
-
-  return "straight";
-  }
   return (
     <main>
       <style>{`
@@ -726,6 +891,265 @@ button {
   font-weight: 900;
   text-anchor: middle;
   dominant-baseline: central;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .layoutPrintArea, .layoutPrintArea * {
+    visibility: visible;
+  }
+
+  .layoutPrintArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .layoutControls,
+  .layoutLegend,
+  .filtersPanel,
+  .toolbar,
+  .viewToggle,
+  .hero {
+    display: none !important;
+  }
+
+  .layoutCanvas {
+    max-height: none;
+    overflow: visible;
+    border: 0;
+  }
+}
+
+
+.layoutCanvas {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  overflow: auto;
+  padding: 8px;
+  max-width: 100%;
+  max-height: 80vh;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior: contain;
+}
+
+.layoutControls {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.layoutControls label {
+  font-weight: 900;
+}
+
+.layoutControls select {
+  width: auto;
+  min-width: 130px;
+  padding: 10px 12px;
+}
+
+.layoutControlBtn {
+  background: #050505;
+  color: #ffd21f;
+  padding: 10px 12px;
+  border-radius: 12px;
+  min-width: 44px;
+}
+
+.layoutControlBtn.small {
+  min-width: 38px;
+  padding: 8px 10px;
+}
+
+.layoutZoomLabel {
+  font-weight: 900;
+  background: #eee;
+  border-radius: 999px;
+  padding: 8px 12px;
+}
+
+.layoutCanvas.editMode {
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.svgPlanner {
+  width: auto;
+  height: auto;
+  display: block;
+  background: #fafafa;
+  touch-action: pan-x pan-y;
+}
+
+.layoutCanvas.editMode .svgPlanner,
+.layoutCanvas.editMode .svgModuleGroup,
+.layoutCanvas.editMode .svgTableGroup {
+  touch-action: none;
+}
+
+.svgModuleGroup,
+.svgTableGroup {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.svgModule {
+  fill: rgba(198, 226, 178, .55);
+  stroke: #3d6b2d;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgModule.custom {
+  stroke: #b00020;
+}
+
+.svgModule.bridge {
+  stroke: #6b4b20;
+}
+
+.svgFrontEdge {
+  stroke: #3d6b2d;
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgRail {
+  stroke: #222;
+  stroke-width: 2;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgRailTie {
+  stroke: #777;
+  stroke-width: 1;
+  opacity: .35;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgNumberText {
+  fill: #2f6124;
+  font-size: 14px;
+  font-weight: 900;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.svgRotateCircle {
+  fill: #ffd21f;
+  stroke: #050505;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgRotateText {
+  fill: #050505;
+  font-size: 13px;
+  font-weight: 900;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.svgTable {
+  fill: rgba(70, 155, 255, .28);
+  stroke: #1f6fbf;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgTableLabel {
+  fill: #14508a;
+  font-size: 18px;
+  font-weight: 900;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.svgScaleKey {
+  fill: rgba(255,255,255,.94);
+  stroke: #ffd21f;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgKeyTitle {
+  fill: #050505;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.svgKeyText {
+  fill: #111;
+  font-size: 12px;
+}
+
+.layoutLegend {
+  margin-top: 18px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #ddd;
+  overflow: hidden;
+}
+
+.legendTitle {
+  margin: 0;
+  padding: 12px 14px;
+  background: #050505;
+  color: #ffd21f;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.legendRow {
+  display: grid;
+  grid-template-columns: 24px 44px 1fr;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid #eee;
+  align-items: start;
+}
+
+.legendCheckbox {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #ffd21f;
+}
+
+.legendNumber {
+  background: #ffd21f;
+  color: #050505;
+  border-radius: 999px;
+  font-weight: 900;
+  text-align: center;
+  padding: 5px 0;
+}
+
+.legendNumber.inactive {
+  background: #ddd;
+  color: #555;
+}
+
+.legendText {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.legendText strong {
+  display: block;
+  font-size: 15px;
 }
 
 @media print {
@@ -1229,7 +1653,7 @@ button {
           const permanentIndex = moduleNumber(m, index);
           const slot = getPlacedSlot(m, permanentIndex);
           const kind = getLayoutKind(m);
-          const size = getLayoutSize(m, slot);
+          const size = getLayoutSize(m);
           const rails = getTrackRails();
           const moduleTransform = getModuleTransform(slot, size);
           const numberPosition = getNumberPosition(slot, size);
@@ -1389,5 +1813,6 @@ button {
     </main>
   );
 }
+
 
 
