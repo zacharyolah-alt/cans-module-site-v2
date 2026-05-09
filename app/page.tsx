@@ -438,6 +438,17 @@ const layoutModules = modules.filter(
     ...(layoutOverrides[m.id] || {}),
   };
   }
+  function getLayoutKind(moduleType: string) {
+  if (
+    moduleType?.toLowerCase().includes("corner") ||
+    moduleType?.toLowerCase().includes("inside") ||
+    moduleType?.toLowerCase().includes("outside")
+  ) {
+    return "corner";
+  }
+
+  return "straight";
+  }
   return (
     <main>
       <style>{`
