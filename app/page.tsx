@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -33,7 +33,7 @@ const [dimensionFilter, setDimensionFilter] = useState("All");
   const [mobileEditMode, setMobileEditMode] = useState(false);
 
 const [layoutTables, setLayoutTables] = useState<any[]>([]);
-
+const svgPlannerRef = useRef<SVGSVGElement | null>(null);
 const LAYOUT_SCALE = 1;
   useEffect(() => {
     loadModules();
