@@ -215,35 +215,7 @@ function exportToCSV() {
 
   URL.revokeObjectURL(url);
 }
-  function handleLayoutDrag(e: any, m: any, index: number) {
-  e.preventDefault();
-
-  const startX = e.clientX;
-  const startY = e.clientY;
-
-  const current = layoutPositions[m.id] || {
-    x: 20 + (index % 2) * 220,
-    y: 20 + Math.floor(index / 2) * 140,
-  };
-
-  const moveHandler = (moveEvent: any) => {
-    setLayoutPositions((prev: any) => ({
-      ...prev,
-      [m.id]: {
-        x: current.x + moveEvent.clientX - startX,
-        y: current.y + moveEvent.clientY - startY,
-      },
-    }));
-  };
-
-  const upHandler = () => {
-    window.removeEventListener("pointermove", moveHandler);
-    window.removeEventListener("pointerup", upHandler);
-  };
-
-  window.addEventListener("pointermove", moveHandler);
-  window.addEventListener("pointerup", upHandler);
-  }
+  
 const term = search.toLowerCase();
 
 const filteredModules = modules.filter((m) => {
@@ -937,7 +909,6 @@ button {
         style={{
           transform: `translate(${pos.x}px, ${pos.y}px)`,
         }}
-        onPointerDown={(e) => handleLayoutDrag(e, m, index)}
       >
         <div className="layoutTitle">{m.module_name}</div>
         <div className="layoutMeta">{m.module_type || "Module"}</div>
