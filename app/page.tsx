@@ -284,7 +284,27 @@ function exportToCSV() {
 
     return `translate(${table.x}, ${table.y})`;
   }
+function getSvgPoint(event: any) {
+  const svg = svgPlannerRef.current;
 
+  if (!svg) {
+    return { x: 0, y: 0 };
+  }
+
+  const point = svg.createSVGPoint();
+
+  point.x = event.clientX;
+  point.y = event.clientY;
+
+  const transformedPoint = point.matrixTransform(
+    svg.getScreenCTM()?.inverse()
+  );
+
+  return {
+    x: transformedPoint.x,
+    y: transformedPoint.y,
+  };
+}
   function handleTablePointerDown(event: any, table: any) {
     event.preventDefault();
     event.stopPropagation();
