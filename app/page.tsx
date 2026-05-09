@@ -254,6 +254,20 @@ function exportToCSV() {
     return filteredModules.filter((m) => !layoutExcluded[m.id]);
   }, [filteredModules, layoutExcluded]);
 
+  const moduleNumberMap = useMemo(() => {
+    const sortedModules = [...modules].sort((a, b) => {
+      const aTime = new Date(a.created_at || 0).getTime();
+      const bTime = new Date(b.created_at || 0).getTime();
+
+      return aTime - bTime;
+    });
+
+    return sortedModules.reduce((map: any, module: any, index: number) => {
+      map[module.id] = index + 1;
+      return map;
+    }, {});
+  }, [modules]);
+
   const LAYOUT_SCALE = 10; // 10 SVG pixels = 1 inch
   const FRONT_TRACK_FRONT_EDGE = 15; // 1.5 inches from module front to front edge of front track
   const TRACK_WIDTH = 10; // each track shown as 1 inch wide
@@ -363,6 +377,108 @@ function exportToCSV() {
     return [frontRail1, frontRail2, rearRail1, rearRail2];
   }
 
+  function getMainTrackCenters() {
+    const frontTrackCenter = FRONT_TRACK_FRONT_EDGE + TRACK_WIDTH / 2;
+    const rearTrackCenter = frontTrackCenter + TRACK_CENTER_SPACING;
+
+    return [frontTrackCenter, rearTrackCenter];
+  }
+
+  function rotatePoint(x: number, y: number, rotation: number, size: any) {
+    if (rotation === 90) {
+      return { x: size.height - y, y: x };
+    }
+
+    if (rotation === 180) {
+      return { x: size.width - x, y: size.height - y };
+    }
+
+    if (rotation === 270) {
+      return { x: y, y: size.width - x };
+    }
+
+    return { x, y };
+  }
+
+  function getTrackEndpointsForSlot(slot: any, size: any) {
+    const rails = getMainTrackCenters();
+    const rotation = slot.rotation || 0;
+
+    if (isCornerKind(slot.kind)) {
+      // Snap corners by their two main exits.
+      const outer = FRONT_TRACK_FRONT_EDGE + TRACK_WIDTH / 2;
+      const inner = outer + TRACK_CENTER_SPACING;
+      const localPoints = [
+        { x: 0, y: outer },
+        { x: size.width - outer, y: size.height },
+        { x: 0, y: inner },
+        { x: size.width - inner, y: size.height },
+      ];
+
+      return localPoints.map((point) => {
+        const rotated = rotatePoint(point.x, point.y, rotation, size);
+        return { x: slot.x + rotated.x, y: slot.y + rotated.y };
+      });
+    }
+
+    const localPoints = rails.flatMap((rail) => [
+      { x: 0, y: rail },
+      { x: size.width, y: rail },
+    ]);
+
+    return localPoints.map((point) => {
+      const rotated = rotatePoint(point.x, point.y, rotation, size);
+      return { x: slot.x + rotated.x, y: slot.y + rotated.y };
+    });
+  }
+
+  function applyTrackSnap(candidateSlot: any, movingModuleId: string, movingIndex: number) {
+    const movingModule = layoutModules[movingIndex];
+    const movingKind = candidateSlot.kind || getLayoutKind(movingModule);
+    const movingSize = getLayoutSize(movingModule, candidateSlot);
+    const movingEndpoints = getTrackEndpointsForSlot(
+      { ...candidateSlot, kind: movingKind },
+      movingSize
+    );
+
+    let bestSnap: any = null;
+    const snapDistance = 12; // SVG units; slightly over 1 inch
+
+    layoutModules.forEach((otherModule: any, otherIndex: number) => {
+      if (otherModule.id === movingModuleId) return;
+
+      const otherSlot = getPlacedSlot(otherModule, otherIndex);
+      const otherKind = otherSlot.kind || getLayoutKind(otherModule);
+      const otherSize = getLayoutSize(otherModule, otherSlot);
+      const otherEndpoints = getTrackEndpointsForSlot(
+        { ...otherSlot, kind: otherKind },
+        otherSize
+      );
+
+      movingEndpoints.forEach((movingEndpoint) => {
+        otherEndpoints.forEach((otherEndpoint) => {
+          const dx = otherEndpoint.x - movingEndpoint.x;
+          const dy = otherEndpoint.y - movingEndpoint.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance <= snapDistance && (!bestSnap || distance < bestSnap.distance)) {
+            bestSnap = { distance, dx, dy };
+          }
+        });
+      });
+    });
+
+    if (!bestSnap) {
+      return candidateSlot;
+    }
+
+    return {
+      ...candidateSlot,
+      x: snapToGrid(candidateSlot.x + bestSnap.dx),
+      y: snapToGrid(candidateSlot.y + bestSnap.dy),
+    };
+  }
+
   function getNumberPosition(slot: any, size: any) {
     /*
       The number belongs at the back of the module, away from the front edge/tracks.
@@ -447,13 +563,20 @@ function exportToCSV() {
     function moveHandler(moveEvent: any) {
       const currentPoint = getSvgPoint(moveEvent);
 
+      const candidateSlot = {
+        ...startingSlot,
+        x: snapToGrid(startingX + currentPoint.x - startingPoint.x),
+        y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
+      };
+
+      const snappedSlot = applyTrackSnap(candidateSlot, m.id, index);
+
       setLayoutOverrides((prev: any) => ({
         ...prev,
         [m.id]: {
           ...startingSlot,
           ...(prev[m.id] || {}),
-          x: snapToGrid(startingX + currentPoint.x - startingPoint.x),
-          y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
+          ...snappedSlot,
         },
       }));
     }
@@ -1268,7 +1391,7 @@ button {
               </g>
 
               <text className="svgNumberText" x={numberPosition.x} y={numberPosition.y}>
-                {index + 1}
+                {moduleNumberMap[m.id] || index + 1}
               </text>
 
               <g
@@ -1291,7 +1414,7 @@ button {
       <h3 className="legendTitle">Module Key</h3>
       {filteredModules.map((m) => {
         const isIncluded = !layoutExcluded[m.id];
-        const layoutNumber = layoutModules.findIndex((item) => item.id === m.id) + 1;
+        const permanentNumber = moduleNumberMap[m.id];
 
         return (
           <div key={m.id} className="legendRow">
@@ -1310,7 +1433,7 @@ button {
             />
 
             <div className={`legendNumber ${isIncluded ? "" : "inactive"}`}>
-              {isIncluded ? layoutNumber : "—"}
+              {permanentNumber || "—"}
             </div>
 
             <div className="legendText">
