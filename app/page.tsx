@@ -419,7 +419,11 @@ function zoomLayout(direction: "in" | "out") {
   function exportLayoutPDF() {
     window.print();
   }
+const displaySvgWidth = gridWidthFeet * 12 * layoutZoom;
+const displaySvgHeight = gridDepthFeet * 12 * layoutZoom;
 
+const gridSvgWidth = gridWidthFeet * 12;
+const gridSvgHeight = gridDepthFeet * 12;
 
   return (
     <main>
