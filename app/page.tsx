@@ -246,6 +246,65 @@ function exportToCSV() {
     return matchesSearch && matchesStandard && matchesStatus && matchesType && matchesSize;
   });
 }, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
+
+  function getLayoutKind(m: any) {
+    if (
+      m.module_type === "Inside Corner" ||
+      m.module_type === "Outside Corner" ||
+      m.dimensions?.startsWith("Corner")
+    ) {
+      return "corner";
+    }
+
+    if (m.module_type === "Bridge") return "bridge";
+    if (m.dimensions?.startsWith("Single")) return "single";
+    if (m.dimensions?.startsWith("Double")) return "double";
+    if (m.dimensions?.startsWith("Triple")) return "triple";
+    if (m.dimensions?.startsWith("Quad")) return "quad";
+
+    return "custom";
+  }
+
+  function getLayoutSize(m: any) {
+    const kind = getLayoutKind(m);
+
+    if (kind === "corner") return { width: 74, height: 74 };
+    if (kind === "single") return { width: 62, height: 74 };
+    if (kind === "double") return { width: 124, height: 74 };
+    if (kind === "triple") return { width: 186, height: 74 };
+    if (kind === "quad") return { width: 248, height: 74 };
+    if (kind === "bridge") return { width: 124, height: 60 };
+
+    return { width: 92, height: 74 };
+  }
+
+  function getLayoutPosition(index: number) {
+    const savedPositions = [
+      { x: 36, y: 40 },
+      { x: 150, y: 40 },
+      { x: 360, y: 40 },
+      { x: 36, y: 140 },
+      { x: 230, y: 140 },
+      { x: 36, y: 240 },
+      { x: 150, y: 240 },
+      { x: 270, y: 240 },
+      { x: 36, y: 340 },
+      { x: 230, y: 340 },
+      { x: 350, y: 340 },
+      { x: 36, y: 440 },
+      { x: 150, y: 440 },
+    ];
+
+    return savedPositions[index] || {
+      x: 36 + (index % 4) * 150,
+      y: 540 + Math.floor((index - 13) / 4) * 100,
+    };
+  }
+
+  function getRailY(height: number) {
+    return Math.round(height * 0.42);
+  }
+
   return (
     <main>
       <style>{`
@@ -417,139 +476,60 @@ button {
   height: 180px;
 }
 .layoutCanvas {
-  min-height: 720px;
-  background-color: #fafafa;
-  background-image:
-    linear-gradient(#d8d8d8 1px, transparent 1px),
-    linear-gradient(90deg, #d8d8d8 1px, transparent 1px);
-  background-size: 10px 10px;
-  border-radius: 20px;
+  background: white;
   border: 1px solid #ddd;
-  padding: 14px;
+  border-radius: 20px;
   overflow: auto;
+  padding: 8px;
 }
 
-.layoutGrid {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 10px;
-  margin-top: 12px;
+.svgPlanner {
+  width: 100%;
+  min-width: 720px;
+  height: auto;
+  display: block;
+  background: #fafafa;
 }
 
-.layoutBlock {
-  --track-y: 22px;
-  --rail-gap: 7px;
-  position: relative;
-  background: rgba(255,255,255,.9);
-  color: #111;
-  border: 2px solid #7a3f18;
-  border-radius: 3px;
-  box-shadow: 0 2px 5px rgba(0,0,0,.10);
-  overflow: hidden;
-  box-sizing: border-box;
+.svgModule {
+  fill: rgba(255,255,255,.82);
+  stroke: #7a3f18;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
 
-.layoutBlock:not(.cornerBlock)::before {
-  content: "";
-  position: absolute;
-  left: -2px;
-  right: -2px;
-  top: var(--track-y);
-  border-top: 2px solid #333;
+.svgModule.custom {
+  stroke: #b00020;
 }
 
-.layoutBlock:not(.cornerBlock)::after {
-  content: "";
-  position: absolute;
-  left: -2px;
-  right: -2px;
-  top: calc(var(--track-y) + var(--rail-gap));
-  border-top: 2px solid #333;
+.svgModule.bridge {
+  stroke: #6b4b20;
 }
 
-.singleBlock {
-  width: 61px;
-  height: 72px;
+.svgRail {
+  stroke: #222;
+  stroke-width: 2;
+  fill: none;
+  vector-effect: non-scaling-stroke;
 }
 
-.doubleBlock {
-  width: 122px;
-  height: 72px;
+.svgRailLight {
+  stroke: #777;
+  stroke-width: 1;
+  fill: none;
+  vector-effect: non-scaling-stroke;
 }
 
-.tripleBlock {
-  width: 183px;
-  height: 72px;
+.svgNumberCircle {
+  fill: #050505;
 }
 
-.quadBlock {
-  width: 244px;
-  height: 72px;
-}
-
-.cornerBlock {
-  width: 72px;
-  height: 72px;
-}
-
-/* Corner rails are positioned to exit the right side at the same height as the straight module rails. */
-.cornerBlock::before {
-  content: "";
-  position: absolute;
-  left: 10px;
-  top: 22px;
-  width: 48px;
-  height: 48px;
-  border-top: 2px solid #333;
-  border-right: 2px solid #333;
-  border-bottom: none;
-  border-left: none;
-  border-radius: 0 48px 0 0;
-}
-
-.cornerBlock::after {
-  content: "";
-  position: absolute;
-  left: 17px;
-  top: 29px;
-  width: 34px;
-  height: 34px;
-  border-top: 2px solid #333;
-  border-right: 2px solid #333;
-  border-bottom: none;
-  border-left: none;
-  border-radius: 0 36px 0 0;
-}
-
-.bridgeBlock {
-  width: 122px;
-  height: 60px;
-  border-color: #6b4b20;
-}
-
-.customBlock {
-  width: 90px;
-  height: 72px;
-  border-color: #b00020;
-}
-
-.moduleNumber {
-  position: absolute;
-  left: 5px;
-  bottom: 5px;
-  z-index: 2;
-  background: #050505;
-  color: #ffd21f;
-  border-radius: 999px;
-  min-width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
+.svgNumberText {
+  fill: #ffd21f;
+  font-size: 13px;
   font-weight: 900;
-  line-height: 1;
+  text-anchor: middle;
+  dominant-baseline: central;
 }
 
 .layoutLegend {
@@ -952,37 +932,71 @@ button {
   <section className="formCard">
     <h2>Layout View</h2>
     <p>
-      Scaled planning view. Modules are numbered on the grid, with details listed below.
+      SVG planning view. Modules are drawn to scale with numbered blocks and a key below.
     </p>
 
     <div className="layoutCanvas">
-      <div className="layoutGrid">
-        {filteredModules.map((m, index) => (
-          <div
-            key={m.id}
-            title={`${index + 1}. ${m.module_name || "Module"} - ${m.module_type || "Module"} - ${m.dimensions || "Custom Size"}`}
-            className={`layoutBlock ${
-              m.module_type === "Inside Corner" ||
-              m.module_type === "Outside Corner" ||
-              m.dimensions?.startsWith("Corner")
-                ? "cornerBlock"
-                : m.module_type === "Bridge"
-                ? "bridgeBlock"
-                : m.dimensions?.startsWith("Single")
-                ? "singleBlock"
-                : m.dimensions?.startsWith("Double")
-                ? "doubleBlock"
-                : m.dimensions?.startsWith("Triple")
-                ? "tripleBlock"
-                : m.dimensions?.startsWith("Quad")
-                ? "quadBlock"
-                : "customBlock"
-            }`}
-          >
-            <span className="moduleNumber">{index + 1}</span>
-          </div>
-        ))}
-      </div>
+      <svg className="svgPlanner" viewBox="0 0 720 780" role="img" aria-label="C.A.N.S. module layout planner">
+        <defs>
+          <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#dddddd" strokeWidth="1" />
+          </pattern>
+          <pattern id="largeGrid" width="50" height="50" patternUnits="userSpaceOnUse">
+            <rect width="50" height="50" fill="url(#smallGrid)" />
+            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#c9c9c9" strokeWidth="1.2" />
+          </pattern>
+        </defs>
+
+        <rect x="0" y="0" width="720" height="780" fill="url(#largeGrid)" />
+
+        {filteredModules.map((m, index) => {
+          const kind = getLayoutKind(m);
+          const size = getLayoutSize(m);
+          const pos = getLayoutPosition(index);
+          const railY = getRailY(size.height);
+          const railGap = 7;
+
+          return (
+            <g key={m.id} transform={`translate(${pos.x}, ${pos.y})`}>
+              <rect
+                className={`svgModule ${kind}`}
+                x="0"
+                y="0"
+                width={size.width}
+                height={size.height}
+                rx="1"
+              />
+
+              {kind === "corner" ? (
+                <>
+                  <path
+                    className="svgRail"
+                    d={`M ${size.width} ${railY} A ${size.width - railY} ${size.height - railY} 0 0 1 ${railY} ${size.height}`}
+                  />
+                  <path
+                    className="svgRail"
+                    d={`M ${size.width} ${railY + railGap} A ${size.width - railY - railGap} ${size.height - railY - railGap} 0 0 1 ${railY + railGap} ${size.height}`}
+                  />
+                  <path
+                    className="svgRailLight"
+                    d={`M ${size.width} ${railY - 5} A ${size.width - railY + 5} ${size.height - railY + 5} 0 0 1 ${railY - 5} ${size.height}`}
+                  />
+                </>
+              ) : (
+                <>
+                  <line className="svgRail" x1="0" y1={railY} x2={size.width} y2={railY} />
+                  <line className="svgRail" x1="0" y1={railY + railGap} x2={size.width} y2={railY + railGap} />
+                </>
+              )}
+
+              <circle className="svgNumberCircle" cx="24" cy={size.height - 20} r="17" />
+              <text className="svgNumberText" x="24" y={size.height - 20}>
+                {index + 1}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
     </div>
 
     <div className="layoutLegend">
