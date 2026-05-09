@@ -12,6 +12,7 @@ export default function Page() {
   const [viewMode, setViewMode] = useState("directory");
   const svgPlannerRef = useRef<SVGSVGElement | null>(null);
   const [layoutOverrides, setLayoutOverrides] = useState<any>({});
+  const [layoutExcluded, setLayoutExcluded] = useState<any>({});
   const [modules, setModules] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -249,6 +250,10 @@ function exportToCSV() {
   });
 }, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
 
+  const layoutModules = useMemo(() => {
+    return filteredModules.filter((m) => !layoutExcluded[m.id]);
+  }, [filteredModules, layoutExcluded]);
+
   const LAYOUT_SCALE = 10; // 10 SVG pixels = 1 inch
   const FRONT_TRACK_FRONT_EDGE = 15; // 1.5 inches from module front to front edge of front track
   const TRACK_WIDTH = 10; // each track shown as 1 inch wide
@@ -427,6 +432,12 @@ function exportToCSV() {
   function handleModulePointerDown(event: any, m: any, index: number) {
     event.preventDefault();
     event.stopPropagation();
+
+    if (event.currentTarget?.setPointerCapture && event.pointerId !== undefined) {
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch (_error) {}
+    }
 
     const startingSlot = getPlacedSlot(m, index);
     const startingPoint = getSvgPoint(event);
@@ -704,12 +715,39 @@ button {
   dominant-baseline: central;
 }
 
+.svgPlanner {
+  touch-action: none;
+}
+
 .svgModuleGroup {
   cursor: grab;
+  touch-action: none;
+  user-select: none;
 }
 
 .svgModuleGroup:active {
   cursor: grabbing;
+}
+
+.legendCheckbox {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #ffd21f;
+}
+
+.legendRow {
+  display: grid;
+  grid-template-columns: 24px 44px 1fr;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid #eee;
+  align-items: start;
+}
+
+.legendNumber.inactive {
+  background: #ddd;
+  color: #555;
 }
 
 .svgRotateCircle {
@@ -763,14 +801,6 @@ button {
   font-weight: 900;
 }
 
-.legendRow {
-  display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 10px;
-  padding: 10px 14px;
-  border-top: 1px solid #eee;
-  align-items: start;
-}
 
 .legendNumber {
   background: #ffd21f;
@@ -1167,7 +1197,7 @@ button {
           <text className="svgKeyText" x="36" y="82">1 large square = 5 inches</text>
         </g>
 
-        {filteredModules.map((m, index) => {
+        {layoutModules.map((m, index) => {
           const slot = getPlacedSlot(m, index);
           const kind = slot.kind || getLayoutKind(m);
           const size = getLayoutSize(m, slot);
@@ -1259,15 +1289,37 @@ button {
 
     <div className="layoutLegend">
       <h3 className="legendTitle">Module Key</h3>
-      {filteredModules.map((m, index) => (
-        <div key={m.id} className="legendRow">
-          <div className="legendNumber">{index + 1}</div>
-          <div className="legendText">
-            <strong>{m.module_name || "Unnamed Module"}</strong>
-            {m.module_type || "Module"} — {m.dimensions || "Custom Size"} — {m.owner_name || "Unknown Owner"}
+      {filteredModules.map((m) => {
+        const isIncluded = !layoutExcluded[m.id];
+        const layoutNumber = layoutModules.findIndex((item) => item.id === m.id) + 1;
+
+        return (
+          <div key={m.id} className="legendRow">
+            <input
+              className="legendCheckbox"
+              type="checkbox"
+              checked={isIncluded}
+              onChange={(event) => {
+                const checked = event.target.checked;
+
+                setLayoutExcluded((prev: any) => ({
+                  ...prev,
+                  [m.id]: !checked,
+                }));
+              }}
+            />
+
+            <div className={`legendNumber ${isIncluded ? "" : "inactive"}`}>
+              {isIncluded ? layoutNumber : "—"}
+            </div>
+
+            <div className="legendText">
+              <strong>{m.module_name || "Unnamed Module"}</strong>
+              {m.module_type || "Module"} — {m.dimensions || "Custom Size"} — {m.owner_name || "Unknown Owner"}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   </section>
 )}
