@@ -11,11 +11,12 @@ const supabase = createClient(
 export default function Page() {
   const [viewMode, setViewMode] = useState("directory");
   const svgPlannerRef = useRef<SVGSVGElement | null>(null);
+  const layoutCanvasRef = useRef<HTMLDivElement | null>(null);
   const [layoutOverrides, setLayoutOverrides] = useState<any>({});
   const [layoutIncluded, setLayoutIncluded] = useState<any>({});
   const [gridWidthFeet, setGridWidthFeet] = useState(20);
   const [gridDepthFeet, setGridDepthFeet] = useState(20);
-  const [layoutZoom, setLayoutZoom] = useState(50);
+  const [layoutZoom, setLayoutZoom] = useState(25);
   const [modules, setModules] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -259,10 +260,14 @@ function exportToCSV() {
 
   const moduleNumberMap = useMemo(() => {
     const sortedModules = [...modules].sort((a, b) => {
-      const aTime = new Date(a.created_at || 0).getTime();
-      const bTime = new Date(b.created_at || 0).getTime();
+      const aTime = Date.parse(a.created_at || "");
+      const bTime = Date.parse(b.created_at || "");
 
-      return aTime - bTime;
+      if (!Number.isNaN(aTime) && !Number.isNaN(bTime) && aTime !== bTime) {
+        return aTime - bTime;
+      }
+
+      return String(a.id || "").localeCompare(String(b.id || ""));
     });
 
     return sortedModules.reduce((map: any, module: any, index: number) => {
@@ -510,6 +515,21 @@ function exportToCSV() {
     }));
   }
 
+  function panLayout(dx: number, dy: number) {
+    layoutCanvasRef.current?.scrollBy({
+      left: dx,
+      top: dy,
+      behavior: "smooth",
+    });
+  }
+
+  function zoomLayout(direction: "in" | "out") {
+    setLayoutZoom((current) => {
+      const next = direction === "in" ? current + 10 : current - 10;
+      return Math.min(100, Math.max(15, next));
+    });
+  }
+
   return (
     <main>
       <style>{`
@@ -687,6 +707,7 @@ button {
   overflow: auto;
   padding: 8px;
   max-width: 100%;
+  height: 72vh;
   max-height: 80vh;
   -webkit-overflow-scrolling: touch;
   touch-action: auto;
@@ -708,6 +729,26 @@ button {
   width: auto;
   min-width: 130px;
   padding: 10px 12px;
+}
+
+.layoutControlBtn {
+  background: #050505;
+  color: #ffd21f;
+  padding: 10px 12px;
+  border-radius: 12px;
+  min-width: 44px;
+}
+
+.layoutControlBtn.small {
+  min-width: 38px;
+  padding: 8px 10px;
+}
+
+.layoutZoomLabel {
+  font-weight: 900;
+  background: #eee;
+  border-radius: 999px;
+  padding: 8px 12px;
 }
 
 .svgPlanner {
@@ -1223,7 +1264,7 @@ button {
   <section className="formCard">
     <h2>Layout View</h2>
 
-    <div className="layoutCanvas">
+    <div className="layoutCanvas" ref={layoutCanvasRef}>
       <div className="layoutControls">
         <label>
           Grid width:
@@ -1247,16 +1288,14 @@ button {
           </select>
         </label>
 
-        <label>
-          Zoom:
-          <select value={layoutZoom} onChange={(event) => setLayoutZoom(Number(event.target.value))}>
-            <option value={25}>25%</option>
-            <option value={40}>40%</option>
-            <option value={50}>50%</option>
-            <option value={75}>75%</option>
-            <option value={100}>100%</option>
-          </select>
-        </label>
+        <span className="layoutZoomLabel">Zoom: {layoutZoom}%</span>
+        <button className="layoutControlBtn small" onClick={() => zoomLayout("out")}>−</button>
+        <button className="layoutControlBtn small" onClick={() => zoomLayout("in")}>+</button>
+
+        <button className="layoutControlBtn" onClick={() => panLayout(-300, 0)}>←</button>
+        <button className="layoutControlBtn" onClick={() => panLayout(300, 0)}>→</button>
+        <button className="layoutControlBtn" onClick={() => panLayout(0, -300)}>↑</button>
+        <button className="layoutControlBtn" onClick={() => panLayout(0, 300)}>↓</button>
       </div>
 
       <svg
@@ -1360,7 +1399,7 @@ button {
               </g>
 
               <text className="svgNumberText" x={numberPosition.x} y={numberPosition.y}>
-                {moduleNumberMap[m.id] || index + 1}
+                {moduleNumberMap[m.id] ?? ""}
               </text>
 
               <g
@@ -1452,5 +1491,6 @@ button {
     </main>
   );
 }
+
 
 
