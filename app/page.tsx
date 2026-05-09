@@ -342,6 +342,35 @@ button {
 }
           .actions { flex-direction: column; }
         }
+        .filterGroup p {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.buttonRow {
+  gap: 4px;
+}
+
+.filterGroup button {
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.card {
+  border-radius: 18px;
+}
+
+.cardBody {
+  padding: 14px;
+}
+
+.cardBody h3 {
+  font-size: 22px;
+}
+
+.moduleImage {
+  height: 180px;
+}
         .imageModal {
   position: fixed;
   inset: 0;
