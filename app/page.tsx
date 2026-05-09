@@ -1819,6 +1819,7 @@ button {
     </text>
   </g>
 </g>
+            </g>
         ))}
 
         {layoutModules.map((m, index) => {
