@@ -638,6 +638,13 @@ function exportToCSV() {
   function exportLayoutPDF() {
     window.print();
   }
+  function panLayout(dx: number, dy: number) {
+  layoutCanvasRef.current?.scrollBy({
+    left: dx,
+    top: dy,
+    behavior: "smooth",
+  });
+  }
 function zoomLayout(direction: "in" | "out") {
   setLayoutZoom((current) => {
     const next = direction === "in" ? current + 10 : current - 10;
