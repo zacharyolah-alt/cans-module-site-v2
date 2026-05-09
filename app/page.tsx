@@ -15,6 +15,7 @@ export default function Page() {
   const [layoutIncluded, setLayoutIncluded] = useState<any>({});
   const [gridWidthFeet, setGridWidthFeet] = useState(20);
   const [gridDepthFeet, setGridDepthFeet] = useState(20);
+  const layoutCanvasRef = useRef<HTMLDivElement>(null);
   const [layoutZoom, setLayoutZoom] = useState(25);
 const [mobileEditMode, setMobileEditMode] = useState(false);
 const [layoutTables, setLayoutTables] = useState<any[]>([]);
