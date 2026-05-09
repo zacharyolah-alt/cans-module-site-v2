@@ -174,7 +174,45 @@ corner_size: cornerSize,
 
     loadModules();
   }
+function exportToCSV() {
+  const headers = [
+    "Module Name",
+    "Owner",
+    "Standard",
+    "Type",
+    "Size",
+    "Status",
+    "Notes",
+  ];
 
+  const rows = modules.map((m) => [
+    m.module_name || "",
+    m.owner_name || "",
+    m.standard || "",
+    m.module_type || "",
+    m.dimensions || "",
+    m.status || "",
+    m.additional_notes || "",
+  ]);
+
+  const csv = [headers, ...rows]
+    .map((row) =>
+      row
+        .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+        .join(",")
+    )
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "cans-modules.csv";
+  link.click();
+
+  URL.revokeObjectURL(url);
+}
   const filteredModules = useMemo(() => {
   return modules.filter((m) => {
     const term = search.toLowerCase();
@@ -421,7 +459,9 @@ button {
         </section>
 
         <section className="toolbar">
-          
+          <button className="yellowBtn" onClick={exportToCSV}>
+  Export Spreadsheet
+</button>
           {!user ? (
             <button className="blackBtn" onClick={login}>
               Member Login
