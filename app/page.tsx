@@ -13,6 +13,8 @@ export default function Page() {
   const svgPlannerRef = useRef<SVGSVGElement | null>(null);
   const [layoutOverrides, setLayoutOverrides] = useState<any>({});
   const [layoutExcluded, setLayoutExcluded] = useState<any>({});
+  const [gridWidthFeet, setGridWidthFeet] = useState(20);
+  const [gridDepthFeet, setGridDepthFeet] = useState(20);
   const [modules, setModules] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -269,9 +271,15 @@ function exportToCSV() {
   }, [modules]);
 
   const LAYOUT_SCALE = 10; // 10 SVG pixels = 1 inch
-  const FRONT_TRACK_FRONT_EDGE = 15; // 1.5 inches from module front to front edge of front track
-  const TRACK_WIDTH = 10; // each track shown as 1 inch wide
-  const TRACK_CENTER_SPACING = 13; // 33 mm center-to-center is about 1.3 inches
+  const FRONT_TRACK_FRONT_EDGE = 15;
+  const TRACK_WIDTH = 10;
+  const TRACK_CENTER_SPACING = 13;
+
+  const gridWidthInches = gridWidthFeet * 12;
+  const gridDepthInches = gridDepthFeet * 12;
+
+  const gridSvgWidth = gridWidthInches * 5;
+  const gridSvgHeight = gridDepthInches * 5;
 
   function getLayoutKind(m: any) {
     if (m.module_type === "Inside Corner") return "insideCorner";
@@ -286,7 +294,7 @@ function exportToCSV() {
   }
 
   function getLayoutSize(m: any, slot: any) {
-    const kind = slot?.kind || getLayoutKind(m);
+    const kind = getLayoutKind(m);
 
     if (kind === "insideCorner" || kind === "outsideCorner") {
       return { width: 144, height: 144 };
@@ -783,6 +791,27 @@ button {
   border-radius: 20px;
   overflow: auto;
   padding: 8px;
+  max-width: 100%;
+  max-height: 80vh;
+  -webkit-overflow-scrolling: touch;
+}
+
+.layoutControls {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.layoutControls label {
+  font-weight: 900;
+}
+
+.layoutControls select {
+  width: auto;
+  min-width: 130px;
+  padding: 10px 12px;
 }
 
 .svgPlanner {
@@ -1300,24 +1329,58 @@ button {
     <h2>Layout View</h2>
 
     <div className="layoutCanvas">
-      <svg ref={svgPlannerRef} className="svgPlanner" viewBox="0 0 1250 880" role="img" aria-label="C.A.N.S. module layout planner">
+      <div className="layoutControls">
+        <label>
+          Grid width:
+          <select value={gridWidthFeet} onChange={(event) => setGridWidthFeet(Number(event.target.value))}>
+            <option value={10}>10 ft</option>
+            <option value={20}>20 ft</option>
+            <option value={30}>30 ft</option>
+            <option value={40}>40 ft</option>
+            <option value={50}>50 ft</option>
+          </select>
+        </label>
+
+        <label>
+          Grid depth:
+          <select value={gridDepthFeet} onChange={(event) => setGridDepthFeet(Number(event.target.value))}>
+            <option value={10}>10 ft</option>
+            <option value={20}>20 ft</option>
+            <option value={30}>30 ft</option>
+            <option value={40}>40 ft</option>
+            <option value={50}>50 ft</option>
+          </select>
+        </label>
+      </div>
+
+      <svg
+        ref={svgPlannerRef}
+        className="svgPlanner"
+        width={gridSvgWidth}
+        height={gridSvgHeight}
+        viewBox={`0 0 ${gridSvgWidth} ${gridSvgHeight}`}
+        role="img"
+        aria-label="C.A.N.S. module layout planner"
+      >
         <defs>
-          <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#dddddd" strokeWidth="1" />
+          <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#dddddd" strokeWidth="1" />
           </pattern>
-          <pattern id="largeGrid" width="50" height="50" patternUnits="userSpaceOnUse">
-            <rect width="50" height="50" fill="url(#smallGrid)" />
-            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#c9c9c9" strokeWidth="1.2" />
+
+          <pattern id="largeGrid" width="60" height="60" patternUnits="userSpaceOnUse">
+            <rect width="60" height="60" fill="url(#smallGrid)" />
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#c9c9c9" strokeWidth="1.2" />
           </pattern>
         </defs>
 
-        <rect x="0" y="0" width="1250" height="880" fill="url(#largeGrid)" />
+        <rect x="0" y="0" width={gridSvgWidth} height={gridSvgHeight} fill="url(#largeGrid)" />
 
         <g>
-          <rect className="svgScaleKey" x="20" y="20" width="235" height="72" rx="8" />
+          <rect className="svgScaleKey" x="20" y="20" width="290" height="92" rx="8" />
           <text className="svgKeyTitle" x="36" y="44">Grid Scale</text>
-          <text className="svgKeyText" x="36" y="64">1 small square = 1 inch</text>
-          <text className="svgKeyText" x="36" y="82">1 large square = 5 inches</text>
+          <text className="svgKeyText" x="36" y="64">1 small square = 2 inches</text>
+          <text className="svgKeyText" x="36" y="84">1 large square = 6 inches</text>
+          <text className="svgKeyText" x="36" y="104">2 x 2 large squares = 1 sq ft</text>
         </g>
 
         {layoutModules.map((m, index) => {
