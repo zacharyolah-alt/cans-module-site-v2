@@ -10,6 +10,7 @@ const supabase = createClient(
 
 export default function Page() {
   const [viewMode, setViewMode] = useState("directory");
+  const [layoutPositions, setLayoutPositions] = useState<any>({});
   const [modules, setModules] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -214,6 +215,35 @@ function exportToCSV() {
 
   URL.revokeObjectURL(url);
 }
+  function handleLayoutDrag(e: any, m: any, index: number) {
+  e.preventDefault();
+
+  const startX = e.clientX;
+  const startY = e.clientY;
+
+  const current = layoutPositions[m.id] || {
+    x: 20 + (index % 2) * 220,
+    y: 20 + Math.floor(index / 2) * 140,
+  };
+
+  function moveHandler(moveEvent: any) {
+    setLayoutPositions((prev: any) => ({
+      ...prev,
+      [m.id]: {
+        x: current.x + moveEvent.clientX - startX,
+        y: current.y + moveEvent.clientY - startY,
+      },
+    }));
+  }
+
+  function upHandler() {
+    window.removeEventListener("pointermove", moveHandler);
+    window.removeEventListener("pointerup", upHandler);
+  }
+
+  window.addEventListener("pointermove", moveHandler);
+  window.addEventListener("pointerup", upHandler);
+  }
   const filteredModules = useMemo(() => {
   return modules.filter((m) => {
     const term = search.toLowerCase();
@@ -415,6 +445,60 @@ button {
 
 .moduleImage {
   height: 180px;
+}
+.layoutCanvas {
+  position: relative;
+  min-height: 700px;
+  background-color: #fafafa;
+  background-image:
+    linear-gradient(#ddd 1px, transparent 1px),
+    linear-gradient(90deg, #ddd 1px, transparent 1px);
+  background-size: 40px 40px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  overflow: auto;
+  touch-action: none;
+}
+
+.movableBlock {
+  position: absolute;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.movableBlock:active {
+  cursor: grabbing;
+}
+
+.layoutCanvas .singleBlock {
+  width: 150px;
+  height: 90px;
+}
+
+.layoutCanvas .doubleBlock {
+  width: 240px;
+  height: 90px;
+}
+
+.layoutCanvas .tripleBlock {
+  width: 330px;
+  height: 90px;
+}
+
+.layoutCanvas .quadBlock {
+  width: 420px;
+  height: 90px;
+}
+
+.layoutCanvas .cornerBlock {
+  width: 180px;
+  height: 180px;
+}
+
+.layoutCanvas .bridgeBlock {
+  width: 260px;
+  height: 80px;
 }
 .layoutGrid {
   display: grid;
@@ -827,9 +911,43 @@ button {
         {viewMode === "layout" && (
   <section className="formCard">
     <h2>Layout View</h2>
-    <div className="layoutGrid">
-  {filteredModules.map((m) => (
-    <div
+    <div className="layoutCanvas">
+  {filteredModules.map((m, index) => {
+    const pos = layoutPositions[m.id] || {
+      x: 20 + (index % 2) * 220,
+      y: 20 + Math.floor(index / 2) * 140,
+    };
+
+    return (
+      <div
+        key={m.id}
+        className={`layoutBlock movableBlock ${
+          m.module_type === "Inside Corner" || m.module_type === "Outside Corner"
+            ? "cornerBlock"
+            : m.module_type === "Bridge"
+            ? "bridgeBlock"
+            : m.dimensions?.startsWith("Single")
+            ? "singleBlock"
+            : m.dimensions?.startsWith("Double")
+            ? "doubleBlock"
+            : m.dimensions?.startsWith("Triple")
+            ? "tripleBlock"
+            : m.dimensions?.startsWith("Quad")
+            ? "quadBlock"
+            : "customBlock"
+        }`}
+        style={{
+          transform: `translate(${pos.x}px, ${pos.y}px)`,
+        }}
+        onPointerDown={(e) => handleLayoutDrag(e, m, index)}
+      >
+        <div className="layoutTitle">{m.module_name}</div>
+        <div className="layoutMeta">{m.module_type || "Module"}</div>
+        <div className="layoutMeta">{m.dimensions || "Custom Size"}</div>
+      </div>
+    );
+  })}
+</div>
   key={m.id}
   className={`layoutBlock ${
     m.module_type === "Inside Corner" || m.module_type === "Outside Corner"
