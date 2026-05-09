@@ -242,9 +242,10 @@ function exportToCSV() {
   }
 
   window.addEventListener("pointermove", moveHandler);
-  window.addEventListener("pointerup", upHandler);
-  }
-  const filteredModules = useMemo(() => {
+window.addEventListener("pointerup", upHandler);
+};
+
+const filteredModules = useMemo(() => {
   return modules.filter((m) => {
     const term = search.toLowerCase();
 
