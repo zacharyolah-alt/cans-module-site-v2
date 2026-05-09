@@ -279,25 +279,29 @@ function exportToCSV() {
   }
 
   function getLayoutPosition(index: number) {
-    const savedPositions = [
-      { x: 36, y: 40 },
-      { x: 150, y: 40 },
-      { x: 360, y: 40 },
-      { x: 36, y: 140 },
-      { x: 230, y: 140 },
-      { x: 36, y: 240 },
-      { x: 150, y: 240 },
-      { x: 270, y: 240 },
-      { x: 36, y: 340 },
-      { x: 230, y: 340 },
-      { x: 350, y: 340 },
-      { x: 36, y: 440 },
-      { x: 150, y: 440 },
+    // This is a starter loop-style template modeled after your sample image.
+    // Later we can make these positions draggable and save them.
+    const template = [
+      { x: 35, y: 165 },   // left corner
+      { x: 109, y: 165 },  // top row
+      { x: 233, y: 165 },
+      { x: 357, y: 165 },
+      { x: 543, y: 165 },  // right side / corner area
+
+      { x: 35, y: 239 },   // left lower corner / return
+      { x: 109, y: 313 },  // bottom row
+      { x: 233, y: 313 },
+      { x: 357, y: 313 },
+      { x: 543, y: 313 },
+
+      { x: 35, y: 30 },    // spare modules above
+      { x: 160, y: 30 },
+      { x: 470, y: 55 },
     ];
 
-    return savedPositions[index] || {
-      x: 36 + (index % 4) * 150,
-      y: 540 + Math.floor((index - 13) / 4) * 100,
+    return template[index] || {
+      x: 35 + (index % 5) * 130,
+      y: 430 + Math.floor((index - 13) / 5) * 92,
     };
   }
 
@@ -485,7 +489,7 @@ button {
 
 .svgPlanner {
   width: 100%;
-  min-width: 720px;
+  min-width: 900px;
   height: auto;
   display: block;
   background: #fafafa;
@@ -932,11 +936,11 @@ button {
   <section className="formCard">
     <h2>Layout View</h2>
     <p>
-      SVG planning view. Modules are drawn to scale with numbered blocks and a key below.
+      SVG loop-style planning view. Modules are numbered on the plan, with details listed below.
     </p>
 
     <div className="layoutCanvas">
-      <svg className="svgPlanner" viewBox="0 0 720 780" role="img" aria-label="C.A.N.S. module layout planner">
+      <svg className="svgPlanner" viewBox="0 0 900 560" role="img" aria-label="C.A.N.S. module layout planner">
         <defs>
           <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
             <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#dddddd" strokeWidth="1" />
@@ -947,7 +951,7 @@ button {
           </pattern>
         </defs>
 
-        <rect x="0" y="0" width="720" height="780" fill="url(#largeGrid)" />
+        <rect x="0" y="0" width="900" height="560" fill="url(#largeGrid)" />
 
         {filteredModules.map((m, index) => {
           const kind = getLayoutKind(m);
@@ -977,10 +981,6 @@ button {
                     className="svgRail"
                     d={`M ${size.width} ${railY + railGap} A ${size.width - railY - railGap} ${size.height - railY - railGap} 0 0 1 ${railY + railGap} ${size.height}`}
                   />
-                  <path
-                    className="svgRailLight"
-                    d={`M ${size.width} ${railY - 5} A ${size.width - railY + 5} ${size.height - railY + 5} 0 0 1 ${railY - 5} ${size.height}`}
-                  />
                 </>
               ) : (
                 <>
@@ -989,8 +989,8 @@ button {
                 </>
               )}
 
-              <circle className="svgNumberCircle" cx="24" cy={size.height - 20} r="17" />
-              <text className="svgNumberText" x="24" y={size.height - 20}>
+              <circle className="svgNumberCircle" cx="22" cy={size.height - 18} r="16" />
+              <text className="svgNumberText" x="22" y={size.height - 18}>
                 {index + 1}
               </text>
             </g>
