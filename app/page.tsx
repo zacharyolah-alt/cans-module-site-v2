@@ -9,6 +9,7 @@ const supabase = createClient(
 );
 
 export default function Page() {
+  const [viewMode, setViewMode] = useState("directory");
   const [modules, setModules] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
