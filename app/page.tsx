@@ -39,6 +39,7 @@ const [gridWidthFeet, setGridWidthFeet] = useState(20);
 const [gridDepthFeet, setGridDepthFeet] = useState(20);
 const [layoutZoom, setLayoutZoom] = useState(25);
 const svgPlannerRef = useRef<SVGSVGElement | null>(null);
+  const layoutCanvasRef = useRef<HTMLDivElement | null>(null);
 const LAYOUT_SCALE = 1;
   useEffect(() => {
     loadModules();
@@ -291,7 +292,7 @@ function exportToCSV() {
   }
 function getSvgPoint(event: any) {
   const svg = svgPlannerRef.current;
-
+  
   if (!svg) {
     return { x: 0, y: 0 };
   }
