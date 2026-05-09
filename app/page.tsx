@@ -416,61 +416,131 @@ button {
 .moduleImage {
   height: 180px;
 }
+.layoutCanvas {
+  min-height: 720px;
+  background-color: #fafafa;
+  background-image:
+    linear-gradient(#d8d8d8 1px, transparent 1px),
+    linear-gradient(90deg, #d8d8d8 1px, transparent 1px);
+  background-size: 10px 10px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  padding: 14px;
+  overflow: auto;
+}
+
 .layoutGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
-  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .layoutBlock {
+  position: relative;
   background: #202020;
   color: white;
-  border-left: 6px solid #ffd21f;
-  border-radius: 18px;
-  padding: 16px;
-  min-height: 100px;
-  box-shadow: 0 8px 18px rgba(0,0,0,.18);
+  border-left: 4px solid #ffd21f;
+  border-radius: 10px;
+  padding: 8px;
+  min-height: 52px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.18);
+  overflow: hidden;
 }
+
+.layoutBlock::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 18px;
+  height: 8px;
+  border-top: 2px solid #f8f8f8;
+  border-bottom: 2px solid #f8f8f8;
+  opacity: .9;
+}
+
 .singleBlock {
-  min-height: 90px;
+  width: 70px;
+  height: 52px;
 }
 
 .doubleBlock {
-  min-height: 120px;
+  width: 140px;
+  height: 52px;
 }
 
 .tripleBlock {
-  min-height: 150px;
+  width: 210px;
+  height: 52px;
 }
 
 .quadBlock {
-  min-height: 180px;
+  width: 280px;
+  height: 52px;
 }
 
 .cornerBlock {
-  border-radius: 28px 28px 28px 8px;
-  border-left: 8px solid #ffd21f;
+  width: 90px;
+  height: 90px;
+  border-radius: 18px 18px 18px 6px;
+  border-left: 4px solid #ffd21f;
+}
+
+.cornerBlock::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  width: 46px;
+  height: 46px;
+  border-top: 4px double #f8f8f8;
+  border-right: 4px double #f8f8f8;
+  border-bottom: none;
+  border-left: none;
+  border-radius: 0 42px 0 0;
+  opacity: .9;
 }
 
 .bridgeBlock {
-  border-left: 8px solid #999;
+  width: 150px;
+  height: 46px;
+  border-left: 4px solid #999;
+}
+
+.bridgeBlock::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 8px;
+  height: 8px;
+  border-top: 2px dashed #aaa;
+  border-bottom: 2px dashed #aaa;
 }
 
 .customBlock {
-  border-left: 8px solid #b00020;
+  width: 100px;
+  height: 60px;
+  border-left: 4px solid #b00020;
 }
 
 .layoutTitle {
-  font-size: 18px;
+  position: relative;
+  z-index: 1;
+  font-size: 12px;
   font-weight: 900;
-  margin-bottom: 10px;
+  margin-top: 24px;
+  line-height: 1.05;
 }
 
 .layoutMeta {
-  font-size: 14px;
+  position: relative;
+  z-index: 1;
+  font-size: 10px;
   opacity: 0.9;
-  margin-bottom: 6px;
+  margin-top: 3px;
 }
         .imageModal {
   position: fixed;
@@ -827,40 +897,38 @@ button {
         {viewMode === "layout" && (
   <section className="formCard">
     <h2>Layout View</h2>
-    <div className="layoutGrid">
-  {filteredModules.map((m) => (
-    <div
-  key={m.id}
-  className={`layoutBlock ${
-    m.module_type === "Inside Corner" || m.module_type === "Outside Corner"
-      ? "cornerBlock"
-      : m.module_type === "Bridge"
-      ? "bridgeBlock"
-      : m.dimensions?.startsWith("Single")
-      ? "singleBlock"
-      : m.dimensions?.startsWith("Double")
-      ? "doubleBlock"
-      : m.dimensions?.startsWith("Triple")
-      ? "tripleBlock"
-      : m.dimensions?.startsWith("Quad")
-      ? "quadBlock"
-      : "customBlock"
-  }`}
->
-      <div className="layoutTitle">
-        {m.module_name}
-      </div>
+    <p>
+      Scaled planning view: singles, doubles, triples, quads, corners, bridges, and custom modules.
+    </p>
 
-      <div className="layoutMeta">
-        {m.module_type || "Module"}
-      </div>
-
-      <div className="layoutMeta">
-        {m.dimensions || "Custom Size"}
+    <div className="layoutCanvas">
+      <div className="layoutGrid">
+        {filteredModules.map((m) => (
+          <div
+            key={m.id}
+            className={`layoutBlock ${
+              m.module_type === "Inside Corner" || m.module_type === "Outside Corner"
+                ? "cornerBlock"
+                : m.module_type === "Bridge"
+                ? "bridgeBlock"
+                : m.dimensions?.startsWith("Single")
+                ? "singleBlock"
+                : m.dimensions?.startsWith("Double")
+                ? "doubleBlock"
+                : m.dimensions?.startsWith("Triple")
+                ? "tripleBlock"
+                : m.dimensions?.startsWith("Quad")
+                ? "quadBlock"
+                : "customBlock"
+            }`}
+          >
+            <div className="layoutTitle">{m.module_name}</div>
+            <div className="layoutMeta">{m.module_type || "Module"}</div>
+            <div className="layoutMeta">{m.dimensions || "Custom Size"}</div>
+          </div>
+        ))}
       </div>
     </div>
-  ))}
-</div>
   </section>
 )}
         {selectedImage && (
@@ -886,4 +954,5 @@ button {
     </main>
   );
 }
+
 
