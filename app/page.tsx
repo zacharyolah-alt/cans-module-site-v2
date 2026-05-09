@@ -242,8 +242,8 @@ function exportToCSV() {
   }
 
   window.addEventListener("pointermove", moveHandler);
-window.addEventListener("pointerup", upHandler);
-};
+  window.addEventListener("pointerup", upHandler);
+  }
 
 const filteredModules = useMemo(() => {
   return modules.filter((m) => {
