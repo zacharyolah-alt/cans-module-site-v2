@@ -608,17 +608,19 @@ button {
     <strong>Notes:</strong> {m.additional_notes}
   </p>
 )}
-                    <div className="actions">
-                    <button className="editBtn" onClick={() => startEdit(m)}>
-                      Edit
-                    </button>
-                    <button
-                      className="deleteBtn"
-                      onClick={() => deleteModule(m.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
+                    {user && user.id === m.user_id && (
+  <div className="actions">
+    <button className="editBtn" onClick={() => startEdit(m)}>
+      Edit
+    </button>
+    <button
+      className="deleteBtn"
+      onClick={() => deleteModule(m.id)}
+    >
+      Delete
+    </button>
+  </div>
+)}
               </div>
             </article>
           ))}
