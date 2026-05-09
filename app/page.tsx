@@ -1207,7 +1207,7 @@ button {
         ))}
 
         {layoutModules.map((m, index) => {
-          const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
+          const permanentIndex = moduleNumber(m, index);
           const slot = getPlacedSlot(m, permanentIndex);
           const kind = getLayoutKind(m);
           const size = getLayoutSize(m, slot);
