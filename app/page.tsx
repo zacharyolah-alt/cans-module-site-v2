@@ -30,6 +30,7 @@ const [cornerSize, setCornerSize] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
 const [dimensionFilter, setDimensionFilter] = useState("All");
   const [ownerName, setOwnerName] = useState("");
+  const LAYOUT_SCALE = 1;
   useEffect(() => {
     loadModules();
 
