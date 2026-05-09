@@ -16,6 +16,7 @@ export default function Page() {
   const [gridWidthFeet, setGridWidthFeet] = useState(20);
   const [gridDepthFeet, setGridDepthFeet] = useState(20);
   const [layoutZoom, setLayoutZoom] = useState(50);
+  const [mobileEditMode, setMobileEditMode] = useState(false);
   const [modules, setModules] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
