@@ -375,6 +375,13 @@ function zoomLayout(direction: "in" | "out") {
     return Math.max(current - 5, 10);
   });
 }
+  function panLayout(dx: number, dy: number) {
+  layoutCanvasRef.current?.scrollBy({
+    left: dx,
+    top: dy,
+    behavior: "smooth",
+  });
+  }
   function saveLayoutDesign() {
     const savedLayout = {
       layoutOverrides,
