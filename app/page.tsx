@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -10,6 +10,8 @@ const supabase = createClient(
 
 export default function Page() {
   const [viewMode, setViewMode] = useState("directory");
+  const svgPlannerRef = useRef<SVGSVGElement | null>(null);
+  const [layoutOverrides, setLayoutOverrides] = useState<any>({});
   const [modules, setModules] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -383,6 +385,94 @@ function exportToCSV() {
     return { x: slot.x + margin, y: slot.y + size.height - margin };
   }
 
+  function getPlacedSlot(m: any, index: number) {
+    const baseSlot = getTemplateSlot(index);
+    const savedSlot = layoutOverrides[m.id];
+
+    return {
+      ...baseSlot,
+      ...(savedSlot || {}),
+    };
+  }
+
+  function snapToGrid(value: number) {
+    return Math.round(value / 10) * 10;
+  }
+
+  function getSvgPoint(event: any) {
+    const svg = svgPlannerRef.current;
+
+    if (!svg) {
+      return { x: 0, y: 0 };
+    }
+
+    const point = svg.createSVGPoint();
+    point.x = event.clientX;
+    point.y = event.clientY;
+
+    const matrix = svg.getScreenCTM();
+
+    if (!matrix) {
+      return { x: 0, y: 0 };
+    }
+
+    const transformed = point.matrixTransform(matrix.inverse());
+
+    return {
+      x: transformed.x,
+      y: transformed.y,
+    };
+  }
+
+  function handleModulePointerDown(event: any, m: any, index: number) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const startingSlot = getPlacedSlot(m, index);
+    const startingPoint = getSvgPoint(event);
+    const startingX = startingSlot.x;
+    const startingY = startingSlot.y;
+
+    function moveHandler(moveEvent: any) {
+      const currentPoint = getSvgPoint(moveEvent);
+
+      setLayoutOverrides((prev: any) => ({
+        ...prev,
+        [m.id]: {
+          ...startingSlot,
+          ...(prev[m.id] || {}),
+          x: snapToGrid(startingX + currentPoint.x - startingPoint.x),
+          y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
+        },
+      }));
+    }
+
+    function upHandler() {
+      window.removeEventListener("pointermove", moveHandler);
+      window.removeEventListener("pointerup", upHandler);
+    }
+
+    window.addEventListener("pointermove", moveHandler);
+    window.addEventListener("pointerup", upHandler);
+  }
+
+  function rotateModule(event: any, m: any, index: number) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const currentSlot = getPlacedSlot(m, index);
+    const nextRotation = ((currentSlot.rotation || 0) + 90) % 360;
+
+    setLayoutOverrides((prev: any) => ({
+      ...prev,
+      [m.id]: {
+        ...currentSlot,
+        ...(prev[m.id] || {}),
+        rotation: nextRotation,
+      },
+    }));
+  }
+
   return (
     <main>
       <style>{`
@@ -612,6 +702,30 @@ button {
   font-weight: 900;
   text-anchor: middle;
   dominant-baseline: central;
+}
+
+.svgModuleGroup {
+  cursor: grab;
+}
+
+.svgModuleGroup:active {
+  cursor: grabbing;
+}
+
+.svgRotateCircle {
+  fill: #ffd21f;
+  stroke: #050505;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgRotateText {
+  fill: #050505;
+  font-size: 13px;
+  font-weight: 900;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
 }
 
 .svgScaleKey {
@@ -1033,7 +1147,7 @@ button {
     <h2>Layout View</h2>
 
     <div className="layoutCanvas">
-      <svg className="svgPlanner" viewBox="0 0 1250 880" role="img" aria-label="C.A.N.S. module layout planner">
+      <svg ref={svgPlannerRef} className="svgPlanner" viewBox="0 0 1250 880" role="img" aria-label="C.A.N.S. module layout planner">
         <defs>
           <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
             <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#dddddd" strokeWidth="1" />
@@ -1054,7 +1168,7 @@ button {
         </g>
 
         {filteredModules.map((m, index) => {
-          const slot = getTemplateSlot(index);
+          const slot = getPlacedSlot(m, index);
           const kind = slot.kind || getLayoutKind(m);
           const size = getLayoutSize(m, slot);
           const rails = getTrackRails();
@@ -1062,7 +1176,7 @@ button {
           const numberPosition = getNumberPosition(slot, size);
 
           return (
-            <g key={m.id}>
+            <g key={m.id} className="svgModuleGroup" onPointerDown={(event) => handleModulePointerDown(event, m, index)}>
               <g transform={moduleTransform}>
                 <rect
                   className={`svgModule ${kind === "custom" ? "custom" : ""} ${kind === "bridge" ? "bridge" : ""}`}
@@ -1126,6 +1240,17 @@ button {
               <text className="svgNumberText" x={numberPosition.x} y={numberPosition.y}>
                 {index + 1}
               </text>
+
+              <g
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => rotateModule(event, m, index)}
+                style={{ cursor: "pointer" }}
+              >
+                <circle className="svgRotateCircle" cx={numberPosition.x + 24} cy={numberPosition.y} r="11" />
+                <text className="svgRotateText" x={numberPosition.x + 24} y={numberPosition.y}>
+                  ↻
+                </text>
+              </g>
             </g>
           );
         })}
