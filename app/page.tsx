@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -10,15 +10,6 @@ const supabase = createClient(
 
 export default function Page() {
   const [viewMode, setViewMode] = useState("directory");
-  const svgPlannerRef = useRef<SVGSVGElement | null>(null);
-  const [layoutOverrides, setLayoutOverrides] = useState<any>({});
-  const [layoutIncluded, setLayoutIncluded] = useState<any>({});
-  const [gridWidthFeet, setGridWidthFeet] = useState(20);
-  const [gridDepthFeet, setGridDepthFeet] = useState(20);
-  const layoutCanvasRef = useRef<HTMLDivElement>(null);
-  const [layoutZoom, setLayoutZoom] = useState(25);
-const [mobileEditMode, setMobileEditMode] = useState(false);
-const [layoutTables, setLayoutTables] = useState<any[]>([]);
   const [modules, setModules] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -255,272 +246,6 @@ function exportToCSV() {
     return matchesSearch && matchesStandard && matchesStatus && matchesType && matchesSize;
   });
 }, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
-
-  const layoutModules = useMemo(() => {
-    return filteredModules.filter((m) => layoutIncluded[m.id]);
-  }, [filteredModules, layoutIncluded]);
-
-  const moduleNumberMap = useMemo(() => {
-    const sortedModules = [...modules].sort((a, b) => {
-      const aTime = Date.parse(a.created_at || "");
-      const bTime = Date.parse(b.created_at || "");
-
-      if (!Number.isNaN(aTime) && !Number.isNaN(bTime) && aTime !== bTime) {
-        return aTime - bTime;
-      }
-
-      return String(a.id || "").localeCompare(String(b.id || ""));
-    });
-
-    return sortedModules.reduce((map: any, module: any, index: number) => {
-      map[module.id] = index + 1;
-      return map;
-    }, {});
-  }, [modules]);
-
-  const LAYOUT_SCALE = 10; // 10 SVG pixels = 1 inch
-  const FRONT_TRACK_FRONT_EDGE = 15; // 1.5 inches from module front to front edge of front track
-  const TRACK_WIDTH = 10; // each track shown as 1 inch wide
-  const TRACK_CENTER_SPACING = 13; // 33 mm center-to-center is about 1.3 inches
-
-  const gridWidthInches = gridWidthFeet * 12;
-  const gridDepthInches = gridDepthFeet * 12;
-  const gridSvgWidth = gridWidthInches * LAYOUT_SCALE;
-  const gridSvgHeight = gridDepthInches * LAYOUT_SCALE;
-  const displaySvgWidth = Math.round(gridSvgWidth * (layoutZoom / 100));
-  const displaySvgHeight = Math.round(gridSvgHeight * (layoutZoom / 100));
-
-  function getLayoutKind(m: any) {
-    if (m.module_type === "Inside Corner") return "insideCorner";
-    if (m.module_type === "Outside Corner") return "outsideCorner";
-    if (m.dimensions?.startsWith("Corner")) return "outsideCorner";
-    if (m.module_type === "Bridge") return "bridge";
-    if (m.dimensions?.startsWith("Single")) return "single";
-    if (m.dimensions?.startsWith("Double")) return "double";
-    if (m.dimensions?.startsWith("Triple")) return "triple";
-    if (m.dimensions?.startsWith("Quad")) return "quad";
-    return "custom";
-  }
-
-  function getLayoutSize(m: any, slot: any) {
-    const kind = getLayoutKind(m);
-
-    if (kind === "insideCorner" || kind === "outsideCorner") {
-      return { width: 144, height: 144 };
-    }
-
-    if (kind === "single") return { width: 121, height: 144 };
-    if (kind === "double") return { width: 243, height: 144 };
-    if (kind === "triple") return { width: 365, height: 144 };
-    if (kind === "quad") return { width: 487, height: 144 };
-    if (kind === "bridge") return { width: 243, height: 110 };
-
-    return { width: 160, height: 144 };
-  }
-
-  function getTemplateSlot(index: number) {
-    /*
-      Starter loop template:
-      - Front edge faces outward.
-      - Front edge of the front track is 1.5 inches from the module front.
-      - Each track is shown as two rail lines, about 1 inch wide.
-      - Track centers are about 33 mm apart.
-      - Modules rotate to form the loop; the track does not move on the module.
-    */
-    const slots = [
-      { x: 70, y: 140, rotation: 0 },
-      { x: 214, y: 140, rotation: 0 },
-      { x: 335, y: 140, rotation: 0 },
-      { x: 456, y: 140, rotation: 0 },
-      { x: 699, y: 140, rotation: 90 },
-
-      { x: 839, y: 284, rotation: 90 },
-      { x: 839, y: 405, rotation: 180 },
-
-      { x: 352, y: 545, rotation: 180 },
-      { x: 230, y: 545, rotation: 180 },
-      { x: 70, y: 405, rotation: 270 },
-
-      { x: 70, y: 284, rotation: 270 },
-
-      { x: 70, y: 20, rotation: 0 },
-      { x: 230, y: 20, rotation: 0 },
-    ];
-
-    return slots[index] || {
-      x: 70 + (index % 5) * 190,
-      y: 680 + Math.floor((index - 13) / 5) * 170,
-      kind: "custom",
-      rotation: 0,
-    };
-  }
-
-  function getModuleTransform(slot: any, size: any) {
-    if (slot.rotation === 90) {
-      return `translate(${slot.x + size.height}, ${slot.y}) rotate(90)`;
-    }
-
-    if (slot.rotation === 180) {
-      return `translate(${slot.x + size.width}, ${slot.y + size.height}) rotate(180)`;
-    }
-
-    if (slot.rotation === 270) {
-      return `translate(${slot.x}, ${slot.y + size.width}) rotate(270)`;
-    }
-
-    return `translate(${slot.x}, ${slot.y})`;
-  }
-
-  function getRotatedBounds(slot: any, size: any) {
-    if (slot.rotation === 90 || slot.rotation === 270) {
-      return { width: size.height, height: size.width };
-    }
-
-    return { width: size.width, height: size.height };
-  }
-
-  function isCornerKind(kind: string) {
-    return kind === "insideCorner" || kind === "outsideCorner";
-  }
-
-  function getTrackRails() {
-    const frontRail1 = FRONT_TRACK_FRONT_EDGE;
-    const frontRail2 = FRONT_TRACK_FRONT_EDGE + TRACK_WIDTH;
-    const rearTrackFrontEdge =
-      FRONT_TRACK_FRONT_EDGE + TRACK_CENTER_SPACING - TRACK_WIDTH / 2;
-    const rearRail1 = rearTrackFrontEdge;
-    const rearRail2 = rearTrackFrontEdge + TRACK_WIDTH;
-
-    return [frontRail1, frontRail2, rearRail1, rearRail2];
-  }
-
-  function getNumberPosition(slot: any, size: any) {
-    /*
-      The number belongs at the back of the module, away from the front edge/tracks.
-      These positions are calculated after rotation so the number appears on the
-      visible back side of each module.
-    */
-    const margin = 18;
-
-    if (slot.rotation === 0) {
-      return { x: slot.x + margin, y: slot.y + size.height - margin };
-    }
-
-    if (slot.rotation === 90) {
-      return { x: slot.x + size.height - margin, y: slot.y + margin };
-    }
-
-    if (slot.rotation === 180) {
-      return { x: slot.x + size.width - margin, y: slot.y + margin };
-    }
-
-    if (slot.rotation === 270) {
-      return { x: slot.x + margin, y: slot.y + size.width - margin };
-    }
-
-    return { x: slot.x + margin, y: slot.y + size.height - margin };
-  }
-
-  function getPlacedSlot(m: any, index: number) {
-    const baseSlot = getTemplateSlot(index);
-    const savedSlot = layoutOverrides[m.id];
-
-    return {
-      ...baseSlot,
-      ...(savedSlot || {}),
-    };
-  }
-
-  function snapToGrid(value: number) {
-    return Math.round(value / 10) * 10;
-  }
-
-  function getSvgPoint(event: any) {
-    const svg = svgPlannerRef.current;
-
-    if (!svg) {
-      return { x: 0, y: 0 };
-    }
-
-    const point = svg.createSVGPoint();
-    point.x = event.clientX;
-    point.y = event.clientY;
-
-    const matrix = svg.getScreenCTM();
-
-    if (!matrix) {
-      return { x: 0, y: 0 };
-    }
-
-    const transformed = point.matrixTransform(matrix.inverse());
-
-    return {
-      x: transformed.x,
-      y: transformed.y,
-    };
-  }
-
-  function handleModulePointerDown(event: any, m: any, index: number) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (event.pointerType === "touch" && !mobileEditMode) {
-      return;
-    }
-
-    if (event.currentTarget?.setPointerCapture && event.pointerId !== undefined) {
-      try {
-        event.currentTarget.setPointerCapture(event.pointerId);
-      } catch (_error) {}
-    }
-
-    const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
-    const startingSlot = getPlacedSlot(m, permanentIndex);
-    const startingPoint = getSvgPoint(event);
-    const startingX = startingSlot.x;
-    const startingY = startingSlot.y;
-
-    function moveHandler(moveEvent: any) {
-      const currentPoint = getSvgPoint(moveEvent);
-
-      setLayoutOverrides((prev: any) => ({
-        ...prev,
-        [m.id]: {
-          ...startingSlot,
-          ...(prev[m.id] || {}),
-          x: snapToGrid(startingX + currentPoint.x - startingPoint.x),
-          y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
-        },
-      }));
-    }
-
-    function upHandler() {
-      window.removeEventListener("pointermove", moveHandler);
-      window.removeEventListener("pointerup", upHandler);
-    }
-
-    window.addEventListener("pointermove", moveHandler);
-    window.addEventListener("pointerup", upHandler);
-  }
-
-  function rotateModule(event: any, m: any, index: number) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
-    const currentSlot = getPlacedSlot(m, permanentIndex);
-    const nextRotation = ((currentSlot.rotation || 0) + 90) % 360;
-
-    setLayoutOverrides((prev: any) => ({
-      ...prev,
-      [m.id]: {
-        ...currentSlot,
-        ...(prev[m.id] || {}),
-        rotation: nextRotation,
-      },
-    }));
-  }
-
   function addLayoutTable(kind: "6ft" | "8ft") {
     const width = kind === "6ft" ? 72 * LAYOUT_SCALE : 96 * LAYOUT_SCALE;
     const height = 30 * LAYOUT_SCALE;
@@ -623,7 +348,9 @@ function exportToCSV() {
   }
 
   function loadLayoutDesign() {
-    const saved = window.localStorage.getItem("cans-layout-design-v2") || window.localStorage.getItem("cans-layout-design-v1");
+    const saved =
+      window.localStorage.getItem("cans-layout-design-v2") ||
+      window.localStorage.getItem("cans-layout-design-v1");
 
     if (!saved) {
       alert("No saved layout found on this device.");
@@ -643,19 +370,7 @@ function exportToCSV() {
   function exportLayoutPDF() {
     window.print();
   }
-  function panLayout(dx: number, dy: number) {
-  layoutCanvasRef.current?.scrollBy({
-    left: dx,
-    top: dy,
-    behavior: "smooth",
-  });
-  }
-function zoomLayout(direction: "in" | "out") {
-  setLayoutZoom((current) => {
-    const next = direction === "in" ? current + 10 : current - 10;
-    return Math.min(100, Math.max(15, next));
-  });
-}
+
 
   return (
     <main>
@@ -827,139 +542,81 @@ button {
 .moduleImage {
   height: 180px;
 }
-.layoutCanvas {
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 20px;
-  overflow: auto;
-  padding: 8px;
-  max-width: 100%;
-
-  max-height: 80vh;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x pan-y;
-  overscroll-behavior: contain;
-}
-
-.layoutControls {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-bottom: 14px;
-}
-
-.layoutControls label {
-  font-weight: 900;
-}
-
-.layoutControls select {
-  width: auto;
-  min-width: 130px;
-  padding: 10px 12px;
-}
-
-.svgPlanner {
-  width: auto;
-  height: auto;
-  display: block;
-  background: #fafafa;
-}
-
-.svgModule {
-  fill: rgba(198, 226, 178, .55);
-  stroke: #3d6b2d;
-  stroke-width: 2;
-  vector-effect: non-scaling-stroke;
-}
-
-.svgModule.custom {
-  stroke: #b00020;
-  fill: rgba(198, 226, 178, .45);
-}
-
-.svgModule.bridge {
-  stroke: #6b4b20;
-  fill: rgba(198, 226, 178, .50);
-}
-
-.svgFrontEdge {
-  stroke: #3d6b2d;
-  stroke-width: 4;
-  vector-effect: non-scaling-stroke;
-}
-
-.svgRail {
-  stroke: #222;
-  stroke-width: 2;
-  fill: none;
-  vector-effect: non-scaling-stroke;
-}
-
-.svgRailTie {
-  stroke: #777;
-  stroke-width: 1;
-  opacity: .35;
-  vector-effect: non-scaling-stroke;
-}
-
-.svgNumberText {
-  fill: #2f6124;
-  font-size: 14px;
-  font-weight: 900;
-  text-anchor: middle;
-  dominant-baseline: central;
-}
-
-.svgPlanner {
-  touch-action: auto;
-}
-
-.svgModuleGroup {
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-}
-
-.svgModuleGroup:active {
-  cursor: grabbing;
-}
-
-.legendCheckbox {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  accent-color: #ffd21f;
-}
-
-.legendRow {
+.layoutGrid {
   display: grid;
-  grid-template-columns: 24px 44px 1fr;
-  gap: 10px;
-  padding: 10px 14px;
-  border-top: 1px solid #eee;
-  align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 20px;
 }
 
-.legendNumber.inactive {
-  background: #ddd;
-  color: #555;
+.layoutBlock {
+  background: #202020;
+  color: white;
+  border-left: 6px solid #ffd21f;
+  border-radius: 18px;
+  padding: 16px;
+  min-height: 100px;
+  box-shadow: 0 8px 18px rgba(0,0,0,.18);
+}
+.singleBlock {
+  min-height: 90px;
 }
 
-.svgRotateCircle {
-  fill: #ffd21f;
-  stroke: #050505;
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
+.doubleBlock {
+  min-height: 120px;
 }
 
-.svgRotateText {
-  fill: #050505;
-  font-size: 13px;
+.tripleBlock {
+  min-height: 150px;
+}
+
+.quadBlock {
+  min-height: 180px;
+}
+
+.cornerBlock {
+  border-radius: 28px 28px 28px 8px;
+  border-left: 8px solid #ffd21f;
+}
+
+.bridgeBlock {
+  border-left: 8px solid #999;
+}
+
+.customBlock {
+  border-left: 8px solid #b00020;
+}
+
+.layoutTitle {
+  font-size: 18px;
   font-weight: 900;
-  text-anchor: middle;
-  dominant-baseline: central;
-  pointer-events: none;
+  margin-bottom: 10px;
+}
+
+.layoutMeta {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 6px;
+}
+        
+.layoutControlBtn {
+  background: #050505;
+  color: #ffd21f;
+  padding: 10px 12px;
+  border-radius: 12px;
+  min-width: 44px;
+}
+
+.layoutControlBtn.small {
+  min-width: 38px;
+  padding: 8px 10px;
+}
+
+.layoutZoomLabel {
+  font-weight: 900;
+  background: #eee;
+  border-radius: 999px;
+  padding: 8px 12px;
 }
 
 .layoutCanvas.editMode {
@@ -967,10 +624,7 @@ button {
   overscroll-behavior: contain;
 }
 
-.layoutCanvas.editMode .svgPlanner {
-  touch-action: none;
-}
-
+.layoutCanvas.editMode .svgPlanner,
 .layoutCanvas.editMode .svgModuleGroup,
 .layoutCanvas.editMode .svgTableGroup {
   touch-action: none;
@@ -1029,61 +683,7 @@ button {
   }
 }
 
-.svgScaleKey {
-  fill: rgba(255,255,255,.94);
-  stroke: #ffd21f;
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
-}
-
-.svgKeyTitle {
-  fill: #050505;
-  font-size: 15px;
-  font-weight: 900;
-}
-
-.svgKeyText {
-  fill: #111;
-  font-size: 12px;
-}
-
-.layoutLegend {
-  margin-top: 18px;
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #ddd;
-  overflow: hidden;
-}
-
-.legendTitle {
-  margin: 0;
-  padding: 12px 14px;
-  background: #050505;
-  color: #ffd21f;
-  font-size: 16px;
-  font-weight: 900;
-}
-
-
-.legendNumber {
-  background: #ffd21f;
-  color: #050505;
-  border-radius: 999px;
-  font-weight: 900;
-  text-align: center;
-  padding: 5px 0;
-}
-
-.legendText {
-  font-size: 14px;
-  line-height: 1.35;
-}
-
-.legendText strong {
-  display: block;
-  font-size: 15px;
-}
-        .imageModal {
+.imageModal {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.85);
@@ -1712,8 +1312,5 @@ button {
     </main>
   );
 }
-
-
-
 
 
