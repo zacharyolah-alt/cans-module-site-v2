@@ -427,6 +427,9 @@ const gridSvgHeight = gridDepthFeet * 12;
 const layoutModules = modules.filter(
   (module: any) => layoutIncluded[module.id]
 );
+  function moduleNumber(module: any, index: number) {
+  return module.module_number || module.id || index + 1;
+  }
   return (
     <main>
       <style>{`
