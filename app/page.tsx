@@ -198,12 +198,14 @@ function exportToCSV() {
   ]);
 
   const csv = [headers, ...rows]
-    .map((row) =>
-      row
-        .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
-        .join(",")
-    )
-    .join("\n");
+  .map((row) => {
+    return row
+      .map((cell) => {
+        return '"' + String(cell).replace(/"/g, '""') + '"';
+      })
+      .join(",");
+  })
+  .join("\n");
 
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
