@@ -872,7 +872,7 @@ button {
       className="imageModalClose"
       onClick={() => setSelectedImage(null)}
     >
-      ×
+      Ã—
     </button>
 
     <img
