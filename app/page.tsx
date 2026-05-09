@@ -638,7 +638,12 @@ function exportToCSV() {
   function exportLayoutPDF() {
     window.print();
   }
-
+function zoomLayout(direction: "in" | "out") {
+  setLayoutZoom((current) => {
+    const next = direction === "in" ? current + 10 : current - 10;
+    return Math.min(100, Math.max(15, next));
+  });
+}
 
   return (
     <main>
