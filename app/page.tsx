@@ -41,7 +41,6 @@ const [gridDepthFeet, setGridDepthFeet] = useState(20);
 const [layoutZoom, setLayoutZoom] = useState(25);
 const svgPlannerRef = useRef<SVGSVGElement | null>(null);
   const layoutCanvasRef = useRef<HTMLDivElement | null>(null);
-const LAYOUT_SCALE = 1;
   useEffect(() => {
     loadModules();
 
@@ -353,6 +352,7 @@ function exportToCSV() {
     const rearTrackFrontEdge = FRONT_TRACK_FRONT_EDGE + TRACK_CENTER_SPACING - TRACK_WIDTH / 2;
     const rearRail1 = rearTrackFrontEdge;
     const rearRail2 = rearTrackFrontEdge + TRACK_WIDTH;
+
     return [frontRail1, frontRail2, rearRail1, rearRail2];
   }
 
@@ -365,12 +365,16 @@ function exportToCSV() {
   }
 
   function getRotatedBounds(slot: any, size: any) {
-    if (slot.rotation === 90 || slot.rotation === 270) return { width: size.height, height: size.width };
+    if (slot.rotation === 90 || slot.rotation === 270) {
+      return { width: size.height, height: size.width };
+    }
+
     return { width: size.width, height: size.height };
   }
 
   function clampSlotToGrid(slot: any, size: any) {
     const bounds = getRotatedBounds(slot, size);
+
     return {
       ...slot,
       x: clamp(slot.x, 0, Math.max(0, gridSvgWidth - bounds.width)),
@@ -381,6 +385,7 @@ function exportToCSV() {
   function getMainTrackCenters() {
     const frontTrackCenter = FRONT_TRACK_FRONT_EDGE + TRACK_WIDTH / 2;
     const rearTrackCenter = frontTrackCenter + TRACK_CENTER_SPACING;
+
     return [frontTrackCenter, rearTrackCenter];
   }
 
@@ -388,6 +393,7 @@ function exportToCSV() {
     if (rotation === 90) return { x: size.height - y, y: x };
     if (rotation === 180) return { x: size.width - x, y: size.height - y };
     if (rotation === 270) return { x: y, y: size.width - x };
+
     return { x, y };
   }
 
@@ -398,12 +404,21 @@ function exportToCSV() {
     const rails = getMainTrackCenters();
 
     const localPoints = isCornerKind(kind)
-      ? rails.flatMap((rail) => [{ x: 0, y: rail }, { x: size.width - rail, y: size.height }])
-      : rails.flatMap((rail) => [{ x: 0, y: rail }, { x: size.width, y: rail }]);
+      ? rails.flatMap((rail) => [
+          { x: 0, y: rail },
+          { x: size.width - rail, y: size.height },
+        ])
+      : rails.flatMap((rail) => [
+          { x: 0, y: rail },
+          { x: size.width, y: rail },
+        ]);
 
     return localPoints.map((point) => {
       const rotated = rotatePoint(point.x, point.y, rotation, size);
-      return { x: slot.x + rotated.x, y: slot.y + rotated.y };
+      return {
+        x: slot.x + rotated.x,
+        y: slot.y + rotated.y,
+      };
     });
   }
 
@@ -420,7 +435,7 @@ function exportToCSV() {
       const otherSlot = getPlacedSlot(otherModule, otherPermanentIndex);
       const otherEndpoints = getTrackEndpointsForModule(otherModule, otherSlot);
 
-      movingEndpoints.forEach((movingEndpoint) => {
+movingEndpoints.forEach((movingEndpoint) => {
         otherEndpoints.forEach((otherEndpoint) => {
           const dx = otherEndpoint.x - movingEndpoint.x;
           const dy = otherEndpoint.y - movingEndpoint.y;
@@ -433,7 +448,9 @@ function exportToCSV() {
       });
     });
 
-    if (!bestSnap) return clampSlotToGrid(candidateSlot, movingSize);
+    if (!bestSnap) {
+      return clampSlotToGrid(candidateSlot, movingSize);
+    }
 
     return clampSlotToGrid(
       {
@@ -447,6 +464,7 @@ function exportToCSV() {
 
   function getSvgPoint(event: any) {
     const svg = svgPlannerRef.current;
+
     if (!svg) return { x: 0, y: 0 };
 
     const point = svg.createSVGPoint();
@@ -457,7 +475,11 @@ function exportToCSV() {
     if (!matrix) return { x: 0, y: 0 };
 
     const transformed = point.matrixTransform(matrix.inverse());
-    return { x: transformed.x, y: transformed.y };
+
+    return {
+      x: transformed.x,
+      y: transformed.y,
+    };
   }
 
   function handleModulePointerDown(event: any, m: any, index: number) {
@@ -480,6 +502,7 @@ function exportToCSV() {
         x: snapToGrid(startingX + currentPoint.x - startingPoint.x),
         y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
       };
+
       const snappedSlot = applyTrackSnap(candidateSlot, m);
 
       setLayoutOverrides((prev: any) => ({
@@ -510,7 +533,10 @@ function exportToCSV() {
     const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
     const currentSlot = getPlacedSlot(m, permanentIndex);
     const nextSlot = clampSlotToGrid(
-      { ...currentSlot, rotation: ((currentSlot.rotation || 0) + 90) % 360 },
+      {
+        ...currentSlot,
+        rotation: ((currentSlot.rotation || 0) + 90) % 360,
+      },
       getLayoutSize(m)
     );
 
@@ -572,8 +598,16 @@ function exportToCSV() {
             y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
           };
 
-          const clamped = clampSlotToGrid(candidate, { width: item.width, height: item.height });
-          return { ...item, x: clamped.x, y: clamped.y };
+          const clamped = clampSlotToGrid(candidate, {
+            width: item.width,
+            height: item.height,
+          });
+
+          return {
+            ...item,
+            x: clamped.x,
+            y: clamped.y,
+          };
         })
       );
     }
@@ -597,16 +631,30 @@ function exportToCSV() {
       current.map((item) => {
         if (item.id !== table.id) return item;
 
-        const next = { ...item, rotation: ((item.rotation || 0) + 90) % 360 };
-        const clamped = clampSlotToGrid(next, { width: item.width, height: item.height });
+        const next = {
+          ...item,
+          rotation: ((item.rotation || 0) + 90) % 360,
+        };
 
-        return { ...next, x: clamped.x, y: clamped.y };
+        const clamped = clampSlotToGrid(next, {
+          width: item.width,
+          height: item.height,
+        });
+
+        return {
+          ...next,
+          x: clamped.x,
+          y: clamped.y,
+        };
       })
     );
   }
 
   function toggleLayoutLock(id: string) {
-    setLayoutLocks((prev: any) => ({ ...prev, [id]: !prev[id] }));
+    setLayoutLocks((prev: any) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   }
 
   function deleteLayoutTable(id: string) {
@@ -626,7 +674,11 @@ function exportToCSV() {
   }
 
   function panLayout(dx: number, dy: number) {
-    layoutCanvasRef.current?.scrollBy({ left: dx, top: dy, behavior: "smooth" });
+    layoutCanvasRef.current?.scrollBy({
+      left: dx,
+      top: dy,
+      behavior: "smooth",
+    });
   }
 
   function saveLayoutDesign() {
@@ -946,6 +998,300 @@ button {
   font-weight: 900;
   text-anchor: middle;
   dominant-baseline: central;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .layoutPrintArea, .layoutPrintArea * {
+    visibility: visible;
+  }
+
+  .layoutPrintArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .layoutControls,
+  .layoutLegend,
+  .filtersPanel,
+  .toolbar,
+  .viewToggle,
+  .hero {
+    display: none !important;
+  }
+
+  .layoutCanvas {
+    max-height: none;
+    overflow: visible;
+    border: 0;
+  }
+}
+
+
+.layoutCanvas {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  overflow: auto;
+  padding: 8px;
+  max-width: 100%;
+  max-height: 80vh;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior: contain;
+}
+
+.layoutControls {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.layoutControls label {
+  font-weight: 900;
+}
+
+.layoutControls select {
+  width: auto;
+  min-width: 130px;
+  padding: 10px 12px;
+}
+
+.layoutControlBtn {
+  background: #050505;
+  color: #ffd21f;
+  padding: 10px 12px;
+  border-radius: 12px;
+  min-width: 44px;
+}
+.layoutControlBtn.small {
+  min-width: 38px;
+  padding: 8px 10px;
+}
+
+.layoutZoomLabel {
+  font-weight: 900;
+  background: #eee;
+  border-radius: 999px;
+  padding: 8px 12px;
+}
+
+.layoutCanvas.editMode {
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.svgPlanner {
+  width: auto;
+  height: auto;
+  display: block;
+  background: #fafafa;
+}
+
+.layoutCanvas.editMode .svgPlanner,
+.layoutCanvas.editMode .svgModuleGroup,
+.layoutCanvas.editMode .svgTableGroup {
+  touch-action: none;
+}
+
+.svgModuleGroup,
+.svgTableGroup {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.svgModule {
+  fill: rgba(198, 226, 178, .55);
+  stroke: #3d6b2d;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgModule.custom {
+  stroke: #b00020;
+}
+
+.svgModule.bridge {
+  stroke: #6b4b20;
+}
+
+.svgFrontEdge {
+  stroke: #3d6b2d;
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgRail {
+  stroke: #222;
+  stroke-width: 2;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgRailTie {
+  stroke: #777;
+  stroke-width: 1;
+  opacity: .35;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgNumberText {
+  fill: #2f6124;
+  font-size: 28px;
+  font-weight: 900;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.svgRotateCircle {
+  fill: #ffd21f;
+  stroke: #050505;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgRotateText {
+  fill: #050505;
+  font-size: 13px;
+  font-weight: 900;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.svgLockCircle {
+  fill: #b00020;
+  stroke: white;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgLockCircle.locked {
+  fill: #777;
+}
+
+.svgLockText {
+  fill: white;
+  font-size: 11px;
+  font-weight: 900;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.svgDeleteCircle {
+  fill: #b00020;
+  stroke: white;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgDeleteText {
+  fill: white;
+  font-size: 15px;
+  font-weight: 900;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.svgTable {
+  fill: rgba(70, 155, 255, .28);
+  stroke: #1f6fbf;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgTableLabel {
+  fill: #14508a;
+  font-size: 18px;
+  font-weight: 900;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.svgScaleKey {
+  fill: rgba(255,255,255,.94);
+  stroke: #ffd21f;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgKeyTitle {
+  fill: #050505;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.svgKeyText {
+  fill: #111;
+  font-size: 12px;
+}
+
+.layoutLegend {
+  margin-top: 18px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #ddd;
+  overflow: hidden;
+}
+
+.legendTitle {
+  margin: 0;
+  padding: 12px 14px;
+  background: #050505;
+  color: #ffd21f;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.legendRow {
+  display: grid;
+  grid-template-columns: 24px 44px 1fr;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid #eee;
+  align-items: start;
+}
+
+.legendCheckbox {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #ffd21f;
+}
+
+.legendNumber {
+  background: #ffd21f;
+  color: #050505;
+  border-radius: 999px;
+  font-weight: 900;
+  text-align: center;
+  padding: 5px 0;
+}
+
+.legendNumber.inactive {
+  background: #ddd;
+  color: #555;
+}
+
+.legendText {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.legendText strong {
+  display: block;
+  font-size: 15px;
 }
 
 @media print {
@@ -1383,7 +1729,7 @@ button {
         <button className="layoutControlBtn" onClick={exportLayoutPDF}>Export PDF</button>
       </div>
 
-      <svg
+<svg
         ref={svgPlannerRef}
         className="svgPlanner"
         width={displaySvgWidth}
@@ -1476,7 +1822,7 @@ button {
           const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
           const slot = getPlacedSlot(m, permanentIndex);
           const kind = getLayoutKind(m);
-          const size = getLayoutSize(m, slot);
+          const size = getLayoutSize(m);
           const rails = getTrackRails();
           const moduleTransform = getModuleTransform(slot, size);
           const moduleBounds = getRotatedBounds(slot, size);
@@ -1660,6 +2006,7 @@ button {
     </main>
   );
 }
+
 
 
 
