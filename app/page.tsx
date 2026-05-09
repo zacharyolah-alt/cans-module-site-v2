@@ -366,7 +366,15 @@ function getSvgPoint(event: any) {
       )
     );
   }
+function zoomLayout(direction: "in" | "out") {
+  setLayoutZoom((current) => {
+    if (direction === "in") {
+      return Math.min(current + 5, 60);
+    }
 
+    return Math.max(current - 5, 10);
+  });
+}
   function saveLayoutDesign() {
     const savedLayout = {
       layoutOverrides,
