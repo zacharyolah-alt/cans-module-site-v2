@@ -432,6 +432,34 @@ button {
   min-height: 100px;
   box-shadow: 0 8px 18px rgba(0,0,0,.18);
 }
+.singleBlock {
+  min-height: 90px;
+}
+
+.doubleBlock {
+  min-height: 120px;
+}
+
+.tripleBlock {
+  min-height: 150px;
+}
+
+.quadBlock {
+  min-height: 180px;
+}
+
+.cornerBlock {
+  border-radius: 28px 28px 28px 8px;
+  border-left: 8px solid #ffd21f;
+}
+
+.bridgeBlock {
+  border-left: 8px solid #999;
+}
+
+.customBlock {
+  border-left: 8px solid #b00020;
+}
 
 .layoutTitle {
   font-size: 18px;
@@ -801,7 +829,24 @@ button {
     <h2>Layout View</h2>
     <div className="layoutGrid">
   {filteredModules.map((m) => (
-    <div key={m.id} className="layoutBlock">
+    <div
+  key={m.id}
+  className={`layoutBlock ${
+    m.module_type === "Inside Corner" || m.module_type === "Outside Corner"
+      ? "cornerBlock"
+      : m.module_type === "Bridge"
+      ? "bridgeBlock"
+      : m.dimensions?.startsWith("Single")
+      ? "singleBlock"
+      : m.dimensions?.startsWith("Double")
+      ? "doubleBlock"
+      : m.dimensions?.startsWith("Triple")
+      ? "tripleBlock"
+      : m.dimensions?.startsWith("Quad")
+      ? "quadBlock"
+      : "customBlock"
+  }`}
+>
       <div className="layoutTitle">
         {m.module_name}
       </div>
