@@ -33,6 +33,7 @@ const [dimensionFilter, setDimensionFilter] = useState("All");
   const [mobileEditMode, setMobileEditMode] = useState(false);
 
 const [layoutTables, setLayoutTables] = useState<any[]>([]);
+  const [layoutLocks, setLayoutLocks] = useState<any>({});
   const [layoutOverrides, setLayoutOverrides] = useState<any>({});
 const [layoutIncluded, setLayoutIncluded] = useState<any>({});
 const [gridWidthFeet, setGridWidthFeet] = useState(20);
@@ -40,6 +41,7 @@ const [gridDepthFeet, setGridDepthFeet] = useState(20);
 const [layoutZoom, setLayoutZoom] = useState(25);
 const svgPlannerRef = useRef<SVGSVGElement | null>(null);
   const layoutCanvasRef = useRef<HTMLDivElement | null>(null);
+const LAYOUT_SCALE = 1;
   useEffect(() => {
     loadModules();
 
@@ -306,10 +308,7 @@ function exportToCSV() {
   function getLayoutSize(m: any) {
     const kind = getLayoutKind(m);
 
-    if (kind === "insideCorner" || kind === "outsideCorner") {
-      return { width: 144, height: 144 };
-    }
-
+    if (kind === "insideCorner" || kind === "outsideCorner") return { width: 144, height: 144 };
     if (kind === "single") return { width: 121, height: 144 };
     if (kind === "double") return { width: 243, height: 144 };
     if (kind === "triple") return { width: 365, height: 144 };
@@ -338,18 +337,9 @@ function exportToCSV() {
   }
 
   function getModuleTransform(slot: any, size: any) {
-    if (slot.rotation === 90) {
-      return `translate(${slot.x + size.height}, ${slot.y}) rotate(90)`;
-    }
-
-    if (slot.rotation === 180) {
-      return `translate(${slot.x + size.width}, ${slot.y + size.height}) rotate(180)`;
-    }
-
-    if (slot.rotation === 270) {
-      return `translate(${slot.x}, ${slot.y + size.width}) rotate(270)`;
-    }
-
+    if (slot.rotation === 90) return `translate(${slot.x + size.height}, ${slot.y}) rotate(90)`;
+    if (slot.rotation === 180) return `translate(${slot.x + size.width}, ${slot.y + size.height}) rotate(180)`;
+    if (slot.rotation === 270) return `translate(${slot.x}, ${slot.y + size.width}) rotate(270)`;
     return `translate(${slot.x}, ${slot.y})`;
   }
 
@@ -360,72 +350,122 @@ function exportToCSV() {
   function getTrackRails() {
     const frontRail1 = FRONT_TRACK_FRONT_EDGE;
     const frontRail2 = FRONT_TRACK_FRONT_EDGE + TRACK_WIDTH;
-    const rearTrackFrontEdge =
-      FRONT_TRACK_FRONT_EDGE + TRACK_CENTER_SPACING - TRACK_WIDTH / 2;
+    const rearTrackFrontEdge = FRONT_TRACK_FRONT_EDGE + TRACK_CENTER_SPACING - TRACK_WIDTH / 2;
     const rearRail1 = rearTrackFrontEdge;
     const rearRail2 = rearTrackFrontEdge + TRACK_WIDTH;
-
     return [frontRail1, frontRail2, rearRail1, rearRail2];
-  }
-
-  function getNumberPosition(slot: any, size: any) {
-    const margin = 18;
-
-    if (slot.rotation === 0) {
-      return { x: slot.x + margin, y: slot.y + size.height - margin };
-    }
-
-    if (slot.rotation === 90) {
-      return { x: slot.x + size.height - margin, y: slot.y + margin };
-    }
-
-    if (slot.rotation === 180) {
-      return { x: slot.x + size.width - margin, y: slot.y + margin };
-    }
-
-    if (slot.rotation === 270) {
-      return { x: slot.x + margin, y: slot.y + size.width - margin };
-    }
-
-    return { x: slot.x + margin, y: slot.y + size.height - margin };
   }
 
   function snapToGrid(value: number) {
     return Math.round(value / 10) * 10;
   }
 
+  function clamp(value: number, min: number, max: number) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function getRotatedBounds(slot: any, size: any) {
+    if (slot.rotation === 90 || slot.rotation === 270) return { width: size.height, height: size.width };
+    return { width: size.width, height: size.height };
+  }
+
+  function clampSlotToGrid(slot: any, size: any) {
+    const bounds = getRotatedBounds(slot, size);
+    return {
+      ...slot,
+      x: clamp(slot.x, 0, Math.max(0, gridSvgWidth - bounds.width)),
+      y: clamp(slot.y, 0, Math.max(0, gridSvgHeight - bounds.height)),
+    };
+  }
+
+  function getMainTrackCenters() {
+    const frontTrackCenter = FRONT_TRACK_FRONT_EDGE + TRACK_WIDTH / 2;
+    const rearTrackCenter = frontTrackCenter + TRACK_CENTER_SPACING;
+    return [frontTrackCenter, rearTrackCenter];
+  }
+
+  function rotatePoint(x: number, y: number, rotation: number, size: any) {
+    if (rotation === 90) return { x: size.height - y, y: x };
+    if (rotation === 180) return { x: size.width - x, y: size.height - y };
+    if (rotation === 270) return { x: y, y: size.width - x };
+    return { x, y };
+  }
+
+  function getTrackEndpointsForModule(m: any, slot: any) {
+    const size = getLayoutSize(m);
+    const kind = getLayoutKind(m);
+    const rotation = slot.rotation || 0;
+    const rails = getMainTrackCenters();
+
+    const localPoints = isCornerKind(kind)
+      ? rails.flatMap((rail) => [{ x: 0, y: rail }, { x: size.width - rail, y: size.height }])
+      : rails.flatMap((rail) => [{ x: 0, y: rail }, { x: size.width, y: rail }]);
+
+    return localPoints.map((point) => {
+      const rotated = rotatePoint(point.x, point.y, rotation, size);
+      return { x: slot.x + rotated.x, y: slot.y + rotated.y };
+    });
+  }
+
+  function applyTrackSnap(candidateSlot: any, movingModule: any) {
+    const movingSize = getLayoutSize(movingModule);
+    const movingEndpoints = getTrackEndpointsForModule(movingModule, candidateSlot);
+    let bestSnap: any = null;
+    const snapDistance = 18;
+
+    layoutModules.forEach((otherModule: any) => {
+      if (otherModule.id === movingModule.id) return;
+
+      const otherPermanentIndex = Math.max(0, (moduleNumberMap[otherModule.id] || 1) - 1);
+      const otherSlot = getPlacedSlot(otherModule, otherPermanentIndex);
+      const otherEndpoints = getTrackEndpointsForModule(otherModule, otherSlot);
+
+      movingEndpoints.forEach((movingEndpoint) => {
+        otherEndpoints.forEach((otherEndpoint) => {
+          const dx = otherEndpoint.x - movingEndpoint.x;
+          const dy = otherEndpoint.y - movingEndpoint.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance <= snapDistance && (!bestSnap || distance < bestSnap.distance)) {
+            bestSnap = { distance, dx, dy };
+          }
+        });
+      });
+    });
+
+    if (!bestSnap) return clampSlotToGrid(candidateSlot, movingSize);
+
+    return clampSlotToGrid(
+      {
+        ...candidateSlot,
+        x: snapToGrid(candidateSlot.x + bestSnap.dx),
+        y: snapToGrid(candidateSlot.y + bestSnap.dy),
+      },
+      movingSize
+    );
+  }
+
   function getSvgPoint(event: any) {
     const svg = svgPlannerRef.current;
-
-    if (!svg) {
-      return { x: 0, y: 0 };
-    }
+    if (!svg) return { x: 0, y: 0 };
 
     const point = svg.createSVGPoint();
     point.x = event.clientX;
     point.y = event.clientY;
 
     const matrix = svg.getScreenCTM();
-
-    if (!matrix) {
-      return { x: 0, y: 0 };
-    }
+    if (!matrix) return { x: 0, y: 0 };
 
     const transformed = point.matrixTransform(matrix.inverse());
-
-    return {
-      x: transformed.x,
-      y: transformed.y,
-    };
+    return { x: transformed.x, y: transformed.y };
   }
 
   function handleModulePointerDown(event: any, m: any, index: number) {
     event.preventDefault();
     event.stopPropagation();
 
-    if (event.pointerType === "touch" && !mobileEditMode) {
-      return;
-    }
+    if (layoutLocks[m.id]) return;
+    if (event.pointerType === "touch" && !mobileEditMode) return;
 
     const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
     const startingSlot = getPlacedSlot(m, permanentIndex);
@@ -435,14 +475,19 @@ function exportToCSV() {
 
     function moveHandler(moveEvent: any) {
       const currentPoint = getSvgPoint(moveEvent);
+      const candidateSlot = {
+        ...startingSlot,
+        x: snapToGrid(startingX + currentPoint.x - startingPoint.x),
+        y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
+      };
+      const snappedSlot = applyTrackSnap(candidateSlot, m);
 
       setLayoutOverrides((prev: any) => ({
         ...prev,
         [m.id]: {
           ...startingSlot,
           ...(prev[m.id] || {}),
-          x: snapToGrid(startingX + currentPoint.x - startingPoint.x),
-          y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
+          ...snappedSlot,
         },
       }));
     }
@@ -460,16 +505,20 @@ function exportToCSV() {
     event.preventDefault();
     event.stopPropagation();
 
+    if (layoutLocks[m.id]) return;
+
     const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
     const currentSlot = getPlacedSlot(m, permanentIndex);
-    const nextRotation = ((currentSlot.rotation || 0) + 90) % 360;
+    const nextSlot = clampSlotToGrid(
+      { ...currentSlot, rotation: ((currentSlot.rotation || 0) + 90) % 360 },
+      getLayoutSize(m)
+    );
 
     setLayoutOverrides((prev: any) => ({
       ...prev,
       [m.id]: {
-        ...currentSlot,
         ...(prev[m.id] || {}),
-        rotation: nextRotation,
+        ...nextSlot,
       },
     }));
   }
@@ -493,18 +542,9 @@ function exportToCSV() {
   }
 
   function getTableTransform(table: any) {
-    if (table.rotation === 90) {
-      return `translate(${table.x + table.height}, ${table.y}) rotate(90)`;
-    }
-
-    if (table.rotation === 180) {
-      return `translate(${table.x + table.width}, ${table.y + table.height}) rotate(180)`;
-    }
-
-    if (table.rotation === 270) {
-      return `translate(${table.x}, ${table.y + table.width}) rotate(270)`;
-    }
-
+    if (table.rotation === 90) return `translate(${table.x + table.height}, ${table.y}) rotate(90)`;
+    if (table.rotation === 180) return `translate(${table.x + table.width}, ${table.y + table.height}) rotate(180)`;
+    if (table.rotation === 270) return `translate(${table.x}, ${table.y + table.width}) rotate(270)`;
     return `translate(${table.x}, ${table.y})`;
   }
 
@@ -512,9 +552,8 @@ function exportToCSV() {
     event.preventDefault();
     event.stopPropagation();
 
-    if (event.pointerType === "touch" && !mobileEditMode) {
-      return;
-    }
+    if (layoutLocks[table.id]) return;
+    if (event.pointerType === "touch" && !mobileEditMode) return;
 
     const startingPoint = getSvgPoint(event);
     const startingX = table.x;
@@ -524,15 +563,18 @@ function exportToCSV() {
       const currentPoint = getSvgPoint(moveEvent);
 
       setLayoutTables((current) =>
-        current.map((item) =>
-          item.id === table.id
-            ? {
-                ...item,
-                x: snapToGrid(startingX + currentPoint.x - startingPoint.x),
-                y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
-              }
-            : item
-        )
+        current.map((item) => {
+          if (item.id !== table.id) return item;
+
+          const candidate = {
+            ...item,
+            x: snapToGrid(startingX + currentPoint.x - startingPoint.x),
+            y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
+          };
+
+          const clamped = clampSlotToGrid(candidate, { width: item.width, height: item.height });
+          return { ...item, x: clamped.x, y: clamped.y };
+        })
       );
     }
 
@@ -549,16 +591,31 @@ function exportToCSV() {
     event.preventDefault();
     event.stopPropagation();
 
+    if (layoutLocks[table.id]) return;
+
     setLayoutTables((current) =>
-      current.map((item) =>
-        item.id === table.id
-          ? {
-              ...item,
-              rotation: ((item.rotation || 0) + 90) % 360,
-            }
-          : item
-      )
+      current.map((item) => {
+        if (item.id !== table.id) return item;
+
+        const next = { ...item, rotation: ((item.rotation || 0) + 90) % 360 };
+        const clamped = clampSlotToGrid(next, { width: item.width, height: item.height });
+
+        return { ...next, x: clamped.x, y: clamped.y };
+      })
     );
+  }
+
+  function toggleLayoutLock(id: string) {
+    setLayoutLocks((prev: any) => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  function deleteLayoutTable(id: string) {
+    setLayoutTables((current) => current.filter((table) => table.id !== id));
+    setLayoutLocks((prev: any) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
   }
 
   function zoomLayout(direction: "in" | "out") {
@@ -569,11 +626,7 @@ function exportToCSV() {
   }
 
   function panLayout(dx: number, dy: number) {
-    layoutCanvasRef.current?.scrollBy({
-      left: dx,
-      top: dy,
-      behavior: "smooth",
-    });
+    layoutCanvasRef.current?.scrollBy({ left: dx, top: dy, behavior: "smooth" });
   }
 
   function saveLayoutDesign() {
@@ -584,6 +637,7 @@ function exportToCSV() {
       gridDepthFeet,
       layoutZoom,
       layoutTables,
+      layoutLocks,
     };
 
     window.localStorage.setItem("cans-layout-design-v2", JSON.stringify(savedLayout));
@@ -608,6 +662,7 @@ function exportToCSV() {
     setGridDepthFeet(parsed.gridDepthFeet || 20);
     setLayoutZoom(parsed.layoutZoom || 25);
     setLayoutTables(parsed.layoutTables || []);
+    setLayoutLocks(parsed.layoutLocks || {});
   }
 
   function exportLayoutPDF() {
@@ -891,265 +946,6 @@ button {
   font-weight: 900;
   text-anchor: middle;
   dominant-baseline: central;
-}
-
-@media print {
-  body * {
-    visibility: hidden;
-  }
-
-  .layoutPrintArea, .layoutPrintArea * {
-    visibility: visible;
-  }
-
-  .layoutPrintArea {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-
-  .layoutControls,
-  .layoutLegend,
-  .filtersPanel,
-  .toolbar,
-  .viewToggle,
-  .hero {
-    display: none !important;
-  }
-
-  .layoutCanvas {
-    max-height: none;
-    overflow: visible;
-    border: 0;
-  }
-}
-
-
-.layoutCanvas {
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 20px;
-  overflow: auto;
-  padding: 8px;
-  max-width: 100%;
-  max-height: 80vh;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x pan-y;
-  overscroll-behavior: contain;
-}
-
-.layoutControls {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-bottom: 14px;
-}
-
-.layoutControls label {
-  font-weight: 900;
-}
-
-.layoutControls select {
-  width: auto;
-  min-width: 130px;
-  padding: 10px 12px;
-}
-
-.layoutControlBtn {
-  background: #050505;
-  color: #ffd21f;
-  padding: 10px 12px;
-  border-radius: 12px;
-  min-width: 44px;
-}
-
-.layoutControlBtn.small {
-  min-width: 38px;
-  padding: 8px 10px;
-}
-
-.layoutZoomLabel {
-  font-weight: 900;
-  background: #eee;
-  border-radius: 999px;
-  padding: 8px 12px;
-}
-
-.layoutCanvas.editMode {
-  touch-action: none;
-  overscroll-behavior: contain;
-}
-
-.svgPlanner {
-  width: auto;
-  height: auto;
-  display: block;
-  background: #fafafa;
-  touch-action: pan-x pan-y;
-}
-
-.layoutCanvas.editMode .svgPlanner,
-.layoutCanvas.editMode .svgModuleGroup,
-.layoutCanvas.editMode .svgTableGroup {
-  touch-action: none;
-}
-
-.svgModuleGroup,
-.svgTableGroup {
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-}
-
-.svgModule {
-  fill: rgba(198, 226, 178, .55);
-  stroke: #3d6b2d;
-  stroke-width: 2;
-  vector-effect: non-scaling-stroke;
-}
-
-.svgModule.custom {
-  stroke: #b00020;
-}
-
-.svgModule.bridge {
-  stroke: #6b4b20;
-}
-
-.svgFrontEdge {
-  stroke: #3d6b2d;
-  stroke-width: 4;
-  vector-effect: non-scaling-stroke;
-}
-
-.svgRail {
-  stroke: #222;
-  stroke-width: 2;
-  fill: none;
-  vector-effect: non-scaling-stroke;
-}
-
-.svgRailTie {
-  stroke: #777;
-  stroke-width: 1;
-  opacity: .35;
-  vector-effect: non-scaling-stroke;
-}
-
-.svgNumberText {
-  fill: #2f6124;
-  font-size: 14px;
-  font-weight: 900;
-  text-anchor: middle;
-  dominant-baseline: central;
-}
-
-.svgRotateCircle {
-  fill: #ffd21f;
-  stroke: #050505;
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
-}
-
-.svgRotateText {
-  fill: #050505;
-  font-size: 13px;
-  font-weight: 900;
-  text-anchor: middle;
-  dominant-baseline: central;
-  pointer-events: none;
-}
-
-.svgTable {
-  fill: rgba(70, 155, 255, .28);
-  stroke: #1f6fbf;
-  stroke-width: 2;
-  vector-effect: non-scaling-stroke;
-}
-
-.svgTableLabel {
-  fill: #14508a;
-  font-size: 18px;
-  font-weight: 900;
-  text-anchor: middle;
-  dominant-baseline: central;
-}
-
-.svgScaleKey {
-  fill: rgba(255,255,255,.94);
-  stroke: #ffd21f;
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
-}
-
-.svgKeyTitle {
-  fill: #050505;
-  font-size: 15px;
-  font-weight: 900;
-}
-
-.svgKeyText {
-  fill: #111;
-  font-size: 12px;
-}
-
-.layoutLegend {
-  margin-top: 18px;
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #ddd;
-  overflow: hidden;
-}
-
-.legendTitle {
-  margin: 0;
-  padding: 12px 14px;
-  background: #050505;
-  color: #ffd21f;
-  font-size: 16px;
-  font-weight: 900;
-}
-
-.legendRow {
-  display: grid;
-  grid-template-columns: 24px 44px 1fr;
-  gap: 10px;
-  padding: 10px 14px;
-  border-top: 1px solid #eee;
-  align-items: start;
-}
-
-.legendCheckbox {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  accent-color: #ffd21f;
-}
-
-.legendNumber {
-  background: #ffd21f;
-  color: #050505;
-  border-radius: 999px;
-  font-weight: 900;
-  text-align: center;
-  padding: 5px 0;
-}
-
-.legendNumber.inactive {
-  background: #ddd;
-  color: #555;
-}
-
-.legendText {
-  font-size: 14px;
-  line-height: 1.35;
-}
-
-.legendText strong {
-  display: block;
-  font-size: 15px;
 }
 
 @media print {
@@ -1639,27 +1435,59 @@ button {
             <g
               onPointerDown={(event) => event.stopPropagation()}
               onClick={(event) => rotateTable(event, table)}
-              style={{ cursor: "pointer" }}
+              style={{ cursor: layoutLocks[table.id] ? "not-allowed" : "pointer" }}
             >
               <circle className="svgRotateCircle" cx={table.x + 28} cy={table.y + 28} r="13" />
               <text className="svgRotateText" x={table.x + 28} y={table.y + 28}>
                 ↻
               </text>
             </g>
+
+            <g
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={() => toggleLayoutLock(table.id)}
+              style={{ cursor: "pointer" }}
+            >
+              <circle
+                className={`svgLockCircle ${layoutLocks[table.id] ? "locked" : ""}`}
+                cx={table.x + table.width - 28}
+                cy={table.y + 28}
+                r="12"
+              />
+              <text className="svgLockText" x={table.x + table.width - 28} y={table.y + 28}>
+                {layoutLocks[table.id] ? "L" : "●"}
+              </text>
+            </g>
+
+            <g
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={() => deleteLayoutTable(table.id)}
+              style={{ cursor: "pointer" }}
+            >
+              <circle className="svgDeleteCircle" cx={table.x + table.width - 28} cy={table.y + table.height - 28} r="12" />
+              <text className="svgDeleteText" x={table.x + table.width - 28} y={table.y + table.height - 28}>
+                ×
+              </text>
+            </g>
           </g>
         ))}
 
         {layoutModules.map((m, index) => {
-          const permanentIndex = Math.max(
-  0,
-  (moduleNumberMap[m.id] || index + 1) - 1
-);
+          const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
           const slot = getPlacedSlot(m, permanentIndex);
           const kind = getLayoutKind(m);
-          const size = getLayoutSize(m);
+          const size = getLayoutSize(m, slot);
           const rails = getTrackRails();
           const moduleTransform = getModuleTransform(slot, size);
-          const numberPosition = getNumberPosition(slot, size);
+          const moduleBounds = getRotatedBounds(slot, size);
+          const numberPosition = {
+            x: slot.x + moduleBounds.width / 2,
+            y: slot.y + moduleBounds.height / 2,
+          };
+          const lockButton = {
+            x: slot.x + moduleBounds.width - 22,
+            y: slot.y + 22,
+          };
 
           return (
             <g key={m.id} className="svgModuleGroup" onPointerDown={(event) => handleModulePointerDown(event, m, index)}>
@@ -1730,11 +1558,27 @@ button {
               <g
                 onPointerDown={(event) => event.stopPropagation()}
                 onClick={(event) => rotateModule(event, m, index)}
+                style={{ cursor: layoutLocks[m.id] ? "not-allowed" : "pointer" }}
+              >
+                <circle className="svgRotateCircle" cx={numberPosition.x + 34} cy={numberPosition.y} r="11" />
+                <text className="svgRotateText" x={numberPosition.x + 34} y={numberPosition.y}>
+                  ↻
+                </text>
+              </g>
+
+              <g
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={() => toggleLayoutLock(m.id)}
                 style={{ cursor: "pointer" }}
               >
-                <circle className="svgRotateCircle" cx={numberPosition.x + 24} cy={numberPosition.y} r="11" />
-                <text className="svgRotateText" x={numberPosition.x + 24} y={numberPosition.y}>
-                  ↻
+                <circle
+                  className={`svgLockCircle ${layoutLocks[m.id] ? "locked" : ""}`}
+                  cx={lockButton.x}
+                  cy={lockButton.y}
+                  r="10"
+                />
+                <text className="svgLockText" x={lockButton.x} y={lockButton.y}>
+                  {layoutLocks[m.id] ? "L" : "●"}
                 </text>
               </g>
             </g>
@@ -1760,7 +1604,7 @@ button {
                 const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || 1) - 1);
 
                 if (checked && !layoutOverrides[m.id]) {
-                  const startingSlot = getTemplateSlot(permanentIndex);
+                  const startingSlot = clampSlotToGrid(getTemplateSlot(permanentIndex), getLayoutSize(m));
 
                   setLayoutOverrides((prev: any) => ({
                     ...prev,
