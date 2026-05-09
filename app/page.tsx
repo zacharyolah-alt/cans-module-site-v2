@@ -318,23 +318,23 @@ function exportToCSV() {
       - Modules rotate to form the loop; the track does not move on the module.
     */
     const slots = [
-      { x: 70, y: 140, kind: "outsideCorner", rotation: 0 },
-      { x: 214, y: 140, kind: "single", rotation: 0 },
-      { x: 335, y: 140, kind: "single", rotation: 0 },
-      { x: 456, y: 140, kind: "double", rotation: 0 },
-      { x: 699, y: 140, kind: "outsideCorner", rotation: 90 },
+      { x: 70, y: 140, rotation: 0 },
+      { x: 214, y: 140, rotation: 0 },
+      { x: 335, y: 140, rotation: 0 },
+      { x: 456, y: 140, rotation: 0 },
+      { x: 699, y: 140, rotation: 90 },
 
-      { x: 839, y: 284, kind: "single", rotation: 90 },
-      { x: 839, y: 405, kind: "outsideCorner", rotation: 180 },
+      { x: 839, y: 284, rotation: 90 },
+      { x: 839, y: 405, rotation: 180 },
 
-      { x: 352, y: 545, kind: "quad", rotation: 180 },
-      { x: 230, y: 545, kind: "single", rotation: 180 },
-      { x: 70, y: 405, kind: "outsideCorner", rotation: 270 },
+      { x: 352, y: 545, rotation: 180 },
+      { x: 230, y: 545, rotation: 180 },
+      { x: 70, y: 405, rotation: 270 },
 
-      { x: 70, y: 284, kind: "single", rotation: 270 },
+      { x: 70, y: 284, rotation: 270 },
 
-      { x: 70, y: 20, kind: "single", rotation: 0 },
-      { x: 230, y: 20, kind: "double", rotation: 0 },
+      { x: 70, y: 20, rotation: 0 },
+      { x: 230, y: 20, rotation: 0 },
     ];
 
     return slots[index] || {
@@ -686,6 +686,8 @@ button {
   max-width: 100%;
   max-height: 80vh;
   -webkit-overflow-scrolling: touch;
+
+  touch-action: pan-x pan-y;
 }
 
 .layoutControls {
@@ -759,7 +761,7 @@ button {
 }
 
 .svgPlanner {
-  touch-action: none;
+  touch-action: pan-x pan-y;
 }
 
 .svgModuleGroup {
@@ -1378,6 +1380,20 @@ button {
               checked={isIncluded}
               onChange={(event) => {
                 const checked = event.target.checked;
+                const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || 1) - 1);
+
+                if (checked && !layoutOverrides[m.id]) {
+                  const startingSlot = getTemplateSlot(permanentIndex);
+
+                  setLayoutOverrides((prev: any) => ({
+                    ...prev,
+                    [m.id]: {
+                      x: startingSlot.x,
+                      y: startingSlot.y,
+                      rotation: startingSlot.rotation || 0,
+                    },
+                  }));
+                }
 
                 setLayoutIncluded((prev: any) => ({
                   ...prev,
@@ -1423,5 +1439,6 @@ button {
     </main>
   );
 }
+
 
 
