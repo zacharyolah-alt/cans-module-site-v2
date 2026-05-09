@@ -248,9 +248,9 @@ function exportToCSV() {
 }, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
 
   const LAYOUT_SCALE = 10; // 10 SVG pixels = 1 inch
-  const FRONT_TRACK_EDGE_OFFSET = 15; // 1.5 inches from module front to front edge of front track
+  const FRONT_TRACK_FRONT_EDGE = 15; // 1.5 inches from module front to front edge of front track
+  const TRACK_WIDTH = 10; // each track shown as 1 inch wide
   const TRACK_CENTER_SPACING = 13; // 33 mm center-to-center is about 1.3 inches
-  const TRACK_VISUAL_CENTER_OFFSET = 2; // small visual offset so the drawn line represents the track center
 
   function getLayoutKind(m: any) {
     if (m.module_type === "Inside Corner") return "insideCorner";
@@ -285,24 +285,25 @@ function exportToCSV() {
       Starter loop template:
       - Front edge faces outward.
       - Front edge of the front track is 1.5 inches from the module front.
+      - Each track is shown as two rail lines, about 1 inch wide.
       - Track centers are about 33 mm apart.
       - Modules rotate to form the loop; the track does not move on the module.
     */
     const slots = [
-      { x: 70, y: 110, kind: "outsideCorner", rotation: 0 },
-      { x: 214, y: 110, kind: "single", rotation: 0 },
-      { x: 335, y: 110, kind: "single", rotation: 0 },
-      { x: 456, y: 110, kind: "double", rotation: 0 },
-      { x: 699, y: 110, kind: "outsideCorner", rotation: 90 },
+      { x: 70, y: 140, kind: "outsideCorner", rotation: 0 },
+      { x: 214, y: 140, kind: "single", rotation: 0 },
+      { x: 335, y: 140, kind: "single", rotation: 0 },
+      { x: 456, y: 140, kind: "double", rotation: 0 },
+      { x: 699, y: 140, kind: "outsideCorner", rotation: 90 },
 
-      { x: 839, y: 254, kind: "single", rotation: 90 },
-      { x: 839, y: 375, kind: "outsideCorner", rotation: 180 },
+      { x: 839, y: 284, kind: "single", rotation: 90 },
+      { x: 839, y: 405, kind: "outsideCorner", rotation: 180 },
 
-      { x: 352, y: 515, kind: "quad", rotation: 180 },
-      { x: 230, y: 515, kind: "single", rotation: 180 },
-      { x: 70, y: 375, kind: "outsideCorner", rotation: 270 },
+      { x: 352, y: 545, kind: "quad", rotation: 180 },
+      { x: 230, y: 545, kind: "single", rotation: 180 },
+      { x: 70, y: 405, kind: "outsideCorner", rotation: 270 },
 
-      { x: 70, y: 254, kind: "single", rotation: 270 },
+      { x: 70, y: 284, kind: "single", rotation: 270 },
 
       { x: 70, y: 20, kind: "single", rotation: 0 },
       { x: 230, y: 20, kind: "double", rotation: 0 },
@@ -310,7 +311,7 @@ function exportToCSV() {
 
     return slots[index] || {
       x: 70 + (index % 5) * 190,
-      y: 650 + Math.floor((index - 13) / 5) * 170,
+      y: 680 + Math.floor((index - 13) / 5) * 170,
       kind: "custom",
       rotation: 0,
     };
@@ -342,6 +343,17 @@ function exportToCSV() {
 
   function isCornerKind(kind: string) {
     return kind === "insideCorner" || kind === "outsideCorner";
+  }
+
+  function getTrackRails() {
+    const frontRail1 = FRONT_TRACK_FRONT_EDGE;
+    const frontRail2 = FRONT_TRACK_FRONT_EDGE + TRACK_WIDTH;
+    const rearTrackFrontEdge =
+      FRONT_TRACK_FRONT_EDGE + TRACK_CENTER_SPACING - TRACK_WIDTH / 2;
+    const rearRail1 = rearTrackFrontEdge;
+    const rearRail2 = rearTrackFrontEdge + TRACK_WIDTH;
+
+    return [frontRail1, frontRail2, rearRail1, rearRail2];
   }
 
   return (
@@ -578,7 +590,7 @@ button {
 }
 
 .svgScaleKey {
-  fill: rgba(255,255,255,.92);
+  fill: rgba(255,255,255,.94);
   stroke: #777;
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
@@ -995,11 +1007,11 @@ button {
   <section className="formCard">
     <h2>Layout View</h2>
     <p>
-      SVG loop template. The front edge of the front track is fixed 1.5 inches from the module front; modules rotate to form the loop.
+      SVG loop template. Each track is drawn as two parallel rails; modules rotate to form the loop.
     </p>
 
     <div className="layoutCanvas">
-      <svg className="svgPlanner" viewBox="0 0 1250 850" role="img" aria-label="C.A.N.S. module layout planner">
+      <svg className="svgPlanner" viewBox="0 0 1250 880" role="img" aria-label="C.A.N.S. module layout planner">
         <defs>
           <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
             <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#dddddd" strokeWidth="1" />
@@ -1010,14 +1022,13 @@ button {
           </pattern>
         </defs>
 
-        <rect x="0" y="0" width="1250" height="850" fill="url(#largeGrid)" />
+        <rect x="0" y="0" width="1250" height="880" fill="url(#largeGrid)" />
 
         <g>
-          <rect className="svgScaleKey" x="930" y="28" width="285" height="88" rx="8" />
-          <text className="svgKeyTitle" x="946" y="52">Grid / Track Key</text>
-          <text className="svgKeyText" x="946" y="74">1 small square = 1 inch</text>
-          <text className="svgKeyText" x="946" y="92">1 large square = 5 inches</text>
-          <text className="svgKeyText" x="946" y="110">Front track edge = 1.5&quot; from front</text>
+          <rect className="svgScaleKey" x="20" y="20" width="235" height="72" rx="8" />
+          <text className="svgKeyTitle" x="36" y="44">Grid Scale</text>
+          <text className="svgKeyText" x="36" y="64">1 small square = 1 inch</text>
+          <text className="svgKeyText" x="36" y="82">1 large square = 5 inches</text>
         </g>
 
         {filteredModules.map((m, index) => {
@@ -1025,12 +1036,7 @@ button {
           const kind = slot.kind || getLayoutKind(m);
           const size = getLayoutSize(m, slot);
           const bounds = getRotatedBounds(slot, size);
-
-          const frontTrackCenter = FRONT_TRACK_EDGE_OFFSET + TRACK_VISUAL_CENTER_OFFSET;
-          const rearTrackCenter = frontTrackCenter + TRACK_CENTER_SPACING;
-
-          const cornerRadiusOuter = size.width - frontTrackCenter;
-          const cornerRadiusInner = size.width - rearTrackCenter;
+          const rails = getTrackRails();
           const moduleTransform = getModuleTransform(slot, size);
 
           return (
@@ -1050,39 +1056,45 @@ button {
                 {isCornerKind(kind) ? (
                   kind === "outsideCorner" ? (
                     <>
-                      <path
-                        className="svgRail"
-                        d={`M 0 ${frontTrackCenter} A ${cornerRadiusOuter} ${cornerRadiusOuter} 0 0 1 ${cornerRadiusOuter} ${size.height}`}
-                      />
-                      <path
-                        className="svgRail"
-                        d={`M 0 ${rearTrackCenter} A ${cornerRadiusInner} ${cornerRadiusInner} 0 0 1 ${cornerRadiusInner} ${size.height}`}
-                      />
+                      {rails.map((rail, railIndex) => (
+                        <path
+                          key={railIndex}
+                          className="svgRail"
+                          d={`M 0 ${rail} A ${size.width - rail} ${size.height - rail} 0 0 1 ${size.width - rail} ${size.height}`}
+                        />
+                      ))}
                     </>
                   ) : (
                     <>
-                      <path
-                        className="svgRail"
-                        d={`M 0 ${size.height - rearTrackCenter} A ${size.height - rearTrackCenter} ${size.height - rearTrackCenter} 0 0 0 ${size.width - rearTrackCenter} 0`}
-                      />
-                      <path
-                        className="svgRail"
-                        d={`M 0 ${size.height - frontTrackCenter} A ${size.height - frontTrackCenter} ${size.height - frontTrackCenter} 0 0 0 ${size.width - frontTrackCenter} 0`}
-                      />
+                      {rails.map((rail, railIndex) => (
+                        <path
+                          key={railIndex}
+                          className="svgRail"
+                          d={`M 0 ${size.height - rail} A ${size.height - rail} ${size.height - rail} 0 0 0 ${size.width - rail} 0`}
+                        />
+                      ))}
                     </>
                   )
                 ) : (
                   <>
-                    <line className="svgRail" x1="0" y1={frontTrackCenter} x2={size.width} y2={frontTrackCenter} />
-                    <line className="svgRail" x1="0" y1={rearTrackCenter} x2={size.width} y2={rearTrackCenter} />
+                    {rails.map((rail, railIndex) => (
+                      <line
+                        key={railIndex}
+                        className="svgRail"
+                        x1="0"
+                        y1={rail}
+                        x2={size.width}
+                        y2={rail}
+                      />
+                    ))}
                     {Array.from({ length: Math.max(2, Math.floor(size.width / 18)) }).map((_, tieIndex) => (
                       <line
                         key={tieIndex}
                         className="svgRailTie"
                         x1={10 + tieIndex * 18}
-                        y1={frontTrackCenter - 4}
+                        y1={rails[0] - 3}
                         x2={10 + tieIndex * 18}
-                        y2={rearTrackCenter + 4}
+                        y2={rails[3] + 3}
                       />
                     ))}
                   </>
