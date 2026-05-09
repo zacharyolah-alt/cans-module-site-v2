@@ -424,7 +424,9 @@ const displaySvgHeight = gridDepthFeet * 12 * layoutZoom;
 
 const gridSvgWidth = gridWidthFeet * 12;
 const gridSvgHeight = gridDepthFeet * 12;
-
+const layoutModules = modules.filter(
+  (module: any) => layoutIncluded[module.id]
+);
   return (
     <main>
       <style>{`
