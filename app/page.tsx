@@ -416,13 +416,25 @@ button {
 .moduleImage {
   height: 180px;
 }
+
 .layoutGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
   margin-top: 20px;
 }
-
+.layoutCanvas {
+  min-height: 700px;
+  background-color: #fafafa;
+  background-image:
+    linear-gradient(#ddd 1px, transparent 1px),
+    linear-gradient(90deg, #ddd 1px, transparent 1px);
+  background-size: 40px 40px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  padding: 20px;
+  overflow: auto;
+}
 .layoutBlock {
   background: #202020;
   color: white;
@@ -827,7 +839,8 @@ button {
         {viewMode === "layout" && (
   <section className="formCard">
     <h2>Layout View</h2>
-    <div className="layoutGrid">
+    <div className="layoutCanvas">
+  <div className="layoutGrid">
   {filteredModules.map((m) => (
     <div
   key={m.id}
@@ -860,6 +873,7 @@ button {
       </div>
     </div>
   ))}
+</div>
 </div>
   </section>
 )}
