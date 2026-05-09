@@ -262,10 +262,14 @@ function exportToCSV() {
 
   const moduleNumberMap = useMemo(() => {
     const sortedModules = [...modules].sort((a, b) => {
-      const aTime = new Date(a.created_at || 0).getTime();
-      const bTime = new Date(b.created_at || 0).getTime();
+      const aTime = Date.parse(a.created_at || "");
+      const bTime = Date.parse(b.created_at || "");
 
-      return aTime - bTime;
+      if (!Number.isNaN(aTime) && !Number.isNaN(bTime) && aTime !== bTime) {
+        return aTime - bTime;
+      }
+
+      return String(a.id || "").localeCompare(String(b.id || ""));
     });
 
     return sortedModules.reduce((map: any, module: any, index: number) => {
@@ -614,12 +618,12 @@ function exportToCSV() {
       layoutTables,
     };
 
-    window.localStorage.setItem("cans-layout-design-v1", JSON.stringify(savedLayout));
+    window.localStorage.setItem("cans-layout-design-v2", JSON.stringify(savedLayout));
     alert("Layout saved on this device.");
   }
 
   function loadLayoutDesign() {
-    const saved = window.localStorage.getItem("cans-layout-design-v1");
+    const saved = window.localStorage.getItem("cans-layout-design-v2") || window.localStorage.getItem("cans-layout-design-v1");
 
     if (!saved) {
       alert("No saved layout found on this device.");
@@ -833,7 +837,8 @@ button {
 
   max-height: 80vh;
   -webkit-overflow-scrolling: touch;
-  touch-action: auto;
+  touch-action: pan-x pan-y;
+  overscroll-behavior: contain;
 }
 
 .layoutControls {
@@ -959,9 +964,15 @@ button {
 
 .layoutCanvas.editMode {
   touch-action: none;
+  overscroll-behavior: contain;
 }
 
 .layoutCanvas.editMode .svgPlanner {
+  touch-action: none;
+}
+
+.layoutCanvas.editMode .svgModuleGroup,
+.layoutCanvas.editMode .svgTableGroup {
   touch-action: none;
 }
 
@@ -1428,7 +1439,7 @@ button {
   <section className="formCard layoutPrintArea">
     <h2>Layout View</h2>
 
-    <div className="layoutCanvas">
+    <div className={mobileEditMode ? "layoutCanvas editMode" : "layoutCanvas"} ref={layoutCanvasRef}>
       <div className="layoutControls">
         <label>
           Grid width:
@@ -1609,7 +1620,7 @@ button {
               </g>
 
               <text className="svgNumberText" x={numberPosition.x} y={numberPosition.y}>
-                {moduleNumberMap[m.id] || index + 1}
+                {moduleNumberMap[m.id] ?? ""}
               </text>
 
               <g
@@ -1701,6 +1712,7 @@ button {
     </main>
   );
 }
+
 
 
 
