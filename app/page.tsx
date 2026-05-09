@@ -7,6 +7,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 );
+
 export default function Page() {
   const [viewMode, setViewMode] = useState("directory");
   const [modules, setModules] = useState<any[]>([]);
@@ -67,7 +68,8 @@ const [dimensionFilter, setDimensionFilter] = useState("All");
         emailRedirectTo: "https://cans-module-site-v2.vercel.app",
       },
     });
-if (error) {
+
+    if (error) {
       alert(error.message);
       return;
     }
@@ -193,7 +195,6 @@ function exportToCSV() {
     m.status || "",
     m.additional_notes || "",
   ]);
-  
 
   const csv = [headers, ...rows]
     .map((row) =>
@@ -202,7 +203,8 @@ function exportToCSV() {
         .join(",")
     )
     .join("\n");
-const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
 
   const link = document.createElement("a");
@@ -436,7 +438,7 @@ button {
 }
 
 .layoutBlock {
-  --track-y: 28px;
+  --track-y: 22px;
   --rail-gap: 7px;
   position: relative;
   background: rgba(255,255,255,.9);
@@ -491,32 +493,33 @@ button {
   height: 72px;
 }
 
+/* Corner rails are positioned to exit the right side at the same height as the straight module rails. */
 .cornerBlock::before {
   content: "";
   position: absolute;
-  left: 11px;
-  top: 11px;
+  left: 10px;
+  top: 22px;
   width: 48px;
   height: 48px;
   border-top: 2px solid #333;
   border-right: 2px solid #333;
   border-bottom: none;
   border-left: none;
-  border-radius: 0 52px 0 0;
+  border-radius: 0 48px 0 0;
 }
 
 .cornerBlock::after {
   content: "";
   position: absolute;
-  left: 18px;
-  top: 18px;
+  left: 17px;
+  top: 29px;
   width: 34px;
   height: 34px;
   border-top: 2px solid #333;
   border-right: 2px solid #333;
   border-bottom: none;
   border-left: none;
-  border-radius: 0 44px 0 0;
+  border-radius: 0 36px 0 0;
 }
 
 .bridgeBlock {
@@ -1019,6 +1022,5 @@ button {
     </main>
   );
 }
-
 
 
