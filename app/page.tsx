@@ -305,6 +305,9 @@ function getSvgPoint(event: any) {
     y: transformedPoint.y,
   };
 }
+  function snapToGrid(value: number) {
+  return Math.round(value / 10) * 10;
+  }
   function handleTablePointerDown(event: any, table: any) {
     event.preventDefault();
     event.stopPropagation();
