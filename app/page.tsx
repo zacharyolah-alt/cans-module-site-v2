@@ -769,6 +769,7 @@ movingEndpoints.forEach((movingEndpoint) => {
     setLayoutZoom(parsed.layoutZoom || 25);
     setLayoutTables(parsed.layoutTables || []);
     setLayoutLocks(parsed.layoutLocks || {});
+    setLayoutConnections(parsed.layoutConnections || []);
   }
 
   function exportLayoutPDF() {
