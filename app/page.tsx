@@ -1604,6 +1604,33 @@ button {
               {(dimensions === "Other / custom" ||
   bridgeSize === "Custom Bridge") && (
   <>
+    <div>
+  <label>Custom Width (inches)</label>
+  <select
+    value={customWidthInches}
+    onChange={(e) => setCustomWidthInches(e.target.value)}
+  >
+    {Array.from({ length: 100 }, (_, i) => String(i + 1)).map((inch) => (
+      <option key={inch} value={inch}>
+        {inch}"
+      </option>
+    ))}
+  </select>
+</div>
+
+<div>
+  <label>Custom Depth (inches)</label>
+  <select
+    value={customDepthInches}
+    onChange={(e) => setCustomDepthInches(e.target.value)}
+  >
+    {Array.from({ length: 100 }, (_, i) => String(i + 1)).map((inch) => (
+      <option key={inch} value={inch}>
+        {inch}"
+      </option>
+    ))}
+  </select>
+</div>
     <label>Custom Width (inches)</label>
     <select
       value={customWidthInches}
