@@ -1693,6 +1693,11 @@ button {
                     <b>Size:</b> {m.dimensions}
                   </p>
               )}
+                {m.dimensions === "Other / custom" && (
+  <p>
+    Custom Size: {m.custom_width_inches}" W × {m.custom_depth_inches}" D
+  </p>
+)}
               {m.additional_notes && (
   <p>
     <strong>Notes:</strong> {m.additional_notes}
