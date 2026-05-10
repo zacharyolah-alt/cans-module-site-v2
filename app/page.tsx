@@ -19,8 +19,6 @@ export default function Page() {
   const [standard, setStandard] = useState("T-Trak");
   const [dimensions, setDimensions] = useState("");
   const [status, setStatus] = useState("Active");
-  setCustomWidthInches("24");
-setCustomDepthInches("14");
   const [notes, setNotes] = useState("");
   const [customWidthInches, setCustomWidthInches] = useState("24");
 const [customDepthInches, setCustomDepthInches] = useState("14");
