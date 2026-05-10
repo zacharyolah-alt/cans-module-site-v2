@@ -163,6 +163,8 @@ setNotes("");
       module_type: moduleType,
 corner_size: cornerSize,
       dimensions,
+      custom_width_inches: customWidthInches,
+custom_depth_inches: customDepthInches,
       status,
       additional_notes: notes,
     };
