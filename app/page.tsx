@@ -148,6 +148,9 @@ setNotes("");
     setStandard(m.standard || "T-Trak");
     setDimensions(m.dimensions || "");
 setStatus(m.status || "Active");
+    setModuleType(m.module_type || "Straight");
+setCornerSize(m.corner_size || "");
+setBridgeSize(m.bridge_size || "");
 
 setCustomWidthInches(m.custom_width_inches || "24");
 setCustomDepthInches(m.custom_depth_inches || "14");
