@@ -743,6 +743,7 @@ movingEndpoints.forEach((movingEndpoint) => {
       layoutZoom,
       layoutTables,
       layoutLocks,
+      layoutConnections,
     };
 
     window.localStorage.setItem("cans-layout-design-v2", JSON.stringify(savedLayout));
