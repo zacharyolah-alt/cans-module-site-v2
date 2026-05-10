@@ -495,7 +495,12 @@ movingEndpoints.forEach((movingEndpoint) => {
           const distance = Math.sqrt(dx * dx + dy * dy);
 
           if (distance <= snapDistance && (!bestSnap || distance < bestSnap.distance)) {
-            bestSnap = { distance, dx, dy };
+            bestSnap = {
+  distance,
+  dx,
+  dy,
+  otherModuleId: otherModule.id,
+};
           }
         });
       });
@@ -504,7 +509,25 @@ movingEndpoints.forEach((movingEndpoint) => {
     if (!bestSnap) {
       return clampSlotToGrid(candidateSlot, movingSize);
     }
+if (bestSnap && bestSnap.otherModuleId) {
+  setLayoutConnections((prev: any[]) => {
+    const exists = prev.some(
+      (c) =>
+        (c.a === movingModule.id && c.b === bestSnap.otherModuleId) ||
+        (c.b === movingModule.id && c.a === bestSnap.otherModuleId)
+    );
 
+    if (exists) return prev;
+
+    return [
+      ...prev,
+      {
+        a: movingModule.id,
+        b: bestSnap.otherModuleId,
+      },
+    ];
+  });
+}
     return clampSlotToGrid(
       {
         ...candidateSlot,
