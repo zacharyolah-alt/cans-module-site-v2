@@ -356,7 +356,12 @@ function exportToCSV() {
     height: 55,
   };
     }
-
+if (kind === "custom") {
+  return {
+    width: Number(m.custom_width_inches || 24) * LAYOUT_SCALE,
+    height: Number(m.custom_depth_inches || 14) * LAYOUT_SCALE,
+  };
+}
     return { width: 160, height: 144 };
   }
 
