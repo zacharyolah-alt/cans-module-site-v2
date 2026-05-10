@@ -1731,8 +1731,12 @@ button {
                 </p>
 {m.module_type && (
   <p>
-    <b>Type:</b> {m.module_type}
-  </p>
+  <b>Type:</b> {m.module_type}
+
+  {m.bridge_size && (
+    <> — {m.bridge_size}</>
+  )}
+</p>
 )}
                 {m.dimensions && (
                   <p>
