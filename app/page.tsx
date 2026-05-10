@@ -132,7 +132,9 @@ const svgPlannerRef = useRef<SVGSVGElement | null>(null);
     setStandard("T-Trak");
     setDimensions("");
 setStatus("Active");
-
+setModuleType("Straight");
+setCornerSize("");
+setBridgeSize("");
 setCustomWidthInches("24");
 setCustomDepthInches("14");
 
