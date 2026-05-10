@@ -1558,6 +1558,17 @@ button {
   <option>Outside Corner</option>
   <option>Bridge</option>
 </select>
+              {moduleType === "Bridge" && (
+  <select
+    value={bridgeSize}
+    onChange={(e) => setBridgeSize(e.target.value)}
+  >
+    <option value="">Select bridge size</option>
+    <option>Single Bridge</option>
+    <option>Double Bridge</option>
+    <option>Custom Bridge</option>
+  </select>
+)}
               {(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
   <select
     value={cornerSize}
