@@ -22,6 +22,7 @@ export default function Page() {
   const [notes, setNotes] = useState("");
   const [customWidthInches, setCustomWidthInches] = useState("24");
 const [customDepthInches, setCustomDepthInches] = useState("14");
+  const [customShape, setCustomShape] = useState("Rectangle");
   const [search, setSearch] = useState("");
   const [standardFilter, setStandardFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
