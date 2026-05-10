@@ -20,6 +20,8 @@ export default function Page() {
   const [dimensions, setDimensions] = useState("");
   const [status, setStatus] = useState("Active");
   const [notes, setNotes] = useState("");
+  const [customWidthInches, setCustomWidthInches] = useState("24");
+const [customDepthInches, setCustomDepthInches] = useState("14");
   const [search, setSearch] = useState("");
   const [standardFilter, setStandardFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
