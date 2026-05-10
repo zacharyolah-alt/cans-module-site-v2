@@ -38,6 +38,7 @@ const [dimensionFilter, setDimensionFilter] = useState("All");
  
 const [layoutTables, setLayoutTables] = useState<any[]>([]);
   const [layoutLocks, setLayoutLocks] = useState<any>({});
+  const [layoutConnections, setLayoutConnections] = useState<any[]>([]);
   const [layoutOverrides, setLayoutOverrides] = useState<any>({});
 const [layoutIncluded, setLayoutIncluded] = useState<any>({});
 const [gridWidthFeet, setGridWidthFeet] = useState(20);
