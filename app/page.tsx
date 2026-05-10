@@ -156,6 +156,7 @@ setBridgeSize(m.bridge_size || "");
 
 setCustomWidthInches(m.custom_width_inches || "24");
 setCustomDepthInches(m.custom_depth_inches || "14");
+    setCustomShape(m.custom_shape || "Rectangle");
 
 setNotes(m.additional_notes || "");
     window.scrollTo({ top: 0, behavior: "smooth" });
