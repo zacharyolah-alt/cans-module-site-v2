@@ -144,8 +144,12 @@ setNotes("");
     setPhoto(m.photo_url || "");
     setStandard(m.standard || "T-Trak");
     setDimensions(m.dimensions || "");
-    setStatus(m.status || "Active");
-    setNotes(m.additional_notes || "");
+setStatus(m.status || "Active");
+
+setCustomWidthInches(m.custom_width_inches || "24");
+setCustomDepthInches(m.custom_depth_inches || "14");
+
+setNotes(m.additional_notes || "");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
