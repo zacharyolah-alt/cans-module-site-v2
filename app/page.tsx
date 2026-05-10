@@ -331,7 +331,31 @@ function exportToCSV() {
     if (kind === "double") return { width: 243, height: 144 };
     if (kind === "triple") return { width: 365, height: 144 };
     if (kind === "quad") return { width: 487, height: 144 };
-    if (kind === "bridge") return { width: 243, height: 110 };
+    if (kind === "bridge") {
+  let bridgeWidth = 243;
+
+  if (m.bridge_size === "Single Bridge") {
+    bridgeWidth = 121;
+  }
+
+  if (m.bridge_size === "Double Bridge") {
+    bridgeWidth = 243;
+  }
+
+  if (m.bridge_size === "Triple Bridge") {
+    bridgeWidth = 365;
+  }
+
+  if (m.bridge_size === "Custom Bridge") {
+    bridgeWidth =
+      Number(m.custom_width_inches || 24) * LAYOUT_SCALE;
+  }
+
+  return {
+    width: bridgeWidth,
+    height: 55,
+  };
+    }
 
     return { width: 160, height: 144 };
   }
