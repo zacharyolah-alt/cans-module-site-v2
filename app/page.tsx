@@ -168,6 +168,7 @@ setNotes(m.additional_notes || "");
       photo_url: photo,
       standard,
       module_type: moduleType,
+      bridge_size: bridgeSize,
 corner_size: cornerSize,
       dimensions,
       custom_width_inches: customWidthInches,
