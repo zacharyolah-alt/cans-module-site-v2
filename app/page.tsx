@@ -1570,6 +1570,7 @@ button {
     <option value="">Select bridge size</option>
     <option>Single Bridge</option>
     <option>Double Bridge</option>
+    <option>Triple Bridge</option>
     <option>Custom Bridge</option>
   </select>
 )}
