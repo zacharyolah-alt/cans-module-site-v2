@@ -1987,14 +1987,26 @@ button {
           return (
             <g key={m.id} className="svgModuleGroup" onPointerDown={(event) => handleModulePointerDown(event, m, index)}>
               <g transform={moduleTransform}>
-                <rect
-                  className={`svgModule ${kind === "custom" ? "custom" : ""} ${kind === "bridge" ? "bridge" : ""}`}
-                  x="0"
-                  y="0"
-                  width={size.width}
-                  height={size.height}
-                  rx="1"
-                />
+                {kind === "custom" && m.custom_shape === "Angled Inside Corner" ? (
+  <polygon
+    className="svgModule custom"
+    points={`0,${size.height} 0,${size.height * 0.35} ${size.width * 0.35},0 ${size.width},0 ${size.width},${size.height} 0,${size.height}`}
+  />
+) : kind === "custom" && m.custom_shape === "Angled Outside Corner" ? (
+  <polygon
+    className="svgModule custom"
+    points={`0,0 ${size.width},0 ${size.width},${size.height * 0.65} ${size.width * 0.65},${size.height} 0,${size.height} 0,0`}
+  />
+) : (
+  <rect
+    className={`svgModule ${kind === "custom" ? "custom" : ""} ${kind === "bridge" ? "bridge" : ""}`}
+    x="0"
+    y="0"
+    width={size.width}
+    height={size.height}
+    rx="1"
+  />
+)}
 
                 <line className="svgFrontEdge" x1="0" y1="0" x2={size.width} y2="0" />
 
