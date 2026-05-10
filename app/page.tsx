@@ -179,6 +179,7 @@ corner_size: cornerSize,
       dimensions,
       custom_width_inches: customWidthInches,
 custom_depth_inches: customDepthInches,
+      custom_shape: customShape,
       status,
       additional_notes: notes,
     };
