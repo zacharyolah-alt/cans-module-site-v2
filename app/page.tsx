@@ -1668,6 +1668,18 @@ button {
     ))}
   </select>
 </div>
+    <div>
+  <label>Custom Shape</label>
+
+  <select
+    value={customShape}
+    onChange={(e) => setCustomShape(e.target.value)}
+  >
+    <option>Rectangle</option>
+    <option>Angled Inside Corner</option>
+    <option>Angled Outside Corner</option>
+  </select>
+</div>
     <label>Custom Width (inches)</label>
     <select
       value={customWidthInches}
