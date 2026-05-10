@@ -27,6 +27,7 @@ const [customDepthInches, setCustomDepthInches] = useState("14");
   const [statusFilter, setStatusFilter] = useState("All");
   const [uploading, setUploading] = useState(false);
 const [moduleType, setModuleType] = useState("Straight");
+  const [bridgeSize, setBridgeSize] = useState("");
 const [cornerSize, setCornerSize] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [selectedImage, setSelectedImage] = useState(null);
