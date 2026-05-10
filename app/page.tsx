@@ -1601,7 +1601,8 @@ button {
   <option>Interchange Triple - 474 mm x 928 mm (18.66" x 36.54")</option>
   <option>Other / custom</option>
 </select>
-              {dimensions === "Other / custom" && (
+              {(dimensions === "Other / custom" ||
+  bridgeSize === "Custom Bridge") && (
   <>
     <label>Custom Width (inches)</label>
     <select
