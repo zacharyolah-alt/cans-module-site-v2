@@ -130,8 +130,12 @@ const svgPlannerRef = useRef<SVGSVGElement | null>(null);
     setPhoto("");
     setStandard("T-Trak");
     setDimensions("");
-    setStatus("Active");
-    setNotes("");
+setStatus("Active");
+
+setCustomWidthInches("24");
+setCustomDepthInches("14");
+
+setNotes("");
   }
 
   function startEdit(m: any) {
