@@ -138,6 +138,7 @@ setCornerSize("");
 setBridgeSize("");
 setCustomWidthInches("24");
 setCustomDepthInches("14");
+    setCustomShape("Rectangle");
 
 setNotes("");
   }
