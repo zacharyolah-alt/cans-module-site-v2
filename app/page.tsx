@@ -1587,6 +1587,33 @@ button {
   <option>Interchange Triple - 474 mm x 928 mm (18.66" x 36.54")</option>
   <option>Other / custom</option>
 </select>
+              {dimensions === "Other" && (
+  <>
+    <label>Custom Width (inches)</label>
+    <select
+      value={customWidthInches}
+      onChange={(e) => setCustomWidthInches(e.target.value)}
+    >
+      {Array.from({ length: 100 }, (_, i) => String(i + 1)).map((inch) => (
+        <option key={inch} value={inch}>
+          {inch}"
+        </option>
+      ))}
+    </select>
+
+    <label>Custom Depth (inches)</label>
+    <select
+      value={customDepthInches}
+      onChange={(e) => setCustomDepthInches(e.target.value)}
+    >
+      {Array.from({ length: 100 }, (_, i) => String(i + 1)).map((inch) => (
+        <option key={inch} value={inch}>
+          {inch}"
+        </option>
+      ))}
+    </select>
+  </>
+)}
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option>Planning</option>
                 <option>Under Construction</option>
