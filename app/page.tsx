@@ -571,6 +571,14 @@ function getConnectedModuleIds(startId: string) {
     layoutConnections,
   };
 }
+  function pushLayoutHistory() {
+  setLayoutHistory((prev: any[]) => [
+    ...prev,
+    structuredClone(getCurrentLayoutState()),
+  ]);
+
+  setLayoutFuture([]);
+  }
   function getSvgPoint(event: any) {
     const svg = svgPlannerRef.current;
 
