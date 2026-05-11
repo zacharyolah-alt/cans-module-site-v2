@@ -2005,6 +2005,21 @@ button {
         <button className="layoutControlBtn" onClick={saveLayoutDesign}>Save Layout</button>
         <button className="layoutControlBtn" onClick={loadLayoutDesign}>Load Layout</button>
         <button className="layoutControlBtn" onClick={exportLayoutPDF}>Export PDF</button>
+        <button
+  className="layoutActionBtn"
+  onClick={undoLayoutChange}
+  disabled={layoutHistory.length === 0}
+>
+  Undo
+</button>
+
+<button
+  className="layoutActionBtn"
+  onClick={redoLayoutChange}
+  disabled={layoutFuture.length === 0}
+>
+  Redo
+</button>
       </div>
 
 <svg
