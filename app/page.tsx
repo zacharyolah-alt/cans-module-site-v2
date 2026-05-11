@@ -358,7 +358,7 @@ function exportToCSV() {
 
   return {
     width: bridgeWidth,
-    height: 55,
+    height: 80,
   };
     }
 if (kind === "custom") {
