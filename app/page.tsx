@@ -2093,8 +2093,8 @@ button {
                 onClick={(event) => rotateModule(event, m, index)}
                 style={{ cursor: layoutLocks[m.id] ? "not-allowed" : "pointer" }}
               >
-                <circle className="svgRotateCircle" cx={Math.max(34, size.width / 2)} cy={numberPosition.y} r="11" />
-                <text className="svgRotateText" x={Math.max(34, size.width / 2)} y={numberPosition.y}>
+                <circle className="svgRotateCircle" cx={numberPosition.x + 34} cy={numberPosition.y} r="11" />
+                <text className="svgRotateText" x={numberPosition.x + 34} y={numberPosition.y}>
                   ↻
                 </text>
               </g>
