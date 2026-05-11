@@ -46,6 +46,7 @@ const [layoutIncluded, setLayoutIncluded] = useState<any>({});
 const [gridWidthFeet, setGridWidthFeet] = useState(20);
 const [gridDepthFeet, setGridDepthFeet] = useState(20);
 const [layoutZoom, setLayoutZoom] = useState(25);
+  const dragHistoryStartedRef = useRef(false);
 const svgPlannerRef = useRef<SVGSVGElement | null>(null);
   const layoutCanvasRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
