@@ -537,7 +537,30 @@ if (bestSnap && bestSnap.otherModuleId) {
       movingSize
     );
   }
+function getConnectedModuleIds(startId: string) {
+  const visited = new Set<string>();
+  const stack = [startId];
 
+  while (stack.length) {
+    const current = stack.pop()!;
+
+    if (visited.has(current)) continue;
+
+    visited.add(current);
+
+    layoutConnections.forEach((c: any) => {
+      if (c.a === current && !visited.has(c.b)) {
+        stack.push(c.b);
+      }
+
+      if (c.b === current && !visited.has(c.a)) {
+        stack.push(c.a);
+      }
+    });
+  }
+
+  return Array.from(visited);
+}
   function getSvgPoint(event: any) {
     const svg = svgPlannerRef.current;
 
