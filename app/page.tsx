@@ -645,9 +645,11 @@ function redoLayoutChange() {
     event.stopPropagation();
 
     if (layoutLocks[m.id]) return;
-    if (event.pointerType === "touch" && !mobileEditMode) return;
+if (event.pointerType === "touch" && !mobileEditMode) return;
 
-    const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
+pushLayoutHistory();
+
+const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
     const startingSlot = getPlacedSlot(m, permanentIndex);
     const startingPoint = getSvgPoint(event);
     const startingX = startingSlot.x;
