@@ -479,7 +479,7 @@ if (kind === "custom") {
     const movingSize = getLayoutSize(movingModule);
     const movingEndpoints = getTrackEndpointsForModule(movingModule, candidateSlot);
     let bestSnap: any = null;
-    const snapDistance = 18;
+    const snapDistance = 40;
 
     layoutModules.forEach((otherModule: any) => {
       if (otherModule.id === movingModule.id) return;
