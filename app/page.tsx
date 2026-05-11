@@ -769,6 +769,10 @@ function redoLayoutChange() {
     const startingY = table.y;
 
     function moveHandler(moveEvent: any) {
+      if (!window.__layoutDragStarted) {
+  pushLayoutHistory();
+  window.__layoutDragStarted = true;
+      }
       const currentPoint = getSvgPoint(moveEvent);
 
       setLayoutTables((current) =>
@@ -796,6 +800,7 @@ function redoLayoutChange() {
     }
 
     function upHandler() {
+      window.__layoutDragStarted = false;
       window.removeEventListener("pointermove", moveHandler);
       window.removeEventListener("pointerup", upHandler);
     }
