@@ -715,6 +715,7 @@ const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
     event.stopPropagation();
 
     if (layoutLocks[m.id]) return;
+    pushLayoutHistory();
 
     const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
     const currentSlot = getPlacedSlot(m, permanentIndex);
