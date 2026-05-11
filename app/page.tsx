@@ -563,6 +563,14 @@ function getConnectedModuleIds(startId: string) {
 
   return Array.from(visited);
 }
+  function getCurrentLayoutState() {
+  return {
+    layoutOverrides,
+    layoutTables,
+    layoutLocks,
+    layoutConnections,
+  };
+}
   function getSvgPoint(event: any) {
     const svg = svgPlannerRef.current;
 
