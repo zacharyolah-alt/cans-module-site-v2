@@ -770,9 +770,9 @@ function redoLayoutChange() {
     const startingY = table.y;
 
     function moveHandler(moveEvent: any) {
-      if (!(window as any).__layoutDragStarted) {
+      if (!dragHistoryStartedRef.current) {
   pushLayoutHistory();
-(window as any).__layoutDragStarted = true;
+dragHistoryStartedRef.current = true;
       }
       const currentPoint = getSvgPoint(moveEvent);
 
@@ -801,7 +801,7 @@ function redoLayoutChange() {
     }
 
     function upHandler() {
-      (window as any).__layoutDragStarted = false;
+      dragHistoryStartedRef.current = false;
       window.removeEventListener("pointermove", moveHandler);
       window.removeEventListener("pointerup", upHandler);
     }
