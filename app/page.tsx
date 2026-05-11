@@ -579,6 +579,46 @@ function getConnectedModuleIds(startId: string) {
 
   setLayoutFuture([]);
   }
+  function restoreLayoutState(state: any) {
+  setLayoutOverrides(state.layoutOverrides || {});
+  setLayoutTables(state.layoutTables || []);
+  setLayoutLocks(state.layoutLocks || {});
+  setLayoutConnections(state.layoutConnections || []);
+}
+
+function undoLayoutChange() {
+  setLayoutHistory((history: any[]) => {
+    if (history.length === 0) return history;
+
+    const previous = history[history.length - 1];
+    const remaining = history.slice(0, -1);
+
+    setLayoutFuture((future: any[]) => [
+      structuredClone(getCurrentLayoutState()),
+      ...future,
+    ]);
+
+    restoreLayoutState(previous);
+    return remaining;
+  });
+}
+
+function redoLayoutChange() {
+  setLayoutFuture((future: any[]) => {
+    if (future.length === 0) return future;
+
+    const next = future[0];
+    const remaining = future.slice(1);
+
+    setLayoutHistory((history: any[]) => [
+      ...history,
+      structuredClone(getCurrentLayoutState()),
+    ]);
+
+    restoreLayoutState(next);
+    return remaining;
+  });
+}
   function getSvgPoint(event: any) {
     const svg = svgPlannerRef.current;
 
