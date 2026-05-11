@@ -639,7 +639,7 @@ function getConnectedModuleIds(startId: string) {
 
   return next;
 });
-
+    }
     function upHandler() {
       window.removeEventListener("pointermove", moveHandler);
       window.removeEventListener("pointerup", upHandler);
