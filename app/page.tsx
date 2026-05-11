@@ -2098,6 +2098,38 @@ button {
                   ↻
                 </text>
               </g>
+              <g
+  onPointerDown={(event) => event.stopPropagation()}
+  onClick={() => {
+    setLayoutConnections((prev: any[]) =>
+      prev.filter(
+        (c) => c.a !== m.id && c.b !== m.id
+      )
+    );
+  }}
+  style={{ cursor: "pointer" }}
+>
+  <circle
+    cx={lockButton.x}
+    cy={lockButton.y + 28}
+    r="10"
+    fill="#ff6b35"
+    stroke="#ffffff"
+    strokeWidth="2"
+  />
+
+  <text
+    x={lockButton.x}
+    y={lockButton.y + 28}
+    textAnchor="middle"
+    dominantBaseline="central"
+    fontSize="11"
+    fill="#ffffff"
+    fontWeight="700"
+  >
+    ⛓
+  </text>
+</g>
 
               <g
                 onPointerDown={(event) => event.stopPropagation()}
