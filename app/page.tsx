@@ -604,15 +604,41 @@ function getConnectedModuleIds(startId: string) {
 
       const snappedSlot = applyTrackSnap(candidateSlot, m);
 
-      setLayoutOverrides((prev: any) => ({
-        ...prev,
-        [m.id]: {
-          ...startingSlot,
-          ...(prev[m.id] || {}),
-          ...snappedSlot,
-        },
-      }));
-    }
+      setLayoutOverrides((prev: any) => {
+  const connectedIds = getConnectedModuleIds(m.id);
+
+  const deltaX = snappedSlot.x - startingSlot.x;
+  const deltaY = snappedSlot.y - startingSlot.y;
+
+  const next = { ...prev };
+
+  connectedIds.forEach((connectedId) => {
+    const connectedModule = layoutModules.find(
+      (mod: any) => mod.id === connectedId
+    );
+
+    if (!connectedModule) return;
+
+    const connectedIndex = Math.max(
+      0,
+      (moduleNumberMap[connectedModule.id] || 1) - 1
+    );
+
+    const connectedSlot = getPlacedSlot(
+      connectedModule,
+      connectedIndex
+    );
+
+    next[connectedId] = {
+      ...connectedSlot,
+      ...(prev[connectedId] || {}),
+      x: connectedSlot.x + deltaX,
+      y: connectedSlot.y + deltaY,
+    };
+  });
+
+  return next;
+});
 
     function upHandler() {
       window.removeEventListener("pointermove", moveHandler);
@@ -1018,7 +1044,7 @@ button {
 
 .tripleBlock {
   min-height: 150px;
-}
+} 
 
 .quadBlock {
   min-height: 180px;
