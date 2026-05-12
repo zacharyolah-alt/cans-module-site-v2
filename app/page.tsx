@@ -144,6 +144,7 @@ setBridgeSize("");
 setCustomWidthInches("24");
 setCustomDepthInches("14");
     setCustomShape("Rectangle");
+    setPolygonSides("6");
 
 setNotes("");
   }
