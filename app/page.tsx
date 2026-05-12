@@ -766,6 +766,7 @@ const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
     event.stopPropagation();
 
     if (layoutLocks[table.id]) return;
+    pushLayoutHistory();
     if (event.pointerType === "touch" && !mobileEditMode) return;
 
     const startingPoint = getSvgPoint(event);
