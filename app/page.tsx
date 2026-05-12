@@ -23,6 +23,7 @@ export default function Page() {
   const [customWidthInches, setCustomWidthInches] = useState("24");
 const [customDepthInches, setCustomDepthInches] = useState("14");
   const [customShape, setCustomShape] = useState("Rectangle");
+  const [polygonSides, setPolygonSides] = useState("6");
   const [search, setSearch] = useState("");
   const [standardFilter, setStandardFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
