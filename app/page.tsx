@@ -1823,6 +1823,7 @@ button {
     <option>Rectangle</option>
     <option>Angled Inside Corner</option>
     <option>Angled Outside Corner</option>
+    <option>Polygon</option>
   </select>
 </div>
     <label>Custom Width (inches)</label>
