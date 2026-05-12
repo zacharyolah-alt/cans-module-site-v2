@@ -851,6 +851,7 @@ dragHistoryStartedRef.current = true;
   }
 
   function deleteLayoutTable(id: string) {
+    pushLayoutHistory();
     setLayoutTables((current) => current.filter((table) => table.id !== id));
     setLayoutLocks((prev: any) => {
       const next = { ...prev };
