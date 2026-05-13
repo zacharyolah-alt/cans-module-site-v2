@@ -1829,6 +1829,21 @@ button {
     <option>Polygon</option>
   </select>
 </div>
+    {customShape === "Polygon" && (
+  <div>
+    <label>Number of Sides</label>
+    <select
+      value={polygonSides}
+      onChange={(e) => setPolygonSides(e.target.value)}
+    >
+      {[3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((sideCount) => (
+        <option key={sideCount} value={String(sideCount)}>
+          {sideCount} sides
+        </option>
+      ))}
+    </select>
+  </div>
+)}
     <label>Custom Width (inches)</label>
     <select
       value={customWidthInches}
