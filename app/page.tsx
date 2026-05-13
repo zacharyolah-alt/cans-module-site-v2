@@ -24,6 +24,7 @@ export default function Page() {
 const [customDepthInches, setCustomDepthInches] = useState("14");
   const [customShape, setCustomShape] = useState("Rectangle");
   const [polygonSides, setPolygonSides] = useState("6");
+  const [polygonSideLengths, setPolygonSideLengths] = useState<any>({});
   const [search, setSearch] = useState("");
   const [standardFilter, setStandardFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
