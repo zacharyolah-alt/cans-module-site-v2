@@ -165,6 +165,7 @@ setCustomWidthInches(m.custom_width_inches || "24");
 setCustomDepthInches(m.custom_depth_inches || "14");
     setCustomShape(m.custom_shape || "Rectangle");
 setPolygonSides(m.polygon_sides || "6");
+    setPolygonSideLengths({});
 setNotes(m.additional_notes || "");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
