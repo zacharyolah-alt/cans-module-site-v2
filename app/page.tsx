@@ -25,6 +25,7 @@ const [customDepthInches, setCustomDepthInches] = useState("14");
   const [customShape, setCustomShape] = useState("Rectangle");
   const [polygonSides, setPolygonSides] = useState("6");
   const [polygonSideLengths, setPolygonSideLengths] = useState<any>({});
+  const [polygonAngles, setPolygonAngles] = useState<any>({});
   const [search, setSearch] = useState("");
   const [standardFilter, setStandardFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -166,6 +167,7 @@ setCustomDepthInches(m.custom_depth_inches || "14");
     setCustomShape(m.custom_shape || "Rectangle");
 setPolygonSides(m.polygon_sides || "6");
     setPolygonSideLengths({});
+    setPolygonAngles({});
 setNotes(m.additional_notes || "");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -190,6 +192,7 @@ custom_depth_inches: customDepthInches,
       custom_shape: customShape,
       polygon_sides: polygonSides,
 polygon_side_lengths: polygonSideLengths,
+      polygon_angles: polygonAngles,
       status,
       additional_notes: notes,
     };
