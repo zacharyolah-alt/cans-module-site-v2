@@ -1867,8 +1867,12 @@ button {
             </option>
           ))}
         </select>
-        <label>Angle after Side {sideNumber}</label>
-<select
+        <label>Corner Angle after Side {sideNumber} (degrees)</label>
+<input
+  type="number"
+  min="1"
+  max="359"
+  step="0.1"
   value={polygonAngles[sideNumber] || "90"}
   onChange={(e) =>
     setPolygonAngles((prev: any) => ({
@@ -1876,12 +1880,7 @@ button {
       [sideNumber]: e.target.value,
     }))
   }
->
-  {[30, 45, 60, 75, 90, 105, 120, 135, 150].map((angle) => (
-    <option key={angle} value={String(angle)}>
-      {angle}°
-    </option>
-  ))}
+/>
 </select>
       </div>
     ))}
