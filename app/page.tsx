@@ -1976,7 +1976,7 @@ button {
                     <b>Size:</b> {m.dimensions}
                   </p>
               )}
-                {m.dimensions === "Other / custom" && (
+                {m.dimensions === "Other / custom" && m.custom_shape !== "Polygon" && (
   <p>
     Custom Size: {m.custom_width_inches}" W × {m.custom_depth_inches}" D
   </p>
@@ -1984,6 +1984,14 @@ button {
                 {m.dimensions === "Other / custom" && m.custom_shape && (
   <p>
     <b>Shape:</b> {m.custom_shape}
+  </p>
+)}
+                {m.custom_shape === "Polygon" && m.polygon_side_lengths && (
+  <p>
+    <b>Polygon Sides:</b>{" "}
+    {Object.entries(m.polygon_side_lengths)
+      .map(([side, length]) => `Side ${side}: ${length}"`)
+      .join(", ")}
   </p>
 )}
               {m.additional_notes && (
