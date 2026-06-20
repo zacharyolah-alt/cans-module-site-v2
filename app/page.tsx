@@ -189,6 +189,7 @@ corner_size: cornerSize,
 custom_depth_inches: customDepthInches,
       custom_shape: customShape,
       polygon_sides: polygonSides,
+polygon_side_lengths: polygonSideLengths,
       status,
       additional_notes: notes,
     };
