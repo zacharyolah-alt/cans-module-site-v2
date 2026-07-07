@@ -1885,6 +1885,8 @@ button {
     ))}
   </div>
 )}
+{customShape !== "Polygon" && (
+  <>
     <label>Custom Width (inches)</label>
     <select
       value={customWidthInches}
