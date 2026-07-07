@@ -1886,7 +1886,7 @@ button {
   </div>
 )}
 {customShape !== "Polygon" && (
-  <>
+  <div>
     <label>Custom Width (inches)</label>
     <select
       value={customWidthInches}
@@ -1910,7 +1910,7 @@ button {
         </option>
       ))}
     </select>
-  </>
+  </div>
 )}
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option>Planning</option>
