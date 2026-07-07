@@ -1835,7 +1835,7 @@ button {
     <option>Polygon</option>
   </select>
 </div>
-    {customShape === "Polygon" && (
+{customShape === "Polygon" && (
   <div>
     <label>Number of Sides</label>
     <select
@@ -1849,42 +1849,46 @@ button {
       ))}
     </select>
 
-    {Array.from({ length: Number(polygonSides) }, (_, i) => i + 1).map((sideNumber) => (
-      <div key={sideNumber}>
-        <label>Side {sideNumber} Length (inches)</label>
-        <select
-          value={polygonSideLengths[sideNumber] || "24"}
-          onChange={(e) =>
-            setPolygonSideLengths((prev: any) => ({
-              ...prev,
-              [sideNumber]: e.target.value,
-            }))
-          }
-        >
-          {Array.from({ length: 100 }, (_, i) => i + 1).map((inch) => (
-            <option key={inch} value={String(inch)}>
-              {inch}"
-            </option>
-          ))}
-        </select>
-        <label>Interior Angle after Side {sideNumber} (degrees)</label>
-<input
-  type="number"
-  min="1"
-  max="359"
-  step="0.1"
-  value={polygonAngles[sideNumber] || "90"}
-  onChange={(e) =>
-    setPolygonAngles((prev: any) => ({
-      ...prev,
-      [sideNumber]: e.target.value,
-    }))
-  }
-/>
-      </div>
-    ))}
+    {Array.from({ length: Number(polygonSides) }, (_, i) => i + 1).map(
+      (sideNumber) => (
+        <div key={sideNumber}>
+          <label>Side {sideNumber} Length (inches)</label>
+          <select
+            value={polygonSideLengths[sideNumber] || "24"}
+            onChange={(e) =>
+              setPolygonSideLengths((prev: any) => ({
+                ...prev,
+                [sideNumber]: e.target.value,
+              }))
+            }
+          >
+            {Array.from({ length: 100 }, (_, i) => i + 1).map((inch) => (
+              <option key={inch} value={String(inch)}>
+                {inch}"
+              </option>
+            ))}
+          </select>
+
+          <label>Interior Angle after Side {sideNumber} (degrees)</label>
+          <input
+            type="number"
+            min="1"
+            max="359"
+            step="0.1"
+            value={polygonAngles[sideNumber] || "90"}
+            onChange={(e) =>
+              setPolygonAngles((prev: any) => ({
+                ...prev,
+                [sideNumber]: e.target.value,
+              }))
+            }
+          />
+        </div>
+      )
+    )}
   </div>
 )}
+
 {customShape !== "Polygon" && (
   <div>
     <label>Custom Width (inches)</label>
