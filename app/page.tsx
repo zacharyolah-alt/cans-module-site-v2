@@ -1867,7 +1867,7 @@ button {
             </option>
           ))}
         </select>
-        <label>Corner Angle after Side {sideNumber} (degrees)</label>
+        <label>Interior Angle after Side {sideNumber} (degrees)</label>
 <input
   type="number"
   min="1"
