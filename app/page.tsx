@@ -145,6 +145,8 @@ setCustomWidthInches("24");
 setCustomDepthInches("14");
     setCustomShape("Rectangle");
     setPolygonSides("6");
+    setPolygonSideLengths({});
+    setPolygonAngles({});
 
 setNotes("");
   }
@@ -164,8 +166,8 @@ setCustomWidthInches(m.custom_width_inches || "24");
 setCustomDepthInches(m.custom_depth_inches || "14");
     setCustomShape(m.custom_shape || "Rectangle");
 setPolygonSides(m.polygon_sides || "6");
-    setPolygonSideLengths({});
-    setPolygonAngles({});
+    setPolygonSideLengths(m.polygon_side_lengths || {});
+    setPolygonAngles(m.polygon_angles || {});
 setNotes(m.additional_notes || "");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -203,7 +205,6 @@ polygon_side_lengths: polygonSideLengths,
       alert(result.error.message);
       return;
     }
-
     resetForm();
     loadModules();
   }
@@ -287,7 +288,6 @@ function exportToCSV() {
     const matchesSize =
       dimensionFilter === "All" ||
       m.dimensions?.startsWith(dimensionFilter + " -");
-
     return matchesSearch && matchesStandard && matchesStatus && matchesType && matchesSize;
   });
 }, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
@@ -296,6 +296,7 @@ function exportToCSV() {
   const FRONT_TRACK_FRONT_EDGE = 15;
   const TRACK_WIDTH = 10;
   const TRACK_CENTER_SPACING = 13;
+  const TRACK_SNAP_DISTANCE = 24;
 
   const moduleNumberMap = useMemo(() => {
     const sortedModules = [...modules].sort((a, b) => {
@@ -352,6 +353,7 @@ function exportToCSV() {
   if (m.bridge_size === "Single Bridge") {
     bridgeWidth = 121;
   }
+
   if (m.bridge_size === "Double Bridge") {
     bridgeWidth = 243;
   }
@@ -390,7 +392,6 @@ if (kind === "custom") {
   function getPlacedSlot(m: any, index: number) {
     const baseSlot = getTemplateSlot(index);
     const savedSlot = layoutOverrides[m.id];
-
     return {
       ...baseSlot,
       ...(savedSlot || {}),
@@ -414,6 +415,7 @@ if (kind === "custom") {
     const rearTrackFrontEdge = FRONT_TRACK_FRONT_EDGE + TRACK_CENTER_SPACING - TRACK_WIDTH / 2;
     const rearRail1 = rearTrackFrontEdge;
     const rearRail2 = rearTrackFrontEdge + TRACK_WIDTH;
+
     return [frontRail1, frontRail2, rearRail1, rearRail2];
   }
 
@@ -462,23 +464,24 @@ if (kind === "custom") {
     const size = getLayoutSize(m);
     const kind = getLayoutKind(m);
     const rotation = slot.rotation || 0;
-    const rails = getMainTrackCenters();
+    const tracks = getMainTrackCenters();
 
     const localPoints = isCornerKind(kind)
-      ? rails.flatMap((rail) => [
-          { x: 0, y: rail },
-          { x: size.width - rail, y: size.height },
+      ? tracks.flatMap((track, trackIndex) => [
+          { x: 0, y: kind === "insideCorner" ? size.height - track : track, trackIndex, side: "left" },
+          { x: size.width - track, y: kind === "insideCorner" ? 0 : size.height, trackIndex, side: kind === "insideCorner" ? "top" : "bottom" },
         ])
-      : rails.flatMap((rail) => [
-          { x: 0, y: rail },
-          { x: size.width, y: rail },
+      : tracks.flatMap((track, trackIndex) => [
+          { x: 0, y: track, trackIndex, side: "left" },
+          { x: size.width, y: track, trackIndex, side: "right" },
         ]);
-
     return localPoints.map((point) => {
       const rotated = rotatePoint(point.x, point.y, rotation, size);
       return {
         x: slot.x + rotated.x,
         y: slot.y + rotated.y,
+        trackIndex: point.trackIndex,
+        side: point.side,
       };
     });
   }
@@ -487,7 +490,6 @@ if (kind === "custom") {
     const movingSize = getLayoutSize(movingModule);
     const movingEndpoints = getTrackEndpointsForModule(movingModule, candidateSlot);
     let bestSnap: any = null;
-    const snapDistance = 22;
 
     layoutModules.forEach((otherModule: any) => {
       if (otherModule.id === movingModule.id) return;
@@ -496,19 +498,23 @@ if (kind === "custom") {
       const otherSlot = getPlacedSlot(otherModule, otherPermanentIndex);
       const otherEndpoints = getTrackEndpointsForModule(otherModule, otherSlot);
 
-movingEndpoints.forEach((movingEndpoint) => {
+      movingEndpoints.forEach((movingEndpoint) => {
         otherEndpoints.forEach((otherEndpoint) => {
+          if (movingEndpoint.trackIndex !== otherEndpoint.trackIndex) return;
+
           const dx = otherEndpoint.x - movingEndpoint.x;
           const dy = otherEndpoint.y - movingEndpoint.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
-          if (distance <= snapDistance && (!bestSnap || distance < bestSnap.distance)) {
+          if (distance <= TRACK_SNAP_DISTANCE && (!bestSnap || distance < bestSnap.distance)) {
             bestSnap = {
-  distance,
-  dx,
-  dy,
-  otherModuleId: otherModule.id,
-};
+              distance,
+              dx,
+              dy,
+              otherModuleId: otherModule.id,
+              movingTrackIndex: movingEndpoint.trackIndex,
+              otherTrackIndex: otherEndpoint.trackIndex,
+            };
           }
         });
       });
@@ -517,25 +523,28 @@ movingEndpoints.forEach((movingEndpoint) => {
     if (!bestSnap) {
       return clampSlotToGrid(candidateSlot, movingSize);
     }
-if (bestSnap && bestSnap.otherModuleId) {
-  setLayoutConnections((prev: any[]) => {
-    const exists = prev.some(
-      (c) =>
-        (c.a === movingModule.id && c.b === bestSnap.otherModuleId) ||
-        (c.b === movingModule.id && c.a === bestSnap.otherModuleId)
-    );
 
-    if (exists) return prev;
+    if (bestSnap.otherModuleId) {
+      setLayoutConnections((prev: any[]) => {
+        const exists = prev.some(
+          (c) =>
+            (c.a === movingModule.id && c.b === bestSnap.otherModuleId) ||
+            (c.b === movingModule.id && c.a === bestSnap.otherModuleId)
+        );
 
-    return [
-      ...prev,
-      {
-        a: movingModule.id,
-        b: bestSnap.otherModuleId,
-      },
-    ];
-  });
-}
+        if (exists) return prev;
+
+        return [
+          ...prev,
+          {
+            a: movingModule.id,
+            b: bestSnap.otherModuleId,
+            trackIndex: bestSnap.movingTrackIndex,
+          },
+        ];
+      });
+    }
+
     return clampSlotToGrid(
       {
         ...candidateSlot,
@@ -560,6 +569,7 @@ function getConnectedModuleIds(startId: string) {
       if (c.a === current && !visited.has(c.b)) {
         stack.push(c.b);
       }
+
       if (c.b === current && !visited.has(c.a)) {
         stack.push(c.a);
       }
@@ -569,32 +579,63 @@ function getConnectedModuleIds(startId: string) {
   return Array.from(visited);
 }
 
-function isModuleConnected(id: string) {
-  return layoutConnections.some((connection: any) => connection.a === id || connection.b === id);
-}
+  function moduleHasConnection(moduleId: string) {
+    return layoutConnections.some((c: any) => c.a === moduleId || c.b === moduleId);
+  }
 
-function getConnectionLine(connection: any) {
-  const moduleA = layoutModules.find((module: any) => module.id === connection.a);
-  const moduleB = layoutModules.find((module: any) => module.id === connection.b);
+  function getModuleCenter(m: any) {
+    const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || 1) - 1);
+    const slot = getPlacedSlot(m, permanentIndex);
+    const size = getLayoutSize(m);
+    const bounds = getRotatedBounds(slot, size);
 
-  if (!moduleA || !moduleB) return null;
+    return {
+      x: slot.x + bounds.width / 2,
+      y: slot.y + bounds.height / 2,
+    };
+  }
 
-  const indexA = Math.max(0, (moduleNumberMap[moduleA.id] || 1) - 1);
-  const indexB = Math.max(0, (moduleNumberMap[moduleB.id] || 1) - 1);
-  const slotA = getPlacedSlot(moduleA, indexA);
-  const slotB = getPlacedSlot(moduleB, indexB);
-  const sizeA = getLayoutSize(moduleA);
-  const sizeB = getLayoutSize(moduleB);
-  const boundsA = getRotatedBounds(slotA, sizeA);
-  const boundsB = getRotatedBounds(slotB, sizeB);
+  function getConnectionLine(connection: any) {
+    const aModule = layoutModules.find((m: any) => m.id === connection.a);
+    const bModule = layoutModules.find((m: any) => m.id === connection.b);
 
-  return {
-    x1: slotA.x + boundsA.width / 2,
-    y1: slotA.y + boundsA.height / 2,
-    x2: slotB.x + boundsB.width / 2,
-    y2: slotB.y + boundsB.height / 2,
-  };
-}
+    if (!aModule || !bModule) return null;
+    const a = getModuleCenter(aModule);
+    const b = getModuleCenter(bModule);
+
+    return { a, b };
+  }
+
+  function autoArrangeLayout() {
+    pushLayoutHistory();
+
+    let cursorX = 80;
+    const y = 140;
+    const nextOverrides: any = {};
+    const nextConnections: any[] = [];
+
+    layoutModules.forEach((m: any, index: number) => {
+      const size = getLayoutSize(m);
+      nextOverrides[m.id] = {
+        x: cursorX,
+        y,
+        rotation: 0,
+      };
+
+      if (index > 0) {
+        nextConnections.push({
+          a: layoutModules[index - 1].id,
+          b: m.id,
+          trackIndex: 0,
+        });
+      }
+
+      cursorX += size.width + 20;
+    });
+
+    setLayoutOverrides((prev: any) => ({ ...prev, ...nextOverrides }));
+    setLayoutConnections(nextConnections);
+  }
 
   function getCurrentLayoutState() {
   return {
@@ -622,6 +663,7 @@ function getConnectionLine(connection: any) {
 function undoLayoutChange() {
   setLayoutHistory((history: any[]) => {
     if (history.length === 0) return history;
+
     const previous = history[history.length - 1];
     const remaining = history.slice(0, -1);
 
@@ -641,7 +683,6 @@ function redoLayoutChange() {
 
     const next = future[0];
     const remaining = future.slice(1);
-
     setLayoutHistory((history: any[]) => [
       ...history,
       structuredClone(getCurrentLayoutState()),
@@ -662,7 +703,6 @@ function redoLayoutChange() {
 
     const matrix = svg.getScreenCTM();
     if (!matrix) return { x: 0, y: 0 };
-
     const transformed = point.matrixTransform(matrix.inverse());
 
     return {
@@ -747,6 +787,7 @@ const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
 
     if (layoutLocks[m.id]) return;
     pushLayoutHistory();
+
     const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
     const currentSlot = getPlacedSlot(m, permanentIndex);
     const nextSlot = clampSlotToGrid(
@@ -768,7 +809,6 @@ const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
 
   function addLayoutTable(kind: "6ft" | "8ft") {
     pushLayoutHistory();
-
     const width = kind === "6ft" ? 72 * LAYOUT_SCALE : 96 * LAYOUT_SCALE;
     const height = 30 * LAYOUT_SCALE;
 
@@ -878,7 +918,6 @@ dragHistoryStartedRef.current = true;
 
   function toggleLayoutLock(id: string) {
     pushLayoutHistory();
-
     setLayoutLocks((prev: any) => ({
       ...prev,
       [id]: !prev[id],
@@ -894,7 +933,6 @@ dragHistoryStartedRef.current = true;
       return next;
     });
   }
-
   function zoomLayout(direction: "in" | "out") {
     setLayoutZoom((current) => {
       const next = direction === "in" ? current + 10 : current - 10;
@@ -935,6 +973,7 @@ dragHistoryStartedRef.current = true;
       alert("No saved layout found on this device.");
       return;
     }
+
     const parsed = JSON.parse(saved);
 
     setLayoutOverrides(parsed.layoutOverrides || {});
@@ -1060,6 +1099,7 @@ dragHistoryStartedRef.current = true;
   font-weight: 700;
   border: none;
 }
+
 .clearBtn {
   width: auto;
   align-self: flex-start;
@@ -1143,6 +1183,7 @@ button {
 .doubleBlock {
   min-height: 120px;
 }
+
 .tripleBlock {
   min-height: 150px;
 } 
@@ -1163,6 +1204,7 @@ button {
 .customBlock {
   border-left: 8px solid #b00020;
 }
+
 .layoutTitle {
   font-size: 18px;
   font-weight: 900;
@@ -1205,7 +1247,6 @@ button {
 .layoutCanvas.editMode .svgTableGroup {
   touch-action: none;
 }
-
 .svgTableGroup {
   cursor: grab;
   touch-action: none;
@@ -1226,7 +1267,6 @@ button {
   text-anchor: middle;
   dominant-baseline: central;
 }
-
 @media print {
   body * {
     visibility: hidden;
@@ -1309,6 +1349,7 @@ button {
   border-radius: 999px;
   padding: 8px 12px;
 }
+
 .layoutCanvas.editMode {
   touch-action: none;
   overscroll-behavior: contain;
@@ -1369,62 +1410,6 @@ button {
   vector-effect: non-scaling-stroke;
 }
 
-.svgConnectionLine {
-  stroke: #ff6b35;
-  stroke-width: 3;
-  stroke-dasharray: 8 6;
-  fill: none;
-  opacity: .85;
-  vector-effect: non-scaling-stroke;
-  pointer-events: none;
-}
-
-.svgConnectionPoint {
-  fill: #1f8cff;
-  stroke: white;
-  stroke-width: 2;
-  vector-effect: non-scaling-stroke;
-  pointer-events: none;
-}
-
-.layoutHelpKey {
-  margin-top: 18px;
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #ddd;
-  overflow: hidden;
-}
-
-.layoutHelpGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-  padding: 14px;
-}
-
-.layoutHelpItem {
-  font-size: 14px;
-  line-height: 1.35;
-}
-
-.layoutSwatch {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  margin-right: 7px;
-  vertical-align: -3px;
-  border: 2px solid #333;
-  background: rgba(198, 226, 178, .55);
-}
-
-.layoutSwatch.custom { border-color: #b00020; }
-.layoutSwatch.bridge { border-color: #6b4b20; }
-.layoutSwatch.table { background: rgba(70, 155, 255, .28); border-color: #1f6fbf; }
-.layoutSwatch.front { background: #ffd21f; border-color: #3d6b2d; }
-.layoutSwatch.connection { background: #ff6b35; border-color: #ff6b35; }
-.layoutSwatch.point { background: #1f8cff; border-color: white; box-shadow: 0 0 0 1px #1f8cff; }
-
 .svgNumberText {
   fill: #2f6124;
   font-size: 28px;
@@ -1449,7 +1434,6 @@ button {
   dominant-baseline: central;
   pointer-events: none;
 }
-
 .svgLockCircle {
   fill: #b00020;
   stroke: white;
@@ -1476,6 +1460,7 @@ button {
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
+
 .svgDeleteText {
   fill: white;
   font-size: 15px;
@@ -1500,6 +1485,51 @@ button {
   dominant-baseline: central;
 }
 
+.svgConnectionLine {
+  stroke: #ff8c00;
+  stroke-width: 3;
+  stroke-dasharray: 10 7;
+  opacity: .85;
+  vector-effect: non-scaling-stroke;
+}
+
+.svgSnapPoint {
+  fill: #1f6fff;
+  stroke: white;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.symbolKeyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid #eee;
+}
+
+.symbolKeyItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.symbolSwatch {
+  width: 22px;
+  height: 14px;
+  border-radius: 4px;
+  border: 2px solid #3d6b2d;
+  background: rgba(198, 226, 178, .55);
+  flex: 0 0 auto;
+}
+
+.symbolSwatch.custom { border-color: #b00020; }
+.symbolSwatch.bridge { border-color: #6b4b20; }
+.symbolSwatch.table { border-color: #1f6fbf; background: rgba(70, 155, 255, .28); }
+.symbolSwatch.connection { border-color: #ff8c00; background: repeating-linear-gradient(90deg, #ff8c00 0 8px, transparent 8px 14px); }
+.symbolSwatch.snap { border-radius: 999px; width: 14px; height: 14px; border-color: white; background: #1f6fff; }
+
 .svgScaleKey {
   fill: rgba(255,255,255,.94);
   stroke: #ffd21f;
@@ -1517,6 +1547,7 @@ button {
   fill: #111;
   font-size: 12px;
 }
+
 .layoutLegend {
   margin-top: 18px;
   background: white;
@@ -1549,7 +1580,6 @@ button {
   margin: 0;
   accent-color: #ffd21f;
 }
-
 .legendNumber {
   background: #ffd21f;
   color: #050505;
@@ -1558,6 +1588,7 @@ button {
   text-align: center;
   padding: 5px 0;
 }
+
 .legendNumber.inactive {
   background: #ddd;
   color: #555;
@@ -1767,6 +1798,7 @@ button {
 
 </section>
           </section>
+
         {user && (
           <section className="formCard">
             <h2>{editingId ? "Edit Module" : "Add a Module"}</h2>
@@ -1799,7 +1831,6 @@ button {
                   }}
                 />
               </label>
-
               <select
                 value={standard}
                 onChange={(e) => setStandard(e.target.value)}
@@ -1869,99 +1900,97 @@ button {
   bridgeSize === "Custom Bridge") && (
   <>
     <div>
-  <label>Custom Shape</label>
+      <label>Custom Shape</label>
+      <select
+        value={customShape}
+        onChange={(e) => setCustomShape(e.target.value)}
+      >
+        <option>Rectangle</option>
+        <option>Angled Inside Corner</option>
+        <option>Angled Outside Corner</option>
+        <option>Polygon</option>
+      </select>
+    </div>
 
-  <select
-    value={customShape}
-    onChange={(e) => setCustomShape(e.target.value)}
-  >
-    <option>Rectangle</option>
-    <option>Angled Inside Corner</option>
-    <option>Angled Outside Corner</option>
-    <option>Polygon</option>
-  </select>
-</div>
-{customShape === "Polygon" && (
-  <div>
-    <label>Number of Sides</label>
-    <select
-      value={polygonSides}
-      onChange={(e) => setPolygonSides(e.target.value)}
-    >
-      {[3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((sideCount) => (
-        <option key={sideCount} value={String(sideCount)}>
-          {sideCount} sides
-        </option>
-      ))}
-    </select>
+    {customShape === "Polygon" && (
+      <div>
+        <label>Number of Sides</label>
+        <select
+          value={polygonSides}
+          onChange={(e) => setPolygonSides(e.target.value)}
+        >
+          {[3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((sideCount) => (
+            <option key={sideCount} value={String(sideCount)}>
+              {sideCount} sides
+            </option>
+          ))}
+        </select>
 
-    {Array.from({ length: Number(polygonSides) }, (_, i) => i + 1).map(
-      (sideNumber) => (
-        <div key={sideNumber}>
-          <label>Side {sideNumber} Length (inches)</label>
-          <select
-            value={polygonSideLengths[sideNumber] || "24"}
-            onChange={(e) =>
-              setPolygonSideLengths((prev: any) => ({
-                ...prev,
-                [sideNumber]: e.target.value,
-              }))
-            }
-          >
-            {Array.from({ length: 100 }, (_, i) => i + 1).map((inch) => (
-              <option key={inch} value={String(inch)}>
-                {inch}"
-              </option>
-            ))}
-          </select>
+        {Array.from({ length: Number(polygonSides) }, (_, i) => i + 1).map((sideNumber) => (
+          <div key={sideNumber}>
+            <label>Side {sideNumber} Length (inches)</label>
+            <select
+              value={polygonSideLengths[sideNumber] || "24"}
+              onChange={(e) =>
+                setPolygonSideLengths((prev: any) => ({
+                  ...prev,
+                  [sideNumber]: e.target.value,
+                }))
+              }
+            >
+              {Array.from({ length: 100 }, (_, i) => i + 1).map((inch) => (
+                <option key={inch} value={String(inch)}>
+                  {inch}"
+                </option>
+              ))}
+            </select>
 
-          <label>Interior Angle after Side {sideNumber} (degrees)</label>
-          <input
-            type="number"
-            min="1"
-            max="359"
-            step="0.1"
-            value={polygonAngles[sideNumber] || "90"}
-            onChange={(e) =>
-              setPolygonAngles((prev: any) => ({
-                ...prev,
-                [sideNumber]: e.target.value,
-              }))
-            }
-          />
-        </div>
-      )
+            <label>Interior Angle after Side {sideNumber} (degrees)</label>
+            <input
+              type="number"
+              min="1"
+              max="359"
+              step="0.1"
+              value={polygonAngles[sideNumber] || "90"}
+              onChange={(e) =>
+                setPolygonAngles((prev: any) => ({
+                  ...prev,
+                  [sideNumber]: e.target.value,
+                }))
+              }
+            />
+          </div>
+        ))}
+      </div>
     )}
-  </div>
-)}
-{customShape !== "Polygon" && (
-  <div>
-    <label>Custom Width (inches)</label>
-    <select
-      value={customWidthInches}
-      onChange={(e) => setCustomWidthInches(e.target.value)}
-    >
-      {Array.from({ length: 100 }, (_, i) => String(i + 1)).map((inch) => (
-        <option key={inch} value={inch}>
-          {inch}"
-        </option>
-      ))}
-    </select>
 
-    <label>Custom Depth (inches)</label>
-    <select
-      value={customDepthInches}
-      onChange={(e) => setCustomDepthInches(e.target.value)}
-    >
-      {Array.from({ length: 100 }, (_, i) => String(i + 1)).map((inch) => (
-        <option key={inch} value={inch}>
-          {inch}"
-        </option>
-      ))}
-    </select>
-  </div>
-)}
-      </>
+    {customShape !== "Polygon" && (
+      <div>
+        <label>Custom Width (inches)</label>
+        <select
+          value={customWidthInches}
+          onChange={(e) => setCustomWidthInches(e.target.value)}
+        >
+          {Array.from({ length: 100 }, (_, i) => String(i + 1)).map((inch) => (
+            <option key={inch} value={inch}>
+              {inch}"
+            </option>
+          ))}
+        </select>
+        <label>Custom Depth (inches)</label>
+        <select
+          value={customDepthInches}
+          onChange={(e) => setCustomDepthInches(e.target.value)}
+        >
+          {Array.from({ length: 100 }, (_, i) => String(i + 1)).map((inch) => (
+            <option key={inch} value={inch}>
+              {inch}"
+            </option>
+          ))}
+        </select>
+      </div>
+    )}
+  </>
 )}
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option>Planning</option>
@@ -2017,6 +2046,7 @@ button {
               ) : (
                 <div className="noImage">No Photo</div>
               )}
+
               <div className="cardBody">
                 <div className="badgeRow">
   <span className="tag">{m.standard || "Module"}</span>
@@ -2060,6 +2090,14 @@ button {
     <b>Polygon Sides:</b>{" "}
     {Object.entries(m.polygon_side_lengths)
       .map(([side, length]) => `Side ${side}: ${length}"`)
+      .join(", ")}
+  </p>
+)}
+                {m.custom_shape === "Polygon" && m.polygon_angles && (
+  <p>
+    <b>Polygon Angles:</b>{" "}
+    {Object.entries(m.polygon_angles)
+      .map(([side, angle]) => `Side ${side}: ${angle}°`)
       .join(", ")}
   </p>
 )}
@@ -2133,6 +2171,7 @@ button {
 
         <button className="layoutControlBtn" onClick={() => addLayoutTable("6ft")}>Add 6 ft Table</button>
         <button className="layoutControlBtn" onClick={() => addLayoutTable("8ft")}>Add 8 ft Table</button>
+        <button className="layoutControlBtn" onClick={autoArrangeLayout}>Auto Arrange</button>
         <button className="layoutControlBtn" onClick={saveLayoutDesign}>Save Layout</button>
         <button className="layoutControlBtn" onClick={loadLayoutDesign}>Load Layout</button>
         <button className="layoutControlBtn" onClick={exportLayoutPDF}>Export PDF</button>
@@ -2182,18 +2221,18 @@ button {
           <text className="svgKeyText" x="36" y="104">2 x 2 large squares = 1 sq ft</text>
         </g>
 
-        {layoutConnections.map((connection: any, connectionIndex: number) => {
+        {layoutConnections.map((connection: any, index: number) => {
           const line = getConnectionLine(connection);
           if (!line) return null;
 
           return (
             <line
-              key={`connection-${connectionIndex}`}
+              key={`connection-${connection.a}-${connection.b}-${index}`}
               className="svgConnectionLine"
-              x1={line.x1}
-              y1={line.y1}
-              x2={line.x2}
-              y2={line.y2}
+              x1={line.a.x}
+              y1={line.a.y}
+              x2={line.b.x}
+              y2={line.b.y}
             />
           );
         })}
@@ -2353,13 +2392,13 @@ button {
                 )}
               </g>
 
-              {getTrackEndpointsForModule(m, slot).map((endpoint, endpointIndex) => (
+              {getTrackEndpointsForModule(m, slot).map((endpoint: any, endpointIndex: number) => (
                 <circle
-                  key={`endpoint-${endpointIndex}`}
-                  className="svgConnectionPoint"
+                  key={`snap-${m.id}-${endpointIndex}`}
+                  className="svgSnapPoint"
                   cx={endpoint.x}
                   cy={endpoint.y}
-                  r="4"
+                  r="5"
                 />
               ))}
 
@@ -2377,41 +2416,40 @@ button {
                   ↻
                 </text>
               </g>
-              {isModuleConnected(m.id) && (
-              <g
-  onPointerDown={(event) => event.stopPropagation()}
-  onClick={() => {
-    setLayoutConnections((prev: any[]) =>
-      prev.filter(
-        (c) => c.a !== m.id && c.b !== m.id
-      )
-    );
-  }}
-  style={{ cursor: "pointer" }}
->
-  <circle
-    cx={lockButton.x}
-    cy={lockButton.y + 28}
-    r="10"
-    fill="#ff6b35"
-    stroke="#ffffff"
-    strokeWidth="2"
-  />
+              {moduleHasConnection(m.id) && (
+                <g
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={() => {
+                    pushLayoutHistory();
+                    setLayoutConnections((prev: any[]) =>
+                      prev.filter((c) => c.a !== m.id && c.b !== m.id)
+                    );
+                  }}
+                  style={{ cursor: "pointer" }}
+                >
+                  <circle
+                    cx={lockButton.x}
+                    cy={lockButton.y + 28}
+                    r="10"
+                    fill="#ff6b35"
+                    stroke="#ffffff"
+                    strokeWidth="2"
+                  />
 
-  <text
-    x={lockButton.x}
-    y={lockButton.y + 28}
-    textAnchor="middle"
-    dominantBaseline="central"
-    fontSize="11"
-    fill="#ffffff"
-    fontWeight="700"
-  >
-    ⛓
-  </text>
-</g>
-
+                  <text
+                    x={lockButton.x}
+                    y={lockButton.y + 28}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize="11"
+                    fill="#ffffff"
+                    fontWeight="700"
+                  >
+                    ⛓
+                  </text>
+                </g>
               )}
+
               <g
                 onPointerDown={(event) => event.stopPropagation()}
                 onClick={() => toggleLayoutLock(m.id)}
@@ -2433,24 +2471,21 @@ button {
       </svg>
     </div>
 
-    <div className="layoutHelpKey">
-      <h3 className="legendTitle">Layout Symbols Key</h3>
-      <div className="layoutHelpGrid">
-        <div className="layoutHelpItem"><span className="layoutSwatch"></span><strong>Green outline</strong><br />Standard module footprint.</div>
-        <div className="layoutHelpItem"><span className="layoutSwatch custom"></span><strong>Red outline</strong><br />Custom or polygon module footprint.</div>
-        <div className="layoutHelpItem"><span className="layoutSwatch bridge"></span><strong>Brown outline</strong><br />Bridge module footprint.</div>
-        <div className="layoutHelpItem"><span className="layoutSwatch table"></span><strong>Blue rectangle</strong><br />Table.</div>
-        <div className="layoutHelpItem"><span className="layoutSwatch front"></span><strong>Yellow / heavy edge</strong><br />Front/reference edge of the module.</div>
-        <div className="layoutHelpItem"><span className="layoutSwatch point"></span><strong>Blue dots</strong><br />Track connection points used for snapping.</div>
-        <div className="layoutHelpItem"><span className="layoutSwatch connection"></span><strong>Orange dashed line</strong><br />Modules currently connected as a group.</div>
-        <div className="layoutHelpItem"><strong>↻</strong><br />Rotate module/table.</div>
-        <div className="layoutHelpItem"><strong>● / L</strong><br />Lock or unlock position.</div>
-        <div className="layoutHelpItem"><strong>⛓</strong><br />Disconnect a connected module from its group.</div>
-        <div className="layoutHelpItem"><strong>×</strong><br />Delete a table.</div>
-      </div>
-    </div>
-
     <div className="layoutLegend">
+      <h3 className="legendTitle">Layout Symbols Key</h3>
+      <div className="symbolKeyGrid">
+        <div className="symbolKeyItem"><span className="symbolSwatch" /> Green outline = standard module</div>
+        <div className="symbolKeyItem"><span className="symbolSwatch custom" /> Red outline = custom module</div>
+        <div className="symbolKeyItem"><span className="symbolSwatch bridge" /> Brown outline = bridge module</div>
+        <div className="symbolKeyItem"><span className="symbolSwatch table" /> Blue shape = table</div>
+        <div className="symbolKeyItem"><span className="symbolSwatch snap" /> Blue dots = track connection points</div>
+        <div className="symbolKeyItem"><span className="symbolSwatch connection" /> Orange dashed line = connected modules</div>
+        <div className="symbolKeyItem">↻ = rotate</div>
+        <div className="symbolKeyItem">● / L = lock or unlock position</div>
+        <div className="symbolKeyItem">⛓ = disconnect connected module</div>
+        <div className="symbolKeyItem">× = delete table</div>
+      </div>
+
       <h3 className="legendTitle">Module Key</h3>
       {filteredModules.map((m) => {
         const isIncluded = !!layoutIncluded[m.id];
