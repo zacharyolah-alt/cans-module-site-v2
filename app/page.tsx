@@ -1916,6 +1916,8 @@ button {
     </select>
   </div>
 )}
+      </>
+)}
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option>Planning</option>
                 <option>Under Construction</option>
