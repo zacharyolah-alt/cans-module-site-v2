@@ -249,7 +249,6 @@ function exportToCSV() {
         .join(",")
     )
     .join("\n");
-
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
 
@@ -291,12 +290,11 @@ function exportToCSV() {
     return matchesSearch && matchesStandard && matchesStatus && matchesType && matchesSize;
   });
 }, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
-
   const LAYOUT_SCALE = 10;
   const FRONT_TRACK_FRONT_EDGE = 15;
   const TRACK_WIDTH = 10;
   const TRACK_CENTER_SPACING = 13;
-  const TRACK_SNAP_DISTANCE = 24;
+  const TRACK_SNAP_DISTANCE = 36;
 
   const moduleNumberMap = useMemo(() => {
     const sortedModules = [...modules].sort((a, b) => {
@@ -459,6 +457,25 @@ if (kind === "custom") {
 
     return { x, y };
   }
+  function rotateVector(x: number, y: number, rotation: number) {
+    if (rotation === 90) return { x: -y, y: x };
+    if (rotation === 180) return { x: -x, y: -y };
+    if (rotation === 270) return { x: y, y: -x };
+
+    return { x, y };
+  }
+
+  function getDirectionForSide(side: string) {
+    if (side === "left") return { x: -1, y: 0 };
+    if (side === "right") return { x: 1, y: 0 };
+    if (side === "top") return { x: 0, y: -1 };
+    return { x: 0, y: 1 };
+  }
+
+  function endpointsFaceEachOther(a: any, b: any) {
+    const dot = a.direction.x * b.direction.x + a.direction.y * b.direction.y;
+    return dot < -0.85;
+  }
 
   function getTrackEndpointsForModule(m: any, slot: any) {
     const size = getLayoutSize(m);
@@ -475,13 +492,18 @@ if (kind === "custom") {
           { x: 0, y: track, trackIndex, side: "left" },
           { x: size.width, y: track, trackIndex, side: "right" },
         ]);
+
     return localPoints.map((point) => {
       const rotated = rotatePoint(point.x, point.y, rotation, size);
+      const baseDirection = getDirectionForSide(point.side);
+      const direction = rotateVector(baseDirection.x, baseDirection.y, rotation);
+
       return {
         x: slot.x + rotated.x,
         y: slot.y + rotated.y,
         trackIndex: point.trackIndex,
         side: point.side,
+        direction,
       };
     });
   }
@@ -497,10 +519,10 @@ if (kind === "custom") {
       const otherPermanentIndex = Math.max(0, (moduleNumberMap[otherModule.id] || 1) - 1);
       const otherSlot = getPlacedSlot(otherModule, otherPermanentIndex);
       const otherEndpoints = getTrackEndpointsForModule(otherModule, otherSlot);
-
       movingEndpoints.forEach((movingEndpoint) => {
         otherEndpoints.forEach((otherEndpoint) => {
           if (movingEndpoint.trackIndex !== otherEndpoint.trackIndex) return;
+          if (!endpointsFaceEachOther(movingEndpoint, otherEndpoint)) return;
 
           const dx = otherEndpoint.x - movingEndpoint.x;
           const dy = otherEndpoint.y - movingEndpoint.y;
@@ -514,6 +536,8 @@ if (kind === "custom") {
               otherModuleId: otherModule.id,
               movingTrackIndex: movingEndpoint.trackIndex,
               otherTrackIndex: otherEndpoint.trackIndex,
+              movingSide: movingEndpoint.side,
+              otherSide: otherEndpoint.side,
             };
           }
         });
@@ -540,6 +564,8 @@ if (kind === "custom") {
             a: movingModule.id,
             b: bestSnap.otherModuleId,
             trackIndex: bestSnap.movingTrackIndex,
+            aSide: bestSnap.movingSide,
+            bSide: bestSnap.otherSide,
           },
         ];
       });
@@ -595,15 +621,59 @@ function getConnectedModuleIds(startId: string) {
     };
   }
 
+  function getLiveTrackEndpoints(m: any) {
+    const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || 1) - 1);
+    const slot = getPlacedSlot(m, permanentIndex);
+    return getTrackEndpointsForModule(m, slot);
+  }
+
+  function findBestEndpointPair(aModule: any, bModule: any, preferredTrackIndex?: number) {
+    const aEndpoints = getLiveTrackEndpoints(aModule);
+    const bEndpoints = getLiveTrackEndpoints(bModule);
+    let bestPair: any = null;
+
+    aEndpoints.forEach((aEndpoint: any) => {
+      bEndpoints.forEach((bEndpoint: any) => {
+        if (preferredTrackIndex !== undefined && aEndpoint.trackIndex !== preferredTrackIndex) return;
+        if (aEndpoint.trackIndex !== bEndpoint.trackIndex) return;
+        if (!endpointsFaceEachOther(aEndpoint, bEndpoint)) return;
+
+        const dx = bEndpoint.x - aEndpoint.x;
+        const dy = bEndpoint.y - aEndpoint.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (!bestPair || distance < bestPair.distance) {
+          bestPair = {
+            a: aEndpoint,
+            b: bEndpoint,
+            distance,
+          };
+        }
+      });
+    });
+
+    return bestPair;
+  }
+
   function getConnectionLine(connection: any) {
     const aModule = layoutModules.find((m: any) => m.id === connection.a);
     const bModule = layoutModules.find((m: any) => m.id === connection.b);
 
     if (!aModule || !bModule) return null;
-    const a = getModuleCenter(aModule);
-    const b = getModuleCenter(bModule);
 
-    return { a, b };
+    const endpointPair = findBestEndpointPair(aModule, bModule, connection.trackIndex);
+    if (!endpointPair) return null;
+
+    return { a: endpointPair.a, b: endpointPair.b };
+  }
+
+  function isEndpointConnected(m: any, endpoint: any) {
+    return layoutConnections.some((connection: any) => {
+      const otherId = connection.a === m.id ? connection.b : connection.b === m.id ? connection.a : null;
+      if (!otherId) return false;
+
+      return connection.trackIndex === endpoint.trackIndex;
+    });
   }
 
   function autoArrangeLayout() {
@@ -700,7 +770,6 @@ function redoLayoutChange() {
     const point = svg.createSVGPoint();
     point.x = event.clientX;
     point.y = event.clientY;
-
     const matrix = svg.getScreenCTM();
     if (!matrix) return { x: 0, y: 0 };
     const transformed = point.matrixTransform(matrix.inverse());
@@ -784,27 +853,84 @@ const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
   function rotateModule(event: any, m: any, index: number) {
     event.preventDefault();
     event.stopPropagation();
-
     if (layoutLocks[m.id]) return;
     pushLayoutHistory();
 
-    const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
-    const currentSlot = getPlacedSlot(m, permanentIndex);
-    const nextSlot = clampSlotToGrid(
-      {
-        ...currentSlot,
-        rotation: ((currentSlot.rotation || 0) + 90) % 360,
-      },
-      getLayoutSize(m)
-    );
+    const connectedIds = getConnectedModuleIds(m.id);
 
-    setLayoutOverrides((prev: any) => ({
-      ...prev,
-      [m.id]: {
-        ...(prev[m.id] || {}),
-        ...nextSlot,
-      },
-    }));
+    setLayoutOverrides((prev: any) => {
+      const next = { ...prev };
+
+      if (connectedIds.length <= 1) {
+        const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
+        const currentSlot = getPlacedSlot(m, permanentIndex);
+        const nextSlot = clampSlotToGrid(
+          {
+            ...currentSlot,
+            rotation: ((currentSlot.rotation || 0) + 90) % 360,
+          },
+          getLayoutSize(m)
+        );
+
+        next[m.id] = {
+          ...(prev[m.id] || {}),
+          ...nextSlot,
+        };
+
+        return next;
+      }
+
+      const groupModules = connectedIds
+        .map((connectedId) => layoutModules.find((mod: any) => mod.id === connectedId))
+        .filter(Boolean);
+
+      const centers = groupModules.map((connectedModule: any) => {
+        const connectedIndex = Math.max(0, (moduleNumberMap[connectedModule.id] || 1) - 1);
+        const slot = getPlacedSlot(connectedModule, connectedIndex);
+        const size = getLayoutSize(connectedModule);
+        const bounds = getRotatedBounds(slot, size);
+
+        return {
+          module: connectedModule,
+          slot,
+          size,
+          x: slot.x + bounds.width / 2,
+          y: slot.y + bounds.height / 2,
+        };
+      });
+
+      const groupCenter = centers.reduce(
+        (acc: any, item: any) => ({ x: acc.x + item.x / centers.length, y: acc.y + item.y / centers.length }),
+        { x: 0, y: 0 }
+      );
+
+      centers.forEach((item: any) => {
+        const dx = item.x - groupCenter.x;
+        const dy = item.y - groupCenter.y;
+        const rotatedCenter = {
+          x: groupCenter.x - dy,
+          y: groupCenter.y + dx,
+        };
+        const nextRotation = ((item.slot.rotation || 0) + 90) % 360;
+        const nextBounds = getRotatedBounds({ ...item.slot, rotation: nextRotation }, item.size);
+        const nextSlot = clampSlotToGrid(
+          {
+            ...item.slot,
+            rotation: nextRotation,
+            x: snapToGrid(rotatedCenter.x - nextBounds.width / 2),
+            y: snapToGrid(rotatedCenter.y - nextBounds.height / 2),
+          },
+          item.size
+        );
+
+        next[item.module.id] = {
+          ...(prev[item.module.id] || {}),
+          ...nextSlot,
+        };
+      });
+
+      return next;
+    });
   }
 
   function addLayoutTable(kind: "6ft" | "8ft") {
@@ -915,7 +1041,6 @@ dragHistoryStartedRef.current = true;
       })
     );
   }
-
   function toggleLayoutLock(id: string) {
     pushLayoutHistory();
     setLayoutLocks((prev: any) => ({
@@ -1125,7 +1250,6 @@ dragHistoryStartedRef.current = true;
   width: 100%;
   box-sizing: border-box;
 }
-
 button {
   box-sizing: border-box;
 }
@@ -1440,7 +1564,6 @@ button {
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
-
 .svgLockCircle.locked {
   fill: #777;
 }
@@ -1487,17 +1610,25 @@ button {
 
 .svgConnectionLine {
   stroke: #ff8c00;
-  stroke-width: 3;
-  stroke-dasharray: 10 7;
-  opacity: .85;
+  stroke-width: 4;
+  stroke-dasharray: 8 6;
+  opacity: .95;
   vector-effect: non-scaling-stroke;
+  pointer-events: none;
 }
 
 .svgSnapPoint {
   fill: #1f6fff;
   stroke: white;
-  stroke-width: 2;
+  stroke-width: 2.5;
   vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.svgSnapPoint.connected {
+  fill: #00b050;
+  stroke: #ffffff;
+  stroke-width: 3;
 }
 
 .symbolKeyGrid {
@@ -2395,10 +2526,10 @@ button {
               {getTrackEndpointsForModule(m, slot).map((endpoint: any, endpointIndex: number) => (
                 <circle
                   key={`snap-${m.id}-${endpointIndex}`}
-                  className="svgSnapPoint"
+                  className={`svgSnapPoint ${isEndpointConnected(m, endpoint) ? "connected" : ""}`}
                   cx={endpoint.x}
                   cy={endpoint.y}
-                  r="5"
+                  r={isEndpointConnected(m, endpoint) ? 8 : 6}
                 />
               ))}
 
@@ -2478,8 +2609,9 @@ button {
         <div className="symbolKeyItem"><span className="symbolSwatch custom" /> Red outline = custom module</div>
         <div className="symbolKeyItem"><span className="symbolSwatch bridge" /> Brown outline = bridge module</div>
         <div className="symbolKeyItem"><span className="symbolSwatch table" /> Blue shape = table</div>
-        <div className="symbolKeyItem"><span className="symbolSwatch snap" /> Blue dots = track connection points</div>
-        <div className="symbolKeyItem"><span className="symbolSwatch connection" /> Orange dashed line = connected modules</div>
+        <div className="symbolKeyItem"><span className="symbolSwatch snap" /> Blue dots = open track connection points</div>
+        <div className="symbolKeyItem"><span className="symbolSwatch connection" /> Orange dashed line = connected track endpoints</div>
+        <div className="symbolKeyItem">🟢 Green dots = connected track endpoints</div>
         <div className="symbolKeyItem">↻ = rotate</div>
         <div className="symbolKeyItem">● / L = lock or unlock position</div>
         <div className="symbolKeyItem">⛓ = disconnect connected module</div>
@@ -2558,5 +2690,3 @@ button {
     </main>
   );
 }
-
-
