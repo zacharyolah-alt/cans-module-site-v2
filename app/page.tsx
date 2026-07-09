@@ -54,13 +54,12 @@ const svgPlannerRef = useRef<SVGSVGElement | null>(null);
   const layoutCanvasRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     loadModules();
- 
+
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
     });
-
     return () => {
       listener.subscription.unsubscribe();
     };
@@ -123,7 +122,6 @@ const svgPlannerRef = useRef<SVGSVGElement | null>(null);
       alert(error.message);
       return;
     }
-
     const { data } = supabase.storage
       .from("module-photos")
       .getPublicUrl(fileName);
@@ -354,7 +352,6 @@ function exportToCSV() {
   if (m.bridge_size === "Single Bridge") {
     bridgeWidth = 121;
   }
-
   if (m.bridge_size === "Double Bridge") {
     bridgeWidth = 243;
   }
@@ -417,7 +414,6 @@ if (kind === "custom") {
     const rearTrackFrontEdge = FRONT_TRACK_FRONT_EDGE + TRACK_CENTER_SPACING - TRACK_WIDTH / 2;
     const rearRail1 = rearTrackFrontEdge;
     const rearRail2 = rearTrackFrontEdge + TRACK_WIDTH;
-
     return [frontRail1, frontRail2, rearRail1, rearRail2];
   }
 
@@ -491,7 +487,7 @@ if (kind === "custom") {
     const movingSize = getLayoutSize(movingModule);
     const movingEndpoints = getTrackEndpointsForModule(movingModule, candidateSlot);
     let bestSnap: any = null;
-    const snapDistance = 40;
+    const snapDistance = 90;
 
     layoutModules.forEach((otherModule: any) => {
       if (otherModule.id === movingModule.id) return;
@@ -564,7 +560,6 @@ function getConnectedModuleIds(startId: string) {
       if (c.a === current && !visited.has(c.b)) {
         stack.push(c.b);
       }
-
       if (c.b === current && !visited.has(c.a)) {
         stack.push(c.a);
       }
@@ -572,6 +567,34 @@ function getConnectedModuleIds(startId: string) {
   }
 
   return Array.from(visited);
+}
+
+function hasLayoutConnection(moduleId: string) {
+  return layoutConnections.some(
+    (connection: any) => connection.a === moduleId || connection.b === moduleId
+  );
+}
+
+function disconnectLayoutModule(moduleId: string) {
+  if (!hasLayoutConnection(moduleId)) return;
+
+  pushLayoutHistory();
+
+  setLayoutConnections((prev: any[]) =>
+    prev.filter((connection) => connection.a !== moduleId && connection.b !== moduleId)
+  );
+}
+
+function getLayoutModuleCenter(m: any) {
+  const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || 1) - 1);
+  const slot = getPlacedSlot(m, permanentIndex);
+  const size = getLayoutSize(m);
+  const bounds = getRotatedBounds(slot, size);
+
+  return {
+    x: slot.x + bounds.width / 2,
+    y: slot.y + bounds.height / 2,
+  };
 }
   function getCurrentLayoutState() {
   return {
@@ -599,7 +622,6 @@ function getConnectedModuleIds(startId: string) {
 function undoLayoutChange() {
   setLayoutHistory((history: any[]) => {
     if (history.length === 0) return history;
-
     const previous = history[history.length - 1];
     const remaining = history.slice(0, -1);
 
@@ -725,7 +747,6 @@ const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
 
     if (layoutLocks[m.id]) return;
     pushLayoutHistory();
-
     const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
     const currentSlot = getPlacedSlot(m, permanentIndex);
     const nextSlot = clampSlotToGrid(
@@ -788,7 +809,6 @@ const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
 dragHistoryStartedRef.current = true;
       }
       const currentPoint = getSvgPoint(moveEvent);
-
       setLayoutTables((current) =>
         current.map((item) => {
           if (item.id !== table.id) return item;
@@ -851,7 +871,6 @@ dragHistoryStartedRef.current = true;
       })
     );
   }
-
   function toggleLayoutLock(id: string) {
     setLayoutLocks((prev: any) => ({
       ...prev,
@@ -1061,7 +1080,6 @@ dragHistoryStartedRef.current = true;
   width: 100%;
   box-sizing: border-box;
 }
-
 button {
   box-sizing: border-box;
 }
@@ -1229,7 +1247,6 @@ button {
   .hero {
     display: none !important;
   }
-
   .layoutCanvas {
     max-height: none;
     overflow: visible;
@@ -1250,7 +1267,6 @@ button {
   touch-action: pan-x pan-y;
   overscroll-behavior: contain;
 }
-
 .layoutControls {
   display: flex;
   gap: 14px;
@@ -1292,7 +1308,6 @@ button {
   touch-action: none;
   overscroll-behavior: contain;
 }
-
 .svgPlanner {
   width: auto;
   height: auto;
@@ -1346,6 +1361,15 @@ button {
   stroke-width: 1;
   opacity: .35;
   vector-effect: non-scaling-stroke;
+}
+
+.svgConnectionLine {
+  stroke: #ff6b35;
+  stroke-width: 4;
+  stroke-dasharray: 12 8;
+  opacity: .8;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
 }
 
 .svgNumberText {
@@ -1430,7 +1454,6 @@ button {
   stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
-
 .svgKeyTitle {
   fill: #050505;
   font-size: 15px;
@@ -1493,7 +1516,6 @@ button {
   font-size: 14px;
   line-height: 1.35;
 }
-
 .legendText strong {
   display: block;
   font-size: 15px;
@@ -1514,7 +1536,6 @@ button {
     top: 0;
     width: 100%;
   }
-
   .layoutControls,
   .layoutLegend,
   .filtersPanel,
@@ -1661,7 +1682,6 @@ button {
       ))}
     </div>
   </div>
-
   {/* SIZE */}
   <div className="filterGroup">
     <p>Size</p>
@@ -1808,7 +1828,6 @@ button {
     ))}
   </select>
 </div>
-
 <div>
   <label>Custom Depth (inches)</label>
   <select
@@ -1976,7 +1995,6 @@ button {
               <div className="cardBody">
                 <div className="badgeRow">
   <span className="tag">{m.standard || "Module"}</span>
-
   {m.module_type && (
     <span className="typeTag">{m.module_type}</span>
   )}
@@ -2137,6 +2155,27 @@ button {
           <text className="svgKeyText" x="36" y="84">1 large square = 6 inches</text>
           <text className="svgKeyText" x="36" y="104">2 x 2 large squares = 1 sq ft</text>
         </g>
+
+        {layoutConnections.map((connection: any, connectionIndex: number) => {
+          const startModule = layoutModules.find((module: any) => module.id === connection.a);
+          const endModule = layoutModules.find((module: any) => module.id === connection.b);
+
+          if (!startModule || !endModule) return null;
+
+          const start = getLayoutModuleCenter(startModule);
+          const end = getLayoutModuleCenter(endModule);
+
+          return (
+            <line
+              key={`${connection.a}-${connection.b}-${connectionIndex}`}
+              className="svgConnectionLine"
+              x1={start.x}
+              y1={start.y}
+              x2={end.x}
+              y2={end.y}
+            />
+          );
+        })}
 
         {layoutTables.map((table) => (
           <g
@@ -2307,38 +2346,34 @@ button {
                   ↻
                 </text>
               </g>
-              <g
-  onPointerDown={(event) => event.stopPropagation()}
-  onClick={() => {
-    setLayoutConnections((prev: any[]) =>
-      prev.filter(
-        (c) => c.a !== m.id && c.b !== m.id
-      )
-    );
-  }}
-  style={{ cursor: "pointer" }}
->
-  <circle
-    cx={lockButton.x}
-    cy={lockButton.y + 28}
-    r="10"
-    fill="#ff6b35"
-    stroke="#ffffff"
-    strokeWidth="2"
-  />
+              {hasLayoutConnection(m.id) && (
+                <g
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={() => disconnectLayoutModule(m.id)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <circle
+                    cx={lockButton.x}
+                    cy={lockButton.y + 28}
+                    r="10"
+                    fill="#ff6b35"
+                    stroke="#ffffff"
+                    strokeWidth="2"
+                  />
 
-  <text
-    x={lockButton.x}
-    y={lockButton.y + 28}
-    textAnchor="middle"
-    dominantBaseline="central"
-    fontSize="11"
-    fill="#ffffff"
-    fontWeight="700"
-  >
-    ⛓
-  </text>
-</g>
+                  <text
+                    x={lockButton.x}
+                    y={lockButton.y + 28}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize="11"
+                    fill="#ffffff"
+                    fontWeight="700"
+                  >
+                    ⛓
+                  </text>
+                </g>
+              )}
 
               <g
                 onPointerDown={(event) => event.stopPropagation()}
@@ -2379,7 +2414,6 @@ button {
 
                 if (checked && !layoutOverrides[m.id]) {
                   const startingSlot = clampSlotToGrid(getTemplateSlot(permanentIndex), getLayoutSize(m));
-
                   setLayoutOverrides((prev: any) => ({
                     ...prev,
                     [m.id]: {
@@ -2400,7 +2434,6 @@ button {
             <div className={`legendNumber ${isIncluded ? "" : "inactive"}`}>
               {permanentNumber || "—"}
             </div>
-
             <div className="legendText">
               <strong>{m.module_name || "Unnamed Module"}</strong>
               {m.module_type || "Module"} — {m.dimensions || "Custom Size"} — {m.owner_name || "Unknown Owner"}
@@ -2434,7 +2467,5 @@ button {
     </main>
   );
 }
-
-
 
 
