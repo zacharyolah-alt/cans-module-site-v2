@@ -54,7 +54,7 @@ const svgPlannerRef = useRef<SVGSVGElement | null>(null);
   const layoutCanvasRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     loadModules();
-
+ 
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
