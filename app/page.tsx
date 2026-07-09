@@ -487,7 +487,7 @@ if (kind === "custom") {
     const movingSize = getLayoutSize(movingModule);
     const movingEndpoints = getTrackEndpointsForModule(movingModule, candidateSlot);
     let bestSnap: any = null;
-    const snapDistance = 90;
+    const snapDistance = 22;
 
     layoutModules.forEach((otherModule: any) => {
       if (otherModule.id === movingModule.id) return;
@@ -569,33 +569,33 @@ function getConnectedModuleIds(startId: string) {
   return Array.from(visited);
 }
 
-function hasLayoutConnection(moduleId: string) {
-  return layoutConnections.some(
-    (connection: any) => connection.a === moduleId || connection.b === moduleId
-  );
+function isModuleConnected(id: string) {
+  return layoutConnections.some((connection: any) => connection.a === id || connection.b === id);
 }
 
-function disconnectLayoutModule(moduleId: string) {
-  if (!hasLayoutConnection(moduleId)) return;
+function getConnectionLine(connection: any) {
+  const moduleA = layoutModules.find((module: any) => module.id === connection.a);
+  const moduleB = layoutModules.find((module: any) => module.id === connection.b);
 
-  pushLayoutHistory();
+  if (!moduleA || !moduleB) return null;
 
-  setLayoutConnections((prev: any[]) =>
-    prev.filter((connection) => connection.a !== moduleId && connection.b !== moduleId)
-  );
-}
-
-function getLayoutModuleCenter(m: any) {
-  const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || 1) - 1);
-  const slot = getPlacedSlot(m, permanentIndex);
-  const size = getLayoutSize(m);
-  const bounds = getRotatedBounds(slot, size);
+  const indexA = Math.max(0, (moduleNumberMap[moduleA.id] || 1) - 1);
+  const indexB = Math.max(0, (moduleNumberMap[moduleB.id] || 1) - 1);
+  const slotA = getPlacedSlot(moduleA, indexA);
+  const slotB = getPlacedSlot(moduleB, indexB);
+  const sizeA = getLayoutSize(moduleA);
+  const sizeB = getLayoutSize(moduleB);
+  const boundsA = getRotatedBounds(slotA, sizeA);
+  const boundsB = getRotatedBounds(slotB, sizeB);
 
   return {
-    x: slot.x + bounds.width / 2,
-    y: slot.y + bounds.height / 2,
+    x1: slotA.x + boundsA.width / 2,
+    y1: slotA.y + boundsA.height / 2,
+    x2: slotB.x + boundsB.width / 2,
+    y2: slotB.y + boundsB.height / 2,
   };
 }
+
   function getCurrentLayoutState() {
   return {
     layoutOverrides,
@@ -767,6 +767,8 @@ const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
   }
 
   function addLayoutTable(kind: "6ft" | "8ft") {
+    pushLayoutHistory();
+
     const width = kind === "6ft" ? 72 * LAYOUT_SCALE : 96 * LAYOUT_SCALE;
     const height = 30 * LAYOUT_SCALE;
 
@@ -809,6 +811,7 @@ const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
 dragHistoryStartedRef.current = true;
       }
       const currentPoint = getSvgPoint(moveEvent);
+
       setLayoutTables((current) =>
         current.map((item) => {
           if (item.id !== table.id) return item;
@@ -848,6 +851,7 @@ dragHistoryStartedRef.current = true;
     event.stopPropagation();
 
     if (layoutLocks[table.id]) return;
+    pushLayoutHistory();
 
     setLayoutTables((current) =>
       current.map((item) => {
@@ -871,7 +875,10 @@ dragHistoryStartedRef.current = true;
       })
     );
   }
+
   function toggleLayoutLock(id: string) {
+    pushLayoutHistory();
+
     setLayoutLocks((prev: any) => ({
       ...prev,
       [id]: !prev[id],
@@ -928,7 +935,6 @@ dragHistoryStartedRef.current = true;
       alert("No saved layout found on this device.");
       return;
     }
-
     const parsed = JSON.parse(saved);
 
     setLayoutOverrides(parsed.layoutOverrides || {});
@@ -1054,7 +1060,6 @@ dragHistoryStartedRef.current = true;
   font-weight: 700;
   border: none;
 }
-
 .clearBtn {
   width: auto;
   align-self: flex-start;
@@ -1080,6 +1085,7 @@ dragHistoryStartedRef.current = true;
   width: 100%;
   box-sizing: border-box;
 }
+
 button {
   box-sizing: border-box;
 }
@@ -1137,7 +1143,6 @@ button {
 .doubleBlock {
   min-height: 120px;
 }
-
 .tripleBlock {
   min-height: 150px;
 } 
@@ -1158,7 +1163,6 @@ button {
 .customBlock {
   border-left: 8px solid #b00020;
 }
-
 .layoutTitle {
   font-size: 18px;
   font-weight: 900;
@@ -1247,6 +1251,7 @@ button {
   .hero {
     display: none !important;
   }
+
   .layoutCanvas {
     max-height: none;
     overflow: visible;
@@ -1267,6 +1272,7 @@ button {
   touch-action: pan-x pan-y;
   overscroll-behavior: contain;
 }
+
 .layoutControls {
   display: flex;
   gap: 14px;
@@ -1303,11 +1309,11 @@ button {
   border-radius: 999px;
   padding: 8px 12px;
 }
-
 .layoutCanvas.editMode {
   touch-action: none;
   overscroll-behavior: contain;
 }
+
 .svgPlanner {
   width: auto;
   height: auto;
@@ -1365,12 +1371,59 @@ button {
 
 .svgConnectionLine {
   stroke: #ff6b35;
-  stroke-width: 4;
-  stroke-dasharray: 12 8;
-  opacity: .8;
+  stroke-width: 3;
+  stroke-dasharray: 8 6;
+  fill: none;
+  opacity: .85;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
+
+.svgConnectionPoint {
+  fill: #1f8cff;
+  stroke: white;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.layoutHelpKey {
+  margin-top: 18px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #ddd;
+  overflow: hidden;
+}
+
+.layoutHelpGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 14px;
+}
+
+.layoutHelpItem {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.layoutSwatch {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  margin-right: 7px;
+  vertical-align: -3px;
+  border: 2px solid #333;
+  background: rgba(198, 226, 178, .55);
+}
+
+.layoutSwatch.custom { border-color: #b00020; }
+.layoutSwatch.bridge { border-color: #6b4b20; }
+.layoutSwatch.table { background: rgba(70, 155, 255, .28); border-color: #1f6fbf; }
+.layoutSwatch.front { background: #ffd21f; border-color: #3d6b2d; }
+.layoutSwatch.connection { background: #ff6b35; border-color: #ff6b35; }
+.layoutSwatch.point { background: #1f8cff; border-color: white; box-shadow: 0 0 0 1px #1f8cff; }
 
 .svgNumberText {
   fill: #2f6124;
@@ -1423,7 +1476,6 @@ button {
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
-
 .svgDeleteText {
   fill: white;
   font-size: 15px;
@@ -1454,6 +1506,7 @@ button {
   stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
+
 .svgKeyTitle {
   fill: #050505;
   font-size: 15px;
@@ -1464,7 +1517,6 @@ button {
   fill: #111;
   font-size: 12px;
 }
-
 .layoutLegend {
   margin-top: 18px;
   background: white;
@@ -1506,7 +1558,6 @@ button {
   text-align: center;
   padding: 5px 0;
 }
-
 .legendNumber.inactive {
   background: #ddd;
   color: #555;
@@ -1516,6 +1567,7 @@ button {
   font-size: 14px;
   line-height: 1.35;
 }
+
 .legendText strong {
   display: block;
   font-size: 15px;
@@ -1536,6 +1588,7 @@ button {
     top: 0;
     width: 100%;
   }
+
   .layoutControls,
   .layoutLegend,
   .filtersPanel,
@@ -1682,6 +1735,7 @@ button {
       ))}
     </div>
   </div>
+
   {/* SIZE */}
   <div className="filterGroup">
     <p>Size</p>
@@ -1713,7 +1767,6 @@ button {
 
 </section>
           </section>
-
         {user && (
           <section className="formCard">
             <h2>{editingId ? "Edit Module" : "Add a Module"}</h2>
@@ -1816,32 +1869,6 @@ button {
   bridgeSize === "Custom Bridge") && (
   <>
     <div>
-  <label>Custom Width (inches)</label>
-  <select
-    value={customWidthInches}
-    onChange={(e) => setCustomWidthInches(e.target.value)}
-  >
-    {Array.from({ length: 100 }, (_, i) => String(i + 1)).map((inch) => (
-      <option key={inch} value={inch}>
-        {inch}"
-      </option>
-    ))}
-  </select>
-</div>
-<div>
-  <label>Custom Depth (inches)</label>
-  <select
-    value={customDepthInches}
-    onChange={(e) => setCustomDepthInches(e.target.value)}
-  >
-    {Array.from({ length: 100 }, (_, i) => String(i + 1)).map((inch) => (
-      <option key={inch} value={inch}>
-        {inch}"
-      </option>
-    ))}
-  </select>
-</div>
-    <div>
   <label>Custom Shape</label>
 
   <select
@@ -1907,7 +1934,6 @@ button {
     )}
   </div>
 )}
-
 {customShape !== "Polygon" && (
   <div>
     <label>Custom Width (inches)</label>
@@ -1991,10 +2017,10 @@ button {
               ) : (
                 <div className="noImage">No Photo</div>
               )}
-
               <div className="cardBody">
                 <div className="badgeRow">
   <span className="tag">{m.standard || "Module"}</span>
+
   {m.module_type && (
     <span className="typeTag">{m.module_type}</span>
   )}
@@ -2157,22 +2183,17 @@ button {
         </g>
 
         {layoutConnections.map((connection: any, connectionIndex: number) => {
-          const startModule = layoutModules.find((module: any) => module.id === connection.a);
-          const endModule = layoutModules.find((module: any) => module.id === connection.b);
-
-          if (!startModule || !endModule) return null;
-
-          const start = getLayoutModuleCenter(startModule);
-          const end = getLayoutModuleCenter(endModule);
+          const line = getConnectionLine(connection);
+          if (!line) return null;
 
           return (
             <line
-              key={`${connection.a}-${connection.b}-${connectionIndex}`}
+              key={`connection-${connectionIndex}`}
               className="svgConnectionLine"
-              x1={start.x}
-              y1={start.y}
-              x2={end.x}
-              y2={end.y}
+              x1={line.x1}
+              y1={line.y1}
+              x2={line.x2}
+              y2={line.y2}
             />
           );
         })}
@@ -2332,6 +2353,16 @@ button {
                 )}
               </g>
 
+              {getTrackEndpointsForModule(m, slot).map((endpoint, endpointIndex) => (
+                <circle
+                  key={`endpoint-${endpointIndex}`}
+                  className="svgConnectionPoint"
+                  cx={endpoint.x}
+                  cy={endpoint.y}
+                  r="4"
+                />
+              ))}
+
               <text className="svgNumberText" x={numberPosition.x} y={numberPosition.y}>
                 {moduleNumberMap[m.id] ?? ""}
               </text>
@@ -2346,35 +2377,41 @@ button {
                   ↻
                 </text>
               </g>
-              {hasLayoutConnection(m.id) && (
-                <g
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={() => disconnectLayoutModule(m.id)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <circle
-                    cx={lockButton.x}
-                    cy={lockButton.y + 28}
-                    r="10"
-                    fill="#ff6b35"
-                    stroke="#ffffff"
-                    strokeWidth="2"
-                  />
+              {isModuleConnected(m.id) && (
+              <g
+  onPointerDown={(event) => event.stopPropagation()}
+  onClick={() => {
+    setLayoutConnections((prev: any[]) =>
+      prev.filter(
+        (c) => c.a !== m.id && c.b !== m.id
+      )
+    );
+  }}
+  style={{ cursor: "pointer" }}
+>
+  <circle
+    cx={lockButton.x}
+    cy={lockButton.y + 28}
+    r="10"
+    fill="#ff6b35"
+    stroke="#ffffff"
+    strokeWidth="2"
+  />
 
-                  <text
-                    x={lockButton.x}
-                    y={lockButton.y + 28}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    fontSize="11"
-                    fill="#ffffff"
-                    fontWeight="700"
-                  >
-                    ⛓
-                  </text>
-                </g>
+  <text
+    x={lockButton.x}
+    y={lockButton.y + 28}
+    textAnchor="middle"
+    dominantBaseline="central"
+    fontSize="11"
+    fill="#ffffff"
+    fontWeight="700"
+  >
+    ⛓
+  </text>
+</g>
+
               )}
-
               <g
                 onPointerDown={(event) => event.stopPropagation()}
                 onClick={() => toggleLayoutLock(m.id)}
@@ -2396,6 +2433,23 @@ button {
       </svg>
     </div>
 
+    <div className="layoutHelpKey">
+      <h3 className="legendTitle">Layout Symbols Key</h3>
+      <div className="layoutHelpGrid">
+        <div className="layoutHelpItem"><span className="layoutSwatch"></span><strong>Green outline</strong><br />Standard module footprint.</div>
+        <div className="layoutHelpItem"><span className="layoutSwatch custom"></span><strong>Red outline</strong><br />Custom or polygon module footprint.</div>
+        <div className="layoutHelpItem"><span className="layoutSwatch bridge"></span><strong>Brown outline</strong><br />Bridge module footprint.</div>
+        <div className="layoutHelpItem"><span className="layoutSwatch table"></span><strong>Blue rectangle</strong><br />Table.</div>
+        <div className="layoutHelpItem"><span className="layoutSwatch front"></span><strong>Yellow / heavy edge</strong><br />Front/reference edge of the module.</div>
+        <div className="layoutHelpItem"><span className="layoutSwatch point"></span><strong>Blue dots</strong><br />Track connection points used for snapping.</div>
+        <div className="layoutHelpItem"><span className="layoutSwatch connection"></span><strong>Orange dashed line</strong><br />Modules currently connected as a group.</div>
+        <div className="layoutHelpItem"><strong>↻</strong><br />Rotate module/table.</div>
+        <div className="layoutHelpItem"><strong>● / L</strong><br />Lock or unlock position.</div>
+        <div className="layoutHelpItem"><strong>⛓</strong><br />Disconnect a connected module from its group.</div>
+        <div className="layoutHelpItem"><strong>×</strong><br />Delete a table.</div>
+      </div>
+    </div>
+
     <div className="layoutLegend">
       <h3 className="legendTitle">Module Key</h3>
       {filteredModules.map((m) => {
@@ -2414,6 +2468,7 @@ button {
 
                 if (checked && !layoutOverrides[m.id]) {
                   const startingSlot = clampSlotToGrid(getTemplateSlot(permanentIndex), getLayoutSize(m));
+
                   setLayoutOverrides((prev: any) => ({
                     ...prev,
                     [m.id]: {
@@ -2434,6 +2489,7 @@ button {
             <div className={`legendNumber ${isIncluded ? "" : "inactive"}`}>
               {permanentNumber || "—"}
             </div>
+
             <div className="legendText">
               <strong>{m.module_name || "Unnamed Module"}</strong>
               {m.module_type || "Module"} — {m.dimensions || "Custom Size"} — {m.owner_name || "Unknown Owner"}
