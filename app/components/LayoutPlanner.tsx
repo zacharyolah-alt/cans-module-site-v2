@@ -28,12 +28,16 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     gridSvgHeight,
     layoutConnections,
     getConnectionLine,
+    snapPreview,
+    isEndpointConnected,
+    isEndpointPreviewed,
     layoutTables,
     handleTablePointerDown,
     getTableTransform,
     rotateTable,
     layoutLocks,
     toggleLayoutLock,
+    toggleModuleGroupLock,
     deleteLayoutTable,
     layoutModules,
     moduleNumberMap,
@@ -62,6 +66,24 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
   return (
       <section className="formCard layoutPrintArea">
         <h2>Layout View</h2>
+
+        <details className="plannerKey" open>
+          <summary>Symbols & Colors Key</summary>
+          <div className="symbolKeyGrid">
+            <div className="symbolKeyItem"><span className="symbolSwatch" /> Green edge: standard module</div>
+            <div className="symbolKeyItem"><span className="symbolSwatch custom" /> Red edge: custom module</div>
+            <div className="symbolKeyItem"><span className="symbolSwatch bridge" /> Brown edge: bridge module</div>
+            <div className="symbolKeyItem"><span className="symbolSwatch table" /> Blue shape: table</div>
+            <div className="symbolKeyItem"><span className="symbolDot available" /> Blue dot: open track endpoint</div>
+            <div className="symbolKeyItem"><span className="symbolDot candidate" /> Yellow dot: valid snap candidate</div>
+            <div className="symbolKeyItem"><span className="symbolDot connected" /> Green dot: connected track endpoint</div>
+            <div className="symbolKeyItem"><span className="symbolIcon rotate">↻</span> Rotate connected group</div>
+            <div className="symbolKeyItem"><span className="symbolIcon lock">L</span> Lock/unlock connected group</div>
+            <div className="symbolKeyItem"><span className="symbolIcon disconnect">⛓</span> Disconnect module</div>
+            <div className="symbolKeyItem"><span className="symbolIcon number">#</span> Yellow number: module ID</div>
+            <div className="symbolKeyItem"><span className="symbolIcon delete">×</span> Delete table</div>
+          </div>
+        </details>
     
         <div className={mobileEditMode ? "layoutCanvas editMode" : "layoutCanvas"} ref={layoutCanvasRef}>
           <div className="layoutControls">
@@ -154,22 +176,6 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
               <text className="svgKeyText" x="36" y="84">1 large square = 6 inches</text>
               <text className="svgKeyText" x="36" y="104">2 x 2 large squares = 1 sq ft</text>
             </g>
-    
-            {layoutConnections.map((connection: any, index: number) => {
-              const line = getConnectionLine(connection);
-              if (!line) return null;
-    
-              return (
-                <line
-                  key={`connection-${connection.a}-${connection.b}-${index}`}
-                  className="svgConnectionLine"
-                  x1={line.a.x}
-                  y1={line.a.y}
-                  x2={line.b.x}
-                  y2={line.b.y}
-                />
-              );
-            })}
     
             {layoutTables.map((table) => (
               <g
@@ -326,15 +332,21 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                     )}
                   </g>
     
-                  {getTrackEndpointsForModule(m, slot).map((endpoint: any, endpointIndex: number) => (
-                    <circle
-                      key={`snap-${m.id}-${endpointIndex}`}
-                      className="svgSnapPoint"
-                      cx={endpoint.x}
-                      cy={endpoint.y}
-                      r="5"
-                    />
-                  ))}
+                  {getTrackEndpointsForModule(m, slot).map((endpoint: any, endpointIndex: number) => {
+                    const connected = isEndpointConnected(m.id, endpoint.key);
+                    const previewed = isEndpointPreviewed(m.id, endpoint.key);
+                    const stateClass = connected ? "connected" : previewed ? "candidate" : "available";
+
+                    return (
+                      <circle
+                        key={`snap-${m.id}-${endpointIndex}`}
+                        className={`svgSnapPoint ${stateClass}`}
+                        cx={endpoint.x}
+                        cy={endpoint.y}
+                        r={connected || previewed ? "8" : "6"}
+                      />
+                    );
+                  })}
     
                   <text className="svgNumberText" x={numberPosition.x} y={numberPosition.y}>
                     {moduleNumberMap[m.id] ?? ""}
@@ -386,7 +398,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     
                   <g
                     onPointerDown={(event) => event.stopPropagation()}
-                    onClick={() => toggleLayoutLock(m.id)}
+                    onClick={() => toggleModuleGroupLock(m.id)}
                     style={{ cursor: "pointer" }}
                   >
                     <circle
@@ -406,20 +418,6 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
         </div>
     
         <div className="layoutLegend">
-          <h3 className="legendTitle">Layout Symbols Key</h3>
-          <div className="symbolKeyGrid">
-            <div className="symbolKeyItem"><span className="symbolSwatch" /> Green outline = standard module</div>
-            <div className="symbolKeyItem"><span className="symbolSwatch custom" /> Red outline = custom module</div>
-            <div className="symbolKeyItem"><span className="symbolSwatch bridge" /> Brown outline = bridge module</div>
-            <div className="symbolKeyItem"><span className="symbolSwatch table" /> Blue shape = table</div>
-            <div className="symbolKeyItem"><span className="symbolSwatch snap" /> Blue dots = track connection points</div>
-            <div className="symbolKeyItem"><span className="symbolSwatch connection" /> Orange dashed line = connected modules</div>
-            <div className="symbolKeyItem">↻ = rotate</div>
-            <div className="symbolKeyItem">● / L = lock or unlock position</div>
-            <div className="symbolKeyItem">⛓ = disconnect connected module</div>
-            <div className="symbolKeyItem">× = delete table</div>
-          </div>
-    
           <h3 className="legendTitle">Module Key</h3>
           {filteredModules.map((m) => {
             const isIncluded = !!layoutIncluded[m.id];
@@ -470,3 +468,4 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
       </section>
   );
 }
+
