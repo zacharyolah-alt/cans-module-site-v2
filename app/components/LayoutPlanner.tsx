@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo, useState } from "react";
+
 export default function LayoutPlanner({ planner }: { planner: any }) {
   const {
     mobileEditMode,
@@ -63,9 +65,97 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     setLayoutIncluded,
   } = planner;
 
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const [pointerPosition, setPointerPosition] = useState({ x: 0, y: 0 });
+
+  const selectedModule = useMemo(
+    () => layoutModules.find((module: any) => module.id === selectedModuleId) || null,
+    [layoutModules, selectedModuleId]
+  );
+
+  const selectedGroupSize = selectedModuleId
+    ? (() => {
+        const visited = new Set<string>();
+        const stack = [selectedModuleId];
+        while (stack.length) {
+          const current = stack.pop()!;
+          if (visited.has(current)) continue;
+          visited.add(current);
+          layoutConnections.forEach((connection: any) => {
+            if (connection.a === current && !visited.has(connection.b)) stack.push(connection.b);
+            if (connection.b === current && !visited.has(connection.a)) stack.push(connection.a);
+          });
+        }
+        return visited.size;
+      })()
+    : 0;
+
+  const snapStatus = snapPreview
+    ? "Valid snap candidate"
+    : layoutConnections.length > 0
+      ? `${layoutConnections.length} track connection${layoutConnections.length === 1 ? "" : "s"}`
+      : "No active track connections";
+
   return (
-      <section className="formCard layoutPrintArea">
-        <h2>Layout View</h2>
+      <>
+        <style>{`
+          .plannerShell { background: #11151a; color: #eef2f6; border-radius: 24px; overflow: hidden; box-shadow: 0 18px 42px rgba(0,0,0,.28); border: 1px solid #29313a; }
+          .plannerTopbar { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 16px 18px; background: #090c10; border-bottom: 1px solid #29313a; flex-wrap: wrap; }
+          .plannerTopbar h2 { margin: 0; font-size: 24px; color: white; }
+          .plannerTopbar p { margin: 3px 0 0; color: #9faab5; font-size: 13px; }
+          .plannerTopActions { display: flex; gap: 8px; flex-wrap: wrap; }
+          .plannerWorkspace { display: grid; grid-template-columns: 190px minmax(0, 1fr) 250px; min-height: 640px; }
+          .plannerToolbox, .plannerProperties { background: #151b22; padding: 14px; }
+          .plannerToolbox { border-right: 1px solid #29313a; }
+          .plannerProperties { border-left: 1px solid #29313a; }
+          .plannerPanelTitle { margin: 0 0 12px; color: #ffd21f; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; }
+          .plannerToolButton { width: 100%; display: flex; align-items: center; gap: 9px; margin-bottom: 8px; padding: 10px 11px; border-radius: 10px; background: #222b35; color: white; text-align: left; }
+          .plannerToolButton:hover { background: #2d3945; }
+          .plannerToolButton.active { background: #ffd21f; color: #111; }
+          .plannerCenter { min-width: 0; background: #202730; padding: 12px; }
+          .plannerShell .layoutCanvas { border-radius: 12px; border-color: #3b4652; margin: 0; max-height: 72vh; }
+          .plannerShell .layoutControls { background: #151b22; padding: 10px; border-radius: 12px; margin-bottom: 10px; }
+          .plannerShell .layoutControls label { color: #e7ebef; }
+          .plannerShell .plannerKey { margin: 10px 12px 0; background: #151b22; border: 1px solid #29313a; border-radius: 12px; color: #eef2f6; }
+          .plannerShell .plannerKey summary { padding: 12px 14px; cursor: pointer; color: #ffd21f; font-weight: 900; }
+          .plannerShell .symbolKeyGrid { border-top-color: #29313a; }
+          .propertyCard { background: #222b35; border: 1px solid #303b47; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+          .propertyCard strong { display: block; color: white; margin-bottom: 6px; }
+          .propertyRow { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid #303b47; font-size: 13px; }
+          .propertyRow:last-child { border-bottom: 0; }
+          .propertyRow span:first-child { color: #9faab5; }
+          .plannerStatusbar { display: flex; gap: 18px; flex-wrap: wrap; padding: 9px 16px; background: #090c10; border-top: 1px solid #29313a; color: #b9c2cb; font-size: 12px; }
+          .plannerStatusbar strong { color: #ffd21f; }
+          .plannerShell .layoutLegend { margin: 12px; background: #151b22; border-color: #29313a; color: #eef2f6; }
+          .plannerShell .legendRow { border-top-color: #29313a; }
+          @media (max-width: 1000px) {
+            .plannerWorkspace { grid-template-columns: 150px minmax(0,1fr); }
+            .plannerProperties { grid-column: 1 / -1; border-left: 0; border-top: 1px solid #29313a; display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 10px; }
+          }
+          @media (max-width: 700px) {
+            .plannerWorkspace { display: block; }
+            .plannerToolbox { border-right: 0; border-bottom: 1px solid #29313a; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
+            .plannerToolbox .plannerPanelTitle { grid-column: 1 / -1; }
+            .plannerToolButton { margin: 0; min-height: 48px; }
+            .plannerCenter { padding: 8px; }
+            .plannerProperties { display: block; }
+            .plannerTopbar { align-items: flex-start; }
+            .plannerStatusbar { gap: 10px; }
+          }
+        `}</style>
+        <section className="plannerShell layoutPrintArea">
+          <header className="plannerTopbar">
+            <div>
+              <h2>C.A.N.S. Layout Planner</h2>
+              <p>Track-aware module planning workspace</p>
+            </div>
+            <div className="plannerTopActions">
+              <button className="layoutControlBtn" onClick={saveLayoutDesign}>Save</button>
+              <button className="layoutControlBtn" onClick={undoLayoutChange} disabled={layoutHistory.length === 0}>Undo</button>
+              <button className="layoutControlBtn" onClick={redoLayoutChange} disabled={layoutFuture.length === 0}>Redo</button>
+              <button className="layoutControlBtn" onClick={exportLayoutPDF}>Print</button>
+            </div>
+          </header>
 
         <details className="plannerKey" open>
           <summary>Symbols & Colors Key</summary>
@@ -85,7 +175,37 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
           </div>
         </details>
     
-        <div className={mobileEditMode ? "layoutCanvas editMode" : "layoutCanvas"} ref={layoutCanvasRef}>
+        <div className="plannerWorkspace">
+          <aside className="plannerToolbox">
+            <h3 className="plannerPanelTitle">Toolbox</h3>
+            <button className="plannerToolButton active">↖ Select / Move</button>
+            <button className="plannerToolButton" onClick={() => selectedModule && rotateModule({ preventDefault() {}, stopPropagation() {} }, selectedModule, Math.max(0, (moduleNumberMap[selectedModule.id] || 1) - 1))}>↻ Rotate group</button>
+            <button className="plannerToolButton" onClick={() => selectedModuleId && toggleModuleGroupLock(selectedModuleId)}>🔒 Lock group</button>
+            <button className="plannerToolButton" onClick={() => addLayoutTable("6ft")}>▭ Add 6 ft table</button>
+            <button className="plannerToolButton" onClick={() => addLayoutTable("8ft")}>▭ Add 8 ft table</button>
+            <button className="plannerToolButton" onClick={autoArrangeLayout}>✨ Auto arrange</button>
+            <button className="plannerToolButton" onClick={loadLayoutDesign}>↥ Load layout</button>
+            <button className="plannerToolButton" onClick={() => setMobileEditMode((current: boolean) => !current)}>☝ Mobile edit: {mobileEditMode ? "On" : "Off"}</button>
+          </aside>
+
+          <div className="plannerCenter">
+        <div
+          className={mobileEditMode ? "layoutCanvas editMode" : "layoutCanvas"}
+          ref={layoutCanvasRef}
+          tabIndex={0}
+          onWheel={(event) => {
+            if (event.ctrlKey || event.metaKey) return;
+            event.preventDefault();
+            zoomLayout(event.deltaY < 0 ? "in" : "out");
+          }}
+          onPointerMove={(event) => {
+            const rect = event.currentTarget.getBoundingClientRect();
+            setPointerPosition({
+              x: Math.max(0, Math.round((event.clientX - rect.left) / 10)),
+              y: Math.max(0, Math.round((event.clientY - rect.top) / 10)),
+            });
+          }}
+        >
           <div className="layoutControls">
             <label>
               Grid width:
@@ -259,7 +379,14 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
               };
     
               return (
-                <g key={m.id} className="svgModuleGroup" onPointerDown={(event) => handleModulePointerDown(event, m, index)}>
+                <g
+                  key={m.id}
+                  className="svgModuleGroup"
+                  onPointerDown={(event) => {
+                    setSelectedModuleId(m.id);
+                    handleModulePointerDown(event, m, index);
+                  }}
+                >
                   <g transform={moduleTransform}>
                     {kind === "custom" && m.custom_shape === "Angled Inside Corner" ? (
       <polygon
@@ -416,6 +543,50 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
             })}
           </svg>
         </div>
+          </div>
+
+          <aside className="plannerProperties">
+            <h3 className="plannerPanelTitle">Properties</h3>
+            {selectedModule ? (
+              <>
+                <div className="propertyCard">
+                  <strong>{selectedModule.module_name || "Unnamed Module"}</strong>
+                  <div className="propertyRow"><span>Number</span><span>#{moduleNumberMap[selectedModule.id] || "—"}</span></div>
+                  <div className="propertyRow"><span>Owner</span><span>{selectedModule.owner_name || "Unknown"}</span></div>
+                  <div className="propertyRow"><span>Type</span><span>{selectedModule.module_type || "Module"}</span></div>
+                  <div className="propertyRow"><span>Size</span><span>{selectedModule.dimensions || "Custom"}</span></div>
+                  <div className="propertyRow"><span>Group size</span><span>{selectedGroupSize}</span></div>
+                  <div className="propertyRow"><span>Locked</span><span>{layoutLocks[selectedModule.id] ? "Yes" : "No"}</span></div>
+                </div>
+                <button className="plannerToolButton" onClick={() => toggleModuleGroupLock(selectedModule.id)}>Toggle group lock</button>
+                {moduleHasConnection(selectedModule.id) && (
+                  <button
+                    className="plannerToolButton"
+                    onClick={() => {
+                      pushLayoutHistory();
+                      setLayoutConnections((previous: any[]) => previous.filter((connection) => connection.a !== selectedModule.id && connection.b !== selectedModule.id));
+                    }}
+                  >
+                    ⛓ Disconnect module
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className="propertyCard">
+                <strong>No module selected</strong>
+                <span style={{ color: "#9faab5", fontSize: 13 }}>Tap or click a module to see its information and group controls.</span>
+              </div>
+            )}
+          </aside>
+        </div>
+
+        <div className="plannerStatusbar">
+          <span><strong>Zoom</strong> {layoutZoom}%</span>
+          <span><strong>Pointer</strong> {pointerPosition.x}" × {pointerPosition.y}"</span>
+          <span><strong>Snap</strong> {snapStatus}</span>
+          <span><strong>Modules</strong> {layoutModules.length}</span>
+          <span><strong>Selected</strong> {selectedModule ? `#${moduleNumberMap[selectedModule.id] || "—"}` : "None"}</span>
+        </div>
     
         <div className="layoutLegend">
           <h3 className="legendTitle">Module Key</h3>
@@ -466,6 +637,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
           })}
         </div>
       </section>
+      </>
   );
 }
 
