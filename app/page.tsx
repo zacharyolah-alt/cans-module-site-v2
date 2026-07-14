@@ -43,6 +43,7 @@ const [dimensionFilter, setDimensionFilter] = useState("All");
 const [layoutTables, setLayoutTables] = useState<any[]>([]);
   const [layoutLocks, setLayoutLocks] = useState<any>({});
   const [layoutConnections, setLayoutConnections] = useState<any[]>([]);
+  const [snapPreview, setSnapPreview] = useState<any>(null);
   const [layoutHistory, setLayoutHistory] = useState<any[]>([]);
 const [layoutFuture, setLayoutFuture] = useState<any[]>([]);
   const [layoutOverrides, setLayoutOverrides] = useState<any>({});
@@ -354,6 +355,7 @@ function exportToCSV() {
   if (m.bridge_size === "Single Bridge") {
     bridgeWidth = 121;
   }
+
   if (m.bridge_size === "Double Bridge") {
     bridgeWidth = 243;
   }
@@ -415,7 +417,6 @@ if (kind === "custom") {
     const rearTrackFrontEdge = FRONT_TRACK_FRONT_EDGE + TRACK_CENTER_SPACING - TRACK_WIDTH / 2;
     const rearRail1 = rearTrackFrontEdge;
     const rearRail2 = rearTrackFrontEdge + TRACK_WIDTH;
-
     return [frontRail1, frontRail2, rearRail1, rearRail2];
   }
 
@@ -437,6 +438,7 @@ if (kind === "custom") {
 
   function clampSlotToGrid(slot: any, size: any) {
     const bounds = getRotatedBounds(slot, size);
+
     return {
       ...slot,
       x: clamp(slot.x, 0, Math.max(0, gridSvgWidth - bounds.width)),
@@ -459,16 +461,40 @@ if (kind === "custom") {
     return { x, y };
   }
 
+  function rotateDirection(dx: number, dy: number, rotation: number) {
+    if (rotation === 90) return { dx: -dy, dy: dx };
+    if (rotation === 180) return { dx: -dx, dy: -dy };
+    if (rotation === 270) return { dx: dy, dy: -dx };
+    return { dx, dy };
+  }
+
   function getTrackEndpointsForModule(m: any, slot: any) {
     const size = getLayoutSize(m);
     const kind = getLayoutKind(m);
     const rotation = slot.rotation || 0;
     const tracks = getMainTrackCenters();
 
+    const sideDirection: any = {
+      left: { dx: -1, dy: 0 },
+      right: { dx: 1, dy: 0 },
+      top: { dx: 0, dy: -1 },
+      bottom: { dx: 0, dy: 1 },
+    };
+
     const localPoints = isCornerKind(kind)
       ? tracks.flatMap((track, trackIndex) => [
-          { x: 0, y: kind === "insideCorner" ? size.height - track : track, trackIndex, side: "left" },
-          { x: size.width - track, y: kind === "insideCorner" ? 0 : size.height, trackIndex, side: kind === "insideCorner" ? "top" : "bottom" },
+          {
+            x: 0,
+            y: kind === "insideCorner" ? size.height - track : track,
+            trackIndex,
+            side: "left",
+          },
+          {
+            x: size.width - track,
+            y: kind === "insideCorner" ? 0 : size.height,
+            trackIndex,
+            side: kind === "insideCorner" ? "top" : "bottom",
+          },
         ])
       : tracks.flatMap((track, trackIndex) => [
           { x: 0, y: track, trackIndex, side: "left" },
@@ -476,15 +502,24 @@ if (kind === "custom") {
         ]);
     return localPoints.map((point) => {
       const rotated = rotatePoint(point.x, point.y, rotation, size);
+      const baseDirection = sideDirection[point.side];
+      const direction = rotateDirection(baseDirection.dx, baseDirection.dy, rotation);
+
       return {
         x: slot.x + rotated.x,
         y: slot.y + rotated.y,
         trackIndex: point.trackIndex,
         side: point.side,
+        key: `${point.trackIndex}-${point.side}`,
+        dx: direction.dx,
+        dy: direction.dy,
       };
     });
   }
 
+  function endpointsFaceEachOther(a: any, b: any) {
+    return a.dx * b.dx + a.dy * b.dy < -0.9;
+  }
   function applyTrackSnap(candidateSlot: any, movingModule: any) {
     const movingSize = getLayoutSize(movingModule);
     const movingEndpoints = getTrackEndpointsForModule(movingModule, candidateSlot);
@@ -500,19 +535,21 @@ if (kind === "custom") {
       movingEndpoints.forEach((movingEndpoint) => {
         otherEndpoints.forEach((otherEndpoint) => {
           if (movingEndpoint.trackIndex !== otherEndpoint.trackIndex) return;
+          if (!endpointsFaceEachOther(movingEndpoint, otherEndpoint)) return;
 
           const dx = otherEndpoint.x - movingEndpoint.x;
           const dy = otherEndpoint.y - movingEndpoint.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
+          const distance = Math.hypot(dx, dy);
           if (distance <= TRACK_SNAP_DISTANCE && (!bestSnap || distance < bestSnap.distance)) {
             bestSnap = {
               distance,
               dx,
               dy,
               otherModuleId: otherModule.id,
-              movingTrackIndex: movingEndpoint.trackIndex,
-              otherTrackIndex: otherEndpoint.trackIndex,
+              movingEndpointKey: movingEndpoint.key,
+              otherEndpointKey: otherEndpoint.key,
+              movingPoint: movingEndpoint,
+              otherPoint: otherEndpoint,
             };
           }
         });
@@ -520,38 +557,56 @@ if (kind === "custom") {
     });
 
     if (!bestSnap) {
+      setSnapPreview(null);
       return clampSlotToGrid(candidateSlot, movingSize);
     }
-
-    if (bestSnap.otherModuleId) {
-      setLayoutConnections((prev: any[]) => {
-        const exists = prev.some(
-          (c) =>
-            (c.a === movingModule.id && c.b === bestSnap.otherModuleId) ||
-            (c.b === movingModule.id && c.a === bestSnap.otherModuleId)
-        );
-
-        if (exists) return prev;
-
-        return [
-          ...prev,
-          {
-            a: movingModule.id,
-            b: bestSnap.otherModuleId,
-            trackIndex: bestSnap.movingTrackIndex,
-          },
-        ];
-      });
-    }
-
-    return clampSlotToGrid(
+    const snappedSlot = clampSlotToGrid(
       {
         ...candidateSlot,
-        x: snapToGrid(candidateSlot.x + bestSnap.dx),
-        y: snapToGrid(candidateSlot.y + bestSnap.dy),
+        x: candidateSlot.x + bestSnap.dx,
+        y: candidateSlot.y + bestSnap.dy,
       },
       movingSize
     );
+
+    const snappedMovingEndpoint = getTrackEndpointsForModule(movingModule, snappedSlot).find(
+      (endpoint: any) => endpoint.key === bestSnap.movingEndpointKey
+    );
+
+    setSnapPreview({
+      movingModuleId: movingModule.id,
+      otherModuleId: bestSnap.otherModuleId,
+      movingEndpointKey: bestSnap.movingEndpointKey,
+      otherEndpointKey: bestSnap.otherEndpointKey,
+      a: snappedMovingEndpoint || bestSnap.movingPoint,
+      b: bestSnap.otherPoint,
+    });
+
+    setLayoutConnections((prev: any[]) => {
+      const sameConnection = (c: any) =>
+        (c.a === movingModule.id &&
+          c.b === bestSnap.otherModuleId &&
+          c.aEndpointKey === bestSnap.movingEndpointKey &&
+          c.bEndpointKey === bestSnap.otherEndpointKey) ||
+        (c.b === movingModule.id &&
+          c.a === bestSnap.otherModuleId &&
+          c.bEndpointKey === bestSnap.movingEndpointKey &&
+          c.aEndpointKey === bestSnap.otherEndpointKey);
+
+      if (prev.some(sameConnection)) return prev;
+
+      return [
+        ...prev,
+        {
+          a: movingModule.id,
+          b: bestSnap.otherModuleId,
+          aEndpointKey: bestSnap.movingEndpointKey,
+          bEndpointKey: bestSnap.otherEndpointKey,
+        },
+      ];
+    });
+
+    return snappedSlot;
   }
 function getConnectedModuleIds(startId: string) {
   const visited = new Set<string>();
@@ -582,28 +637,46 @@ function getConnectedModuleIds(startId: string) {
     return layoutConnections.some((c: any) => c.a === moduleId || c.b === moduleId);
   }
 
-  function getModuleCenter(m: any) {
-    const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || 1) - 1);
-    const slot = getPlacedSlot(m, permanentIndex);
-    const size = getLayoutSize(m);
-    const bounds = getRotatedBounds(slot, size);
+  function getEndpointForConnection(moduleId: string, endpointKey: string) {
+    const module = layoutModules.find((m: any) => m.id === moduleId);
+    if (!module) return null;
 
-    return {
-      x: slot.x + bounds.width / 2,
-      y: slot.y + bounds.height / 2,
-    };
+    const permanentIndex = Math.max(0, (moduleNumberMap[module.id] || 1) - 1);
+    const slot = getPlacedSlot(module, permanentIndex);
+    return (
+      getTrackEndpointsForModule(module, slot).find(
+        (endpoint: any) => endpoint.key === endpointKey
+      ) || null
+    );
   }
 
   function getConnectionLine(connection: any) {
-    const aModule = layoutModules.find((m: any) => m.id === connection.a);
-    const bModule = layoutModules.find((m: any) => m.id === connection.b);
+    const a = getEndpointForConnection(connection.a, connection.aEndpointKey);
+    const b = getEndpointForConnection(connection.b, connection.bEndpointKey);
 
-    if (!aModule || !bModule) return null;
-    const a = getModuleCenter(aModule);
-    const b = getModuleCenter(bModule);
-
+    if (!a || !b) return null;
     return { a, b };
   }
+
+  function isEndpointConnected(moduleId: string, endpointKey: string) {
+    return layoutConnections.some(
+      (connection: any) =>
+        (connection.a === moduleId && connection.aEndpointKey === endpointKey) ||
+        (connection.b === moduleId && connection.bEndpointKey === endpointKey)
+    );
+  }
+
+  function isEndpointPreviewed(moduleId: string, endpointKey: string) {
+    if (!snapPreview) return false;
+
+    return (
+      (snapPreview.movingModuleId === moduleId &&
+        snapPreview.movingEndpointKey === endpointKey) ||
+      (snapPreview.otherModuleId === moduleId &&
+        snapPreview.otherEndpointKey === endpointKey)
+    );
+  }
+
   function autoArrangeLayout() {
     pushLayoutHistory();
 
@@ -611,7 +684,6 @@ function getConnectedModuleIds(startId: string) {
     const y = 140;
     const nextOverrides: any = {};
     const nextConnections: any[] = [];
-
     layoutModules.forEach((m: any, index: number) => {
       const size = getLayoutSize(m);
       nextOverrides[m.id] = {
@@ -674,7 +746,6 @@ function undoLayoutChange() {
     return remaining;
   });
 }
-
 function redoLayoutChange() {
   setLayoutFuture((future: any[]) => {
     if (future.length === 0) return future;
@@ -708,6 +779,7 @@ function redoLayoutChange() {
       y: transformed.y,
     };
   }
+
   function handleModulePointerDown(event: any, m: any, index: number) {
     event.preventDefault();
     event.stopPropagation();
@@ -757,7 +829,6 @@ const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
       connectedModule,
       connectedIndex
     );
-
     next[connectedId] = {
       ...connectedSlot,
       ...(prev[connectedId] || {}),
@@ -770,6 +841,7 @@ const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
 });
     }
     function upHandler() {
+      setSnapPreview(null);
       window.removeEventListener("pointermove", moveHandler);
       window.removeEventListener("pointerup", upHandler);
     }
@@ -777,31 +849,101 @@ const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
     window.addEventListener("pointermove", moveHandler);
     window.addEventListener("pointerup", upHandler);
   }
-
   function rotateModule(event: any, m: any, index: number) {
     event.preventDefault();
     event.stopPropagation();
 
-    if (layoutLocks[m.id]) return;
+    const connectedIds = getConnectedModuleIds(m.id);
+    const groupModules = connectedIds
+      .map((id) => layoutModules.find((module: any) => module.id === id))
+      .filter(Boolean);
+
+    if (groupModules.some((module: any) => layoutLocks[module.id])) return;
     pushLayoutHistory();
 
-    const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
-    const currentSlot = getPlacedSlot(m, permanentIndex);
-    const nextSlot = clampSlotToGrid(
-      {
-        ...currentSlot,
-        rotation: ((currentSlot.rotation || 0) + 90) % 360,
-      },
-      getLayoutSize(m)
-    );
+    const currentItems = groupModules.map((module: any) => {
+      const permanentIndex = Math.max(0, (moduleNumberMap[module.id] || 1) - 1);
+      const slot = getPlacedSlot(module, permanentIndex);
+      const size = getLayoutSize(module);
+      const bounds = getRotatedBounds(slot, size);
 
-    setLayoutOverrides((prev: any) => ({
-      ...prev,
-      [m.id]: {
-        ...(prev[m.id] || {}),
-        ...nextSlot,
-      },
-    }));
+      return {
+        module,
+        slot,
+        size,
+        center: {
+          x: slot.x + bounds.width / 2,
+          y: slot.y + bounds.height / 2,
+        },
+      };
+    });
+
+    const groupCenter = {
+      x: currentItems.reduce((sum, item) => sum + item.center.x, 0) / currentItems.length,
+      y: currentItems.reduce((sum, item) => sum + item.center.y, 0) / currentItems.length,
+    };
+
+    const nextItems = currentItems.map((item) => {
+      const relativeX = item.center.x - groupCenter.x;
+      const relativeY = item.center.y - groupCenter.y;
+      const nextCenter = {
+        x: groupCenter.x - relativeY,
+        y: groupCenter.y + relativeX,
+      };
+      const nextRotation = ((item.slot.rotation || 0) + 90) % 360;
+      const nextBounds =
+        nextRotation === 90 || nextRotation === 270
+          ? { width: item.size.height, height: item.size.width }
+          : { width: item.size.width, height: item.size.height };
+
+      return {
+        id: item.module.id,
+        slot: {
+          ...item.slot,
+          x: nextCenter.x - nextBounds.width / 2,
+          y: nextCenter.y - nextBounds.height / 2,
+          rotation: nextRotation,
+        },
+        bounds: nextBounds,
+      };
+    });
+
+    const minX = Math.min(...nextItems.map((item) => item.slot.x));
+    const minY = Math.min(...nextItems.map((item) => item.slot.y));
+    const maxX = Math.max(...nextItems.map((item) => item.slot.x + item.bounds.width));
+    const maxY = Math.max(...nextItems.map((item) => item.slot.y + item.bounds.height));
+
+    const correctionX = minX < 0 ? -minX : maxX > gridSvgWidth ? gridSvgWidth - maxX : 0;
+    const correctionY = minY < 0 ? -minY : maxY > gridSvgHeight ? gridSvgHeight - maxY : 0;
+
+    setLayoutOverrides((prev: any) => {
+      const next = { ...prev };
+
+      nextItems.forEach((item) => {
+        next[item.id] = {
+          ...(prev[item.id] || {}),
+          ...item.slot,
+          x: item.slot.x + correctionX,
+          y: item.slot.y + correctionY,
+        };
+      });
+
+      return next;
+    });
+  }
+
+  function toggleModuleGroupLock(moduleId: string) {
+    pushLayoutHistory();
+    const connectedIds = getConnectedModuleIds(moduleId);
+    const shouldLock = connectedIds.some((id) => !layoutLocks[id]);
+
+    setLayoutLocks((prev: any) => {
+      const next = { ...prev };
+      connectedIds.forEach((id) => {
+        next[id] = shouldLock;
+      });
+      return next;
+    });
   }
 
   function addLayoutTable(kind: "6ft" | "8ft") {
@@ -833,6 +975,7 @@ const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
   function handleTablePointerDown(event: any, table: any) {
     event.preventDefault();
     event.stopPropagation();
+
     if (layoutLocks[table.id]) return;
     pushLayoutHistory();
     if (event.pointerType === "touch" && !mobileEditMode) return;
@@ -1295,6 +1438,7 @@ button {
   }
 }
 
+
 .layoutCanvas {
   background: white;
   border: 1px solid #ddd;
@@ -1356,6 +1500,7 @@ button {
   display: block;
   background: #fafafa;
 }
+
 .layoutCanvas.editMode .svgPlanner,
 .layoutCanvas.editMode .svgModuleGroup,
 .layoutCanvas.editMode .svgTableGroup {
@@ -1375,7 +1520,6 @@ button {
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
-
 .svgModule.custom {
   stroke: #b00020;
 }
@@ -1396,7 +1540,6 @@ button {
   fill: none;
   vector-effect: non-scaling-stroke;
 }
-
 .svgRailTie {
   stroke: #777;
   stroke-width: 1;
@@ -1438,7 +1581,6 @@ button {
 .svgLockCircle.locked {
   fill: #777;
 }
-
 .svgLockText {
   fill: white;
   font-size: 11px;
@@ -1488,11 +1630,70 @@ button {
 }
 
 .svgSnapPoint {
-  fill: #1f6fff;
   stroke: white;
-  stroke-width: 2;
+  stroke-width: 2.5;
   vector-effect: non-scaling-stroke;
+  pointer-events: none;
 }
+
+.svgSnapPoint.available {
+  fill: #1f6fff;
+}
+
+.svgSnapPoint.candidate {
+  fill: #ffd21f;
+  stroke: #050505;
+}
+
+.svgSnapPoint.connected {
+  fill: #18a558;
+  stroke: white;
+}
+
+.plannerKey {
+  background: #fff;
+  border: 2px solid #ffd21f;
+  border-radius: 16px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.plannerKey summary {
+  background: #050505;
+  color: #ffd21f;
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 900;
+  padding: 13px 16px;
+}
+
+.symbolDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px #777;
+  flex: 0 0 auto;
+}
+
+.symbolDot.available { background: #1f6fff; }
+.symbolDot.candidate { background: #ffd21f; box-shadow: 0 0 0 1px #050505; }
+.symbolDot.connected { background: #18a558; }
+
+.symbolIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+
+.symbolIcon.rotate, .symbolIcon.number { background: #ffd21f; color: #050505; }
+.symbolIcon.lock, .symbolIcon.delete { background: #b00020; color: white; }
+.symbolIcon.disconnect { background: #ff6b35; color: white; }
 
 .symbolKeyGrid {
   display: grid;
@@ -1523,6 +1724,7 @@ button {
 .symbolSwatch.table { border-color: #1f6fbf; background: rgba(70, 155, 255, .28); }
 .symbolSwatch.connection { border-color: #ff8c00; background: repeating-linear-gradient(90deg, #ff8c00 0 8px, transparent 8px 14px); }
 .symbolSwatch.snap { border-radius: 999px; width: 14px; height: 14px; border-color: white; background: #1f6fff; }
+
 .svgScaleKey {
   fill: rgba(255,255,255,.94);
   stroke: #ffd21f;
@@ -1648,6 +1850,7 @@ button {
   object-fit: contain;
   border-radius: 10px;
 }
+
 .imageModalClose {
   position: fixed;
   top: 12px;
@@ -1710,6 +1913,7 @@ button {
   <h2 className="filtersTitle">Filter Modules</h2>
 
   <section className="filters">
+
   {/* STANDARD */}
   <div className="filterGroup">
     <p>Standard</p>
@@ -1793,6 +1997,7 @@ button {
         {user && (
           <section className="formCard">
             <h2>{editingId ? "Edit Module" : "Add a Module"}</h2>
+
             <div className="formGrid">
               <input
                 placeholder="Module name"
@@ -2002,6 +2207,7 @@ button {
               <button className="yellowBtn" onClick={saveModule}>
                 {editingId ? "Save Changes" : "Add Module"}
               </button>
+
               {editingId && (
                 <button className="grayBtn" onClick={resetForm}>
                   Cancel Edit
@@ -2043,6 +2249,7 @@ button {
   {m.module_type && (
     <span className="typeTag">{m.module_type}</span>
   )}
+
   <span className="status">{m.status || "Active"}</span>
 </div>
                 <h3>{m.module_name}</h3>
@@ -2142,12 +2349,16 @@ button {
               gridSvgHeight,
               layoutConnections,
               getConnectionLine,
+              snapPreview,
+              isEndpointConnected,
+              isEndpointPreviewed,
               layoutTables,
               handleTablePointerDown,
               getTableTransform,
               rotateTable,
               layoutLocks,
               toggleLayoutLock,
+              toggleModuleGroupLock,
               deleteLayoutTable,
               layoutModules,
               moduleNumberMap,
