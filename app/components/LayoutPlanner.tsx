@@ -46,6 +46,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     getPlacedSlot,
     getLayoutKind,
     getLayoutSize,
+    getPolygonGeometry,
     getTrackRails,
     getModuleTransform,
     getRotatedBounds,
@@ -388,7 +389,17 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                   }}
                 >
                   <g transform={moduleTransform}>
-                    {kind === "custom" && m.custom_shape === "Angled Inside Corner" ? (
+                    {kind === "endCap" ? (
+      <path
+        className="svgModule"
+        d={`M 0 0 H ${size.width - size.height / 2} A ${size.height / 2} ${size.height / 2} 0 0 1 ${size.width - size.height / 2} ${size.height} H 0 Z`}
+      />
+    ) : kind === "custom" && m.custom_shape === "Polygon" ? (
+      <polygon
+        className="svgModule custom"
+        points={getPolygonGeometry(m).pointsString}
+      />
+    ) : kind === "custom" && m.custom_shape === "Angled Inside Corner" ? (
       <polygon
         className="svgModule custom"
         points={`0,${size.height} 0,${size.height * 0.35} ${size.width * 0.35},0 ${size.width},0 ${size.width},${size.height} 0,${size.height}`}
@@ -408,10 +419,39 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
         rx="1"
       />
     )}
+
+                    {kind === "endCap" ? (
+                      <line className="svgFrontEdge" x1="0" y1="0" x2="0" y2={size.height} />
+                    ) : kind === "custom" && m.custom_shape === "Polygon" ? (
+                      (() => {
+                        const points = getPolygonGeometry(m).points;
+                        if (points.length < 2) return null;
+                        return (
+                          <line
+                            className="svgFrontEdge"
+                            x1={points[0].x}
+                            y1={points[0].y}
+                            x2={points[1].x}
+                            y2={points[1].y}
+                          />
+                        );
+                      })()
+                    ) : (
+                      <line className="svgFrontEdge" x1="0" y1="0" x2={size.width} y2="0" />
+                    )}
     
-                    <line className="svgFrontEdge" x1="0" y1="0" x2={size.width} y2="0" />
-    
-                    {isCornerKind(kind) ? (
+                    {kind === "endCap" ? (
+                      <>
+                        <path
+                          className="svgRail"
+                          d={`M 0 ${rails[0]} H ${size.width - size.height / 2} A ${size.height / 2 - rails[0]} ${size.height / 2 - rails[0]} 0 0 1 ${size.width - size.height / 2} ${size.height - rails[0]} H 0`}
+                        />
+                        <path
+                          className="svgRail"
+                          d={`M 0 ${rails[1]} H ${size.width - size.height / 2} A ${size.height / 2 - rails[1]} ${size.height / 2 - rails[1]} 0 0 1 ${size.width - size.height / 2} ${size.height - rails[1]} H 0`}
+                        />
+                      </>
+                    ) : isCornerKind(kind) ? (
                       kind === "outsideCorner" ? (
                         <>
                           {rails.map((rail, railIndex) => (
@@ -640,4 +680,5 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
       </>
   );
 }
+
 
