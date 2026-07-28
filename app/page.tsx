@@ -337,6 +337,7 @@ function exportToCSV() {
     if (m.module_type === "Outside Corner") return "outsideCorner";
     if (m.dimensions?.startsWith("Corner")) return "outsideCorner";
     if (m.module_type === "Bridge") return "bridge";
+    if (m.dimensions?.startsWith("End Cap")) return "endCap";
     if (m.dimensions?.startsWith("Single")) return "single";
     if (m.dimensions?.startsWith("Double")) return "double";
     if (m.dimensions?.startsWith("Triple")) return "triple";
@@ -344,10 +345,59 @@ function exportToCSV() {
     return "custom";
   }
 
+  function getPolygonGeometry(m: any) {
+    const sideCount = Math.max(3, Math.min(12, Number(m.polygon_sides || 3)));
+    const lengths = m.polygon_side_lengths || {};
+    const angles = m.polygon_angles || {};
+
+    const points: Array<{ x: number; y: number }> = [{ x: 0, y: 0 }];
+    let x = 0;
+    let y = 0;
+    let heading = 0;
+
+    for (let index = 0; index < sideCount; index += 1) {
+      const sideNumber = index + 1;
+      const lengthInches = Math.max(1, Number(lengths[sideNumber] || 24));
+      const length = lengthInches * LAYOUT_SCALE;
+
+      x += Math.cos(heading) * length;
+      y += Math.sin(heading) * length;
+      points.push({ x, y });
+
+      const interiorAngle = Math.max(1, Math.min(359, Number(angles[sideNumber] || 90)));
+      const exteriorTurn = 180 - interiorAngle;
+      heading += (exteriorTurn * Math.PI) / 180;
+    }
+
+    // The final calculated point should return to the beginning for a valid
+    // polygon. SVG closes the outline automatically, so we only need the
+    // actual corner vertices here.
+    const vertices = points.slice(0, sideCount);
+    const minX = Math.min(...vertices.map((point) => point.x));
+    const minY = Math.min(...vertices.map((point) => point.y));
+    const maxX = Math.max(...vertices.map((point) => point.x));
+    const maxY = Math.max(...vertices.map((point) => point.y));
+
+    const normalizedPoints = vertices.map((point) => ({
+      x: point.x - minX,
+      y: point.y - minY,
+    }));
+
+    return {
+      points: normalizedPoints,
+      pointsString: normalizedPoints
+        .map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`)
+        .join(" "),
+      width: Math.max(20, maxX - minX),
+      height: Math.max(20, maxY - minY),
+    };
+  }
+
   function getLayoutSize(m: any) {
     const kind = getLayoutKind(m);
 
     if (kind === "insideCorner" || kind === "outsideCorner") return { width: 144, height: 144 };
+    if (kind === "endCap") return { width: 288, height: 144 };
     if (kind === "single") return { width: 121, height: 144 };
     if (kind === "double") return { width: 243, height: 144 };
     if (kind === "triple") return { width: 365, height: 144 };
@@ -378,6 +428,11 @@ function exportToCSV() {
   };
     }
 if (kind === "custom") {
+  if (m.custom_shape === "Polygon") {
+    const polygon = getPolygonGeometry(m);
+    return { width: polygon.width, height: polygon.height };
+  }
+
   return {
     width: Number(m.custom_width_inches || 24) * LAYOUT_SCALE,
     height: Number(m.custom_depth_inches || 14) * LAYOUT_SCALE,
@@ -491,26 +546,29 @@ if (kind === "custom") {
       bottom: { dx: 0, dy: 1 },
     };
 
-    const localPoints = isCornerKind(kind)
-      ? [
-          {
-            x: 0,
-            y:
-              kind === "insideCorner"
-                ? size.height - connectionCenter
-                : connectionCenter,
-            side: "left",
-          },
-          {
-            x: size.width - connectionCenter,
-            y: kind === "insideCorner" ? 0 : size.height,
-            side: kind === "insideCorner" ? "top" : "bottom",
-          },
-        ]
-      : [
-          { x: 0, y: connectionCenter, side: "left" },
-          { x: size.width, y: connectionCenter, side: "right" },
-        ];
+    const localPoints =
+      kind === "endCap"
+        ? [{ x: 0, y: connectionCenter, side: "left" }]
+        : isCornerKind(kind)
+          ? [
+              {
+                x: 0,
+                y:
+                  kind === "insideCorner"
+                    ? size.height - connectionCenter
+                    : connectionCenter,
+                side: "left",
+              },
+              {
+                x: size.width - connectionCenter,
+                y: kind === "insideCorner" ? 0 : size.height,
+                side: kind === "insideCorner" ? "top" : "bottom",
+              },
+            ]
+          : [
+              { x: 0, y: connectionCenter, side: "left" },
+              { x: size.width, y: connectionCenter, side: "right" },
+            ];
 
     return localPoints.map((point) => {
       const rotated = rotatePoint(point.x, point.y, rotation, size);
@@ -2498,6 +2556,7 @@ button {
               getPlacedSlot,
               getLayoutKind,
               getLayoutSize,
+              getPolygonGeometry,
               getTrackRails,
               getModuleTransform,
               getRotatedBounds,
