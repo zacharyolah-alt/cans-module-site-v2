@@ -475,7 +475,14 @@ if (kind === "custom") {
     const size = getLayoutSize(m);
     const kind = getLayoutKind(m);
     const rotation = slot.rotation || 0;
-    const tracks = getMainTrackCenters();
+    const trackCenters = getMainTrackCenters();
+
+    // Each module end has one logical connection point centered between the
+    // two parallel main tracks. Snapping this point aligns the complete
+    // two-track interface instead of allowing either individual track to grab.
+    const connectionCenter =
+      trackCenters.reduce((sum, center) => sum + center, 0) /
+      trackCenters.length;
 
     const sideDirection: any = {
       left: { dx: -1, dy: 0 },
@@ -485,35 +492,40 @@ if (kind === "custom") {
     };
 
     const localPoints = isCornerKind(kind)
-      ? tracks.flatMap((track, trackIndex) => [
+      ? [
           {
             x: 0,
-            y: kind === "insideCorner" ? size.height - track : track,
-            trackIndex,
+            y:
+              kind === "insideCorner"
+                ? size.height - connectionCenter
+                : connectionCenter,
             side: "left",
           },
           {
-            x: size.width - track,
+            x: size.width - connectionCenter,
             y: kind === "insideCorner" ? 0 : size.height,
-            trackIndex,
             side: kind === "insideCorner" ? "top" : "bottom",
           },
-        ])
-      : tracks.flatMap((track, trackIndex) => [
-          { x: 0, y: track, trackIndex, side: "left" },
-          { x: size.width, y: track, trackIndex, side: "right" },
-        ]);
+        ]
+      : [
+          { x: 0, y: connectionCenter, side: "left" },
+          { x: size.width, y: connectionCenter, side: "right" },
+        ];
+
     return localPoints.map((point) => {
       const rotated = rotatePoint(point.x, point.y, rotation, size);
       const baseDirection = sideDirection[point.side];
-      const direction = rotateDirection(baseDirection.dx, baseDirection.dy, rotation);
+      const direction = rotateDirection(
+        baseDirection.dx,
+        baseDirection.dy,
+        rotation
+      );
 
       return {
         x: slot.x + rotated.x,
         y: slot.y + rotated.y,
-        trackIndex: point.trackIndex,
         side: point.side,
-        key: `${point.trackIndex}-${point.side}`,
+        key: point.side,
         dx: direction.dx,
         dy: direction.dy,
       };
@@ -524,6 +536,13 @@ if (kind === "custom") {
     return a.dx * b.dx + a.dy * b.dy < -0.9;
   }
 
+  function normalizeEndpointKey(endpointKey: string) {
+    // Saved layouts from the older two-dot system used keys such as
+    // "0-left" and "1-left". Treat both as the single centered "left" end.
+    const parts = String(endpointKey || "").split("-");
+    return parts[parts.length - 1];
+  }
+
   function endpointHasConnection(
     moduleId: string,
     endpointKey: string,
@@ -531,8 +550,12 @@ if (kind === "custom") {
   ) {
     return connections.some(
       (connection: any) =>
-        (connection.a === moduleId && connection.aEndpointKey === endpointKey) ||
-        (connection.b === moduleId && connection.bEndpointKey === endpointKey)
+        (connection.a === moduleId &&
+          normalizeEndpointKey(connection.aEndpointKey) ===
+            normalizeEndpointKey(endpointKey)) ||
+        (connection.b === moduleId &&
+          normalizeEndpointKey(connection.bEndpointKey) ===
+            normalizeEndpointKey(endpointKey))
     );
   }
 
@@ -560,7 +583,6 @@ if (kind === "custom") {
         if (endpointHasConnection(movingModule.id, movingEndpoint.key)) return;
 
         otherEndpoints.forEach((otherEndpoint: any) => {
-          if (movingEndpoint.trackIndex !== otherEndpoint.trackIndex) return;
           if (!endpointsFaceEachOther(movingEndpoint, otherEndpoint)) return;
           if (endpointHasConnection(otherModule.id, otherEndpoint.key)) return;
 
@@ -732,7 +754,9 @@ function getConnectedModuleIds(startId: string) {
     const slot = getPlacedSlot(module, permanentIndex);
     return (
       getTrackEndpointsForModule(module, slot).find(
-        (endpoint: any) => endpoint.key === endpointKey
+        (endpoint: any) =>
+          normalizeEndpointKey(endpoint.key) ===
+          normalizeEndpointKey(endpointKey)
       ) || null
     );
   }
@@ -748,8 +772,12 @@ function getConnectedModuleIds(startId: string) {
   function isEndpointConnected(moduleId: string, endpointKey: string) {
     return layoutConnections.some(
       (connection: any) =>
-        (connection.a === moduleId && connection.aEndpointKey === endpointKey) ||
-        (connection.b === moduleId && connection.bEndpointKey === endpointKey)
+        (connection.a === moduleId &&
+          normalizeEndpointKey(connection.aEndpointKey) ===
+            normalizeEndpointKey(endpointKey)) ||
+        (connection.b === moduleId &&
+          normalizeEndpointKey(connection.bEndpointKey) ===
+            normalizeEndpointKey(endpointKey))
     );
   }
 
@@ -758,9 +786,11 @@ function getConnectedModuleIds(startId: string) {
 
     return (
       (snapPreview.movingModuleId === moduleId &&
-        snapPreview.movingEndpointKey === endpointKey) ||
+        normalizeEndpointKey(snapPreview.movingEndpointKey) ===
+          normalizeEndpointKey(endpointKey)) ||
       (snapPreview.otherModuleId === moduleId &&
-        snapPreview.otherEndpointKey === endpointKey)
+        normalizeEndpointKey(snapPreview.otherEndpointKey) ===
+          normalizeEndpointKey(endpointKey))
     );
   }
 
