@@ -298,7 +298,10 @@ function exportToCSV() {
   const FRONT_TRACK_FRONT_EDGE = 15;
   const TRACK_WIDTH = 10;
   const TRACK_CENTER_SPACING = 13;
-  const TRACK_SNAP_DISTANCE = 24;
+  const TRACK_SNAP_DISTANCE_MOUSE = 34;
+  const TRACK_SNAP_DISTANCE_TOUCH = 56;
+  const TRACK_SNAP_LATERAL_MOUSE = 16;
+  const TRACK_SNAP_LATERAL_TOUCH = 26;
 
   const moduleNumberMap = useMemo(() => {
     const sortedModules = [...modules].sort((a, b) => {
@@ -520,46 +523,111 @@ if (kind === "custom") {
   function endpointsFaceEachOther(a: any, b: any) {
     return a.dx * b.dx + a.dy * b.dy < -0.9;
   }
-  function applyTrackSnap(candidateSlot: any, movingModule: any) {
-    const movingSize = getLayoutSize(movingModule);
+
+  function endpointHasConnection(
+    moduleId: string,
+    endpointKey: string,
+    connections: any[] = layoutConnections
+  ) {
+    return connections.some(
+      (connection: any) =>
+        (connection.a === moduleId && connection.aEndpointKey === endpointKey) ||
+        (connection.b === moduleId && connection.bEndpointKey === endpointKey)
+    );
+  }
+
+  function findBestTrackSnap(
+    candidateSlot: any,
+    movingModule: any,
+    excludedModuleIds: string[],
+    snapDistance: number,
+    lateralTolerance: number
+  ) {
     const movingEndpoints = getTrackEndpointsForModule(movingModule, candidateSlot);
     let bestSnap: any = null;
 
     layoutModules.forEach((otherModule: any) => {
-      if (otherModule.id === movingModule.id) return;
+      if (excludedModuleIds.includes(otherModule.id)) return;
 
-      const otherPermanentIndex = Math.max(0, (moduleNumberMap[otherModule.id] || 1) - 1);
+      const otherPermanentIndex = Math.max(
+        0,
+        (moduleNumberMap[otherModule.id] || 1) - 1
+      );
       const otherSlot = getPlacedSlot(otherModule, otherPermanentIndex);
       const otherEndpoints = getTrackEndpointsForModule(otherModule, otherSlot);
 
-      movingEndpoints.forEach((movingEndpoint) => {
-        otherEndpoints.forEach((otherEndpoint) => {
+      movingEndpoints.forEach((movingEndpoint: any) => {
+        if (endpointHasConnection(movingModule.id, movingEndpoint.key)) return;
+
+        otherEndpoints.forEach((otherEndpoint: any) => {
           if (movingEndpoint.trackIndex !== otherEndpoint.trackIndex) return;
           if (!endpointsFaceEachOther(movingEndpoint, otherEndpoint)) return;
+          if (endpointHasConnection(otherModule.id, otherEndpoint.key)) return;
 
           const dx = otherEndpoint.x - movingEndpoint.x;
           const dy = otherEndpoint.y - movingEndpoint.y;
           const distance = Math.hypot(dx, dy);
-          if (distance <= TRACK_SNAP_DISTANCE && (!bestSnap || distance < bestSnap.distance)) {
-            bestSnap = {
-              distance,
-              dx,
-              dy,
-              otherModuleId: otherModule.id,
-              movingEndpointKey: movingEndpoint.key,
-              otherEndpointKey: otherEndpoint.key,
-              movingPoint: movingEndpoint,
-              otherPoint: otherEndpoint,
-            };
-          }
+
+          // The target should be mostly straight ahead of the endpoint, not far
+          // off to one side. This prevents accidental corner-to-edge grabs.
+          const forward = dx * movingEndpoint.dx + dy * movingEndpoint.dy;
+          const lateral = Math.abs(
+            dx * movingEndpoint.dy - dy * movingEndpoint.dx
+          );
+
+          if (forward < -6) return;
+          if (lateral > lateralTolerance) return;
+          if (distance > snapDistance) return;
+          if (bestSnap && distance >= bestSnap.distance) return;
+
+          bestSnap = {
+            distance,
+            dx,
+            dy,
+            otherModuleId: otherModule.id,
+            movingEndpointKey: movingEndpoint.key,
+            otherEndpointKey: otherEndpoint.key,
+            movingPoint: movingEndpoint,
+            otherPoint: otherEndpoint,
+          };
         });
       });
     });
 
+    return bestSnap;
+  }
+
+  function applyTrackSnap(
+    candidateSlot: any,
+    movingModule: any,
+    excludedModuleIds: string[],
+    snapDistance: number,
+    lateralTolerance: number
+  ) {
+    const movingSize = getLayoutSize(movingModule);
+    const bestSnap = findBestTrackSnap(
+      candidateSlot,
+      movingModule,
+      excludedModuleIds,
+      snapDistance,
+      lateralTolerance
+    );
+
     if (!bestSnap) {
       setSnapPreview(null);
-      return clampSlotToGrid(candidateSlot, movingSize);
+      return {
+        slot: clampSlotToGrid(
+          {
+            ...candidateSlot,
+            x: snapToGrid(candidateSlot.x),
+            y: snapToGrid(candidateSlot.y),
+          },
+          movingSize
+        ),
+        connection: null,
+      };
     }
+
     const snappedSlot = clampSlotToGrid(
       {
         ...candidateSlot,
@@ -569,9 +637,17 @@ if (kind === "custom") {
       movingSize
     );
 
-    const snappedMovingEndpoint = getTrackEndpointsForModule(movingModule, snappedSlot).find(
-      (endpoint: any) => endpoint.key === bestSnap.movingEndpointKey
-    );
+    const snappedMovingEndpoint = getTrackEndpointsForModule(
+      movingModule,
+      snappedSlot
+    ).find((endpoint: any) => endpoint.key === bestSnap.movingEndpointKey);
+
+    const connection = {
+      a: movingModule.id,
+      b: bestSnap.otherModuleId,
+      aEndpointKey: bestSnap.movingEndpointKey,
+      bEndpointKey: bestSnap.otherEndpointKey,
+    };
 
     setSnapPreview({
       movingModuleId: movingModule.id,
@@ -582,32 +658,43 @@ if (kind === "custom") {
       b: bestSnap.otherPoint,
     });
 
-    setLayoutConnections((prev: any[]) => {
-      const sameConnection = (c: any) =>
-        (c.a === movingModule.id &&
-          c.b === bestSnap.otherModuleId &&
-          c.aEndpointKey === bestSnap.movingEndpointKey &&
-          c.bEndpointKey === bestSnap.otherEndpointKey) ||
-        (c.b === movingModule.id &&
-          c.a === bestSnap.otherModuleId &&
-          c.bEndpointKey === bestSnap.movingEndpointKey &&
-          c.aEndpointKey === bestSnap.otherEndpointKey);
-
-      if (prev.some(sameConnection)) return prev;
-
-      return [
-        ...prev,
-        {
-          a: movingModule.id,
-          b: bestSnap.otherModuleId,
-          aEndpointKey: bestSnap.movingEndpointKey,
-          bEndpointKey: bestSnap.otherEndpointKey,
-        },
-      ];
-    });
-
-    return snappedSlot;
+    return { slot: snappedSlot, connection };
   }
+
+  function addTrackConnection(connection: any) {
+    if (!connection) return;
+
+    setLayoutConnections((previous: any[]) => {
+      const sameConnection = (existing: any) =>
+        (existing.a === connection.a &&
+          existing.b === connection.b &&
+          existing.aEndpointKey === connection.aEndpointKey &&
+          existing.bEndpointKey === connection.bEndpointKey) ||
+        (existing.b === connection.a &&
+          existing.a === connection.b &&
+          existing.bEndpointKey === connection.aEndpointKey &&
+          existing.aEndpointKey === connection.bEndpointKey);
+
+      if (previous.some(sameConnection)) return previous;
+      if (
+        endpointHasConnection(
+          connection.a,
+          connection.aEndpointKey,
+          previous
+        ) ||
+        endpointHasConnection(
+          connection.b,
+          connection.bEndpointKey,
+          previous
+        )
+      ) {
+        return previous;
+      }
+
+      return [...previous, connection];
+    });
+  }
+
 function getConnectedModuleIds(startId: string) {
   const visited = new Set<string>();
   const stack = [startId];
@@ -683,8 +770,7 @@ function getConnectedModuleIds(startId: string) {
     let cursorX = 80;
     const y = 140;
     const nextOverrides: any = {};
-    const nextConnections: any[] = [];
-    layoutModules.forEach((m: any, index: number) => {
+    layoutModules.forEach((m: any) => {
       const size = getLayoutSize(m);
       nextOverrides[m.id] = {
         x: cursorX,
@@ -692,19 +778,13 @@ function getConnectedModuleIds(startId: string) {
         rotation: 0,
       };
 
-      if (index > 0) {
-        nextConnections.push({
-          a: layoutModules[index - 1].id,
-          b: m.id,
-          trackIndex: 0,
-        });
-      }
-
       cursorX += size.width + 20;
     });
 
     setLayoutOverrides((prev: any) => ({ ...prev, ...nextOverrides }));
-    setLayoutConnections(nextConnections);
+    // Auto Arrange places modules neatly but does not claim track connections.
+    // Connections are created only by a successful blue-dot-to-blue-dot snap.
+    setLayoutConnections([]);
   }
 
   function getCurrentLayoutState() {
@@ -785,70 +865,93 @@ function redoLayoutChange() {
     event.stopPropagation();
 
     if (layoutLocks[m.id]) return;
-if (event.pointerType === "touch" && !mobileEditMode) return;
+    if (event.pointerType === "touch" && !mobileEditMode) return;
 
-pushLayoutHistory();
+    pushLayoutHistory();
 
-const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
+    const connectedIds = getConnectedModuleIds(m.id);
+    const permanentIndex = Math.max(
+      0,
+      (moduleNumberMap[m.id] || index + 1) - 1
+    );
     const startingSlot = getPlacedSlot(m, permanentIndex);
     const startingPoint = getSvgPoint(event);
     const startingX = startingSlot.x;
     const startingY = startingSlot.y;
+    const snapDistance =
+      event.pointerType === "touch"
+        ? TRACK_SNAP_DISTANCE_TOUCH
+        : TRACK_SNAP_DISTANCE_MOUSE;
+    const lateralTolerance =
+      event.pointerType === "touch"
+        ? TRACK_SNAP_LATERAL_TOUCH
+        : TRACK_SNAP_LATERAL_MOUSE;
+
+    let pendingConnection: any = null;
 
     function moveHandler(moveEvent: any) {
       const currentPoint = getSvgPoint(moveEvent);
       const candidateSlot = {
         ...startingSlot,
-        x: snapToGrid(startingX + currentPoint.x - startingPoint.x),
-        y: snapToGrid(startingY + currentPoint.y - startingPoint.y),
+        x: startingX + currentPoint.x - startingPoint.x,
+        y: startingY + currentPoint.y - startingPoint.y,
       };
 
-      const snappedSlot = applyTrackSnap(candidateSlot, m);
+      const snapResult = applyTrackSnap(
+        candidateSlot,
+        m,
+        connectedIds,
+        snapDistance,
+        lateralTolerance
+      );
+      const snappedSlot = snapResult.slot;
+      pendingConnection = snapResult.connection;
 
-      setLayoutOverrides((prev: any) => {
-  const connectedIds = getConnectedModuleIds(m.id);
+      setLayoutOverrides((previous: any) => {
+        const deltaX = snappedSlot.x - startingSlot.x;
+        const deltaY = snappedSlot.y - startingSlot.y;
+        const next = { ...previous };
 
-  const deltaX = snappedSlot.x - startingSlot.x;
-  const deltaY = snappedSlot.y - startingSlot.y;
+        connectedIds.forEach((connectedId) => {
+          const connectedModule = layoutModules.find(
+            (module: any) => module.id === connectedId
+          );
+          if (!connectedModule) return;
 
-  const next = { ...prev };
+          const connectedIndex = Math.max(
+            0,
+            (moduleNumberMap[connectedModule.id] || 1) - 1
+          );
+          const connectedSlot = getPlacedSlot(
+            connectedModule,
+            connectedIndex
+          );
 
-  connectedIds.forEach((connectedId) => {
-    const connectedModule = layoutModules.find(
-      (mod: any) => mod.id === connectedId
-    );
+          next[connectedId] = {
+            ...connectedSlot,
+            ...(previous[connectedId] || {}),
+            x: connectedSlot.x + deltaX,
+            y: connectedSlot.y + deltaY,
+          };
+        });
 
-    if (!connectedModule) return;
-
-    const connectedIndex = Math.max(
-      0,
-      (moduleNumberMap[connectedModule.id] || 1) - 1
-    );
-
-    const connectedSlot = getPlacedSlot(
-      connectedModule,
-      connectedIndex
-    );
-    next[connectedId] = {
-      ...connectedSlot,
-      ...(prev[connectedId] || {}),
-      x: connectedSlot.x + deltaX,
-      y: connectedSlot.y + deltaY,
-    };
-  });
-
-  return next;
-});
+        return next;
+      });
     }
+
     function upHandler() {
+      if (pendingConnection) addTrackConnection(pendingConnection);
       setSnapPreview(null);
       window.removeEventListener("pointermove", moveHandler);
       window.removeEventListener("pointerup", upHandler);
+      window.removeEventListener("pointercancel", upHandler);
     }
 
     window.addEventListener("pointermove", moveHandler);
     window.addEventListener("pointerup", upHandler);
+    window.addEventListener("pointercancel", upHandler);
   }
+
   function rotateModule(event: any, m: any, index: number) {
     event.preventDefault();
     event.stopPropagation();
@@ -2408,3 +2511,4 @@ button {
     </main>
   );
 }
+
