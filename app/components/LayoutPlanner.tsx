@@ -62,9 +62,59 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     setLayoutIncluded,
   } = planner;
 
+  function normalizeShapeValue(value: any) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_-]+/g, " ");
+  }
+
+  function plannerShapeIsPolygon(module: any) {
+    // Use the same canonical test as page.tsx so sizing, snapping, and drawing
+    // cannot disagree about whether a module is a polygon.
+    return Boolean(isPolygonModule(module));
+  }
+
+  // Resolve the physical outline inside the renderer itself. This deliberately
+  // ignores module_type when an explicit custom shape is present because
+  // module_type describes purpose, not geometry.
+  function resolveLayoutKind(module: any) {
+    const shape = normalizeShapeValue(module?.custom_shape);
+    const dimensions = normalizeShapeValue(module?.dimensions);
+
+    if (plannerShapeIsPolygon(module)) return "custom";
+    if (shape === "rectangle") return "custom";
+    if (shape === "angled inside corner") return "custom";
+    if (shape === "angled outside corner") return "custom";
+
+    if (dimensions.includes("other") || dimensions.includes("custom")) {
+      return "custom";
+    }
+
+    return getLayoutKind(module);
+  }
+
+  function resolveLayoutSize(module: any) {
+    const kind = resolveLayoutKind(module);
+
+    if (kind === "custom" && plannerShapeIsPolygon(module)) {
+      const polygon = getPolygonGeometry(module);
+      return { width: polygon.width, height: polygon.height };
+    }
+
+    if (kind === "custom") {
+      return {
+        width: Math.max(20, Number(module?.custom_width_inches || 24) * 10),
+        height: Math.max(20, Number(module?.custom_depth_inches || 14) * 10),
+      };
+    }
+
+    return getLayoutSize(module);
+  }
+
   return (
       <section className="formCard layoutPrintArea">
-        <h2>Layout View</h2>
+        <h2>Layout View <small style={{ fontSize: "12px", color: "#777" }}>Shape Engine v5</small></h2>
     
         <div className={mobileEditMode ? "layoutCanvas editMode" : "layoutCanvas"} ref={layoutCanvasRef}>
           <div className="layoutControls">
@@ -241,8 +291,8 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
             {layoutModules.map((m, index) => {
               const permanentIndex = Math.max(0, (moduleNumberMap[m.id] || index + 1) - 1);
               const slot = getPlacedSlot(m, permanentIndex);
-              const kind = getLayoutKind(m);
-              const size = getLayoutSize(m);
+              const kind = resolveLayoutKind(m);
+              const size = resolveLayoutSize(m);
               const rails = getTrackRails();
               const moduleTransform = getModuleTransform(slot, size);
               const moduleBounds = getRotatedBounds(slot, size);
@@ -263,7 +313,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                         className="svgModule"
                         d={`M 0 0 H ${size.width - size.height / 2} A ${size.height / 2} ${size.height / 2} 0 0 1 ${size.width - size.height / 2} ${size.height} H 0 Z`}
                       />
-                    ) : kind === "custom" && isPolygonModule(m) ? (
+                    ) : kind === "custom" && plannerShapeIsPolygon(m) ? (
                       <polygon
                         className="svgModule custom"
                         points={getPolygonGeometry(m).pointsString}
@@ -301,7 +351,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
 
                     {kind === "endCap" ? (
                       <line className="svgFrontEdge" x1="0" y1="0" x2="0" y2={size.height} />
-                    ) : kind === "custom" && isPolygonModule(m) ? (
+                    ) : kind === "custom" && plannerShapeIsPolygon(m) ? (
                       (() => {
                         const points = getPolygonGeometry(m).points;
                         if (points.length < 2) return null;
