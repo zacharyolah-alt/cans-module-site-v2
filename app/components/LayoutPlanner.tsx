@@ -1,7 +1,5 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
 export default function LayoutPlanner({ planner }: { planner: any }) {
   const {
     mobileEditMode,
@@ -30,23 +28,18 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     gridSvgHeight,
     layoutConnections,
     getConnectionLine,
-    snapPreview,
-    isEndpointConnected,
-    isEndpointPreviewed,
     layoutTables,
     handleTablePointerDown,
     getTableTransform,
     rotateTable,
     layoutLocks,
     toggleLayoutLock,
-    toggleModuleGroupLock,
     deleteLayoutTable,
     layoutModules,
     moduleNumberMap,
     getPlacedSlot,
     getLayoutKind,
     getLayoutSize,
-    getPolygonGeometry,
     getTrackRails,
     getModuleTransform,
     getRotatedBounds,
@@ -66,147 +59,11 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     setLayoutIncluded,
   } = planner;
 
-  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
-  const [pointerPosition, setPointerPosition] = useState({ x: 0, y: 0 });
-
-  const selectedModule = useMemo(
-    () => layoutModules.find((module: any) => module.id === selectedModuleId) || null,
-    [layoutModules, selectedModuleId]
-  );
-
-  const selectedGroupSize = selectedModuleId
-    ? (() => {
-        const visited = new Set<string>();
-        const stack = [selectedModuleId];
-        while (stack.length) {
-          const current = stack.pop()!;
-          if (visited.has(current)) continue;
-          visited.add(current);
-          layoutConnections.forEach((connection: any) => {
-            if (connection.a === current && !visited.has(connection.b)) stack.push(connection.b);
-            if (connection.b === current && !visited.has(connection.a)) stack.push(connection.a);
-          });
-        }
-        return visited.size;
-      })()
-    : 0;
-
-  const snapStatus = snapPreview
-    ? "Valid snap candidate"
-    : layoutConnections.length > 0
-      ? `${layoutConnections.length} track connection${layoutConnections.length === 1 ? "" : "s"}`
-      : "No active track connections";
-
   return (
-      <>
-        <style>{`
-          .plannerShell { background: #11151a; color: #eef2f6; border-radius: 24px; overflow: hidden; box-shadow: 0 18px 42px rgba(0,0,0,.28); border: 1px solid #29313a; }
-          .plannerTopbar { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 16px 18px; background: #090c10; border-bottom: 1px solid #29313a; flex-wrap: wrap; }
-          .plannerTopbar h2 { margin: 0; font-size: 24px; color: white; }
-          .plannerTopbar p { margin: 3px 0 0; color: #9faab5; font-size: 13px; }
-          .plannerTopActions { display: flex; gap: 8px; flex-wrap: wrap; }
-          .plannerWorkspace { display: grid; grid-template-columns: 190px minmax(0, 1fr) 250px; min-height: 640px; }
-          .plannerToolbox, .plannerProperties { background: #151b22; padding: 14px; }
-          .plannerToolbox { border-right: 1px solid #29313a; }
-          .plannerProperties { border-left: 1px solid #29313a; }
-          .plannerPanelTitle { margin: 0 0 12px; color: #ffd21f; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; }
-          .plannerToolButton { width: 100%; display: flex; align-items: center; gap: 9px; margin-bottom: 8px; padding: 10px 11px; border-radius: 10px; background: #222b35; color: white; text-align: left; }
-          .plannerToolButton:hover { background: #2d3945; }
-          .plannerToolButton.active { background: #ffd21f; color: #111; }
-          .plannerCenter { min-width: 0; background: #202730; padding: 12px; }
-          .plannerShell .layoutCanvas { border-radius: 12px; border-color: #3b4652; margin: 0; max-height: 72vh; }
-          .plannerShell .layoutControls { background: #151b22; padding: 10px; border-radius: 12px; margin-bottom: 10px; }
-          .plannerShell .layoutControls label { color: #e7ebef; }
-          .plannerShell .plannerKey { margin: 10px 12px 0; background: #151b22; border: 1px solid #29313a; border-radius: 12px; color: #eef2f6; }
-          .plannerShell .plannerKey summary { padding: 12px 14px; cursor: pointer; color: #ffd21f; font-weight: 900; }
-          .plannerShell .symbolKeyGrid { border-top-color: #29313a; }
-          .propertyCard { background: #222b35; border: 1px solid #303b47; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
-          .propertyCard strong { display: block; color: white; margin-bottom: 6px; }
-          .propertyRow { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid #303b47; font-size: 13px; }
-          .propertyRow:last-child { border-bottom: 0; }
-          .propertyRow span:first-child { color: #9faab5; }
-          .plannerStatusbar { display: flex; gap: 18px; flex-wrap: wrap; padding: 9px 16px; background: #090c10; border-top: 1px solid #29313a; color: #b9c2cb; font-size: 12px; }
-          .plannerStatusbar strong { color: #ffd21f; }
-          .plannerShell .layoutLegend { margin: 12px; background: #151b22; border-color: #29313a; color: #eef2f6; }
-          .plannerShell .legendRow { border-top-color: #29313a; }
-          @media (max-width: 1000px) {
-            .plannerWorkspace { grid-template-columns: 150px minmax(0,1fr); }
-            .plannerProperties { grid-column: 1 / -1; border-left: 0; border-top: 1px solid #29313a; display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 10px; }
-          }
-          @media (max-width: 700px) {
-            .plannerWorkspace { display: block; }
-            .plannerToolbox { border-right: 0; border-bottom: 1px solid #29313a; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
-            .plannerToolbox .plannerPanelTitle { grid-column: 1 / -1; }
-            .plannerToolButton { margin: 0; min-height: 48px; }
-            .plannerCenter { padding: 8px; }
-            .plannerProperties { display: block; }
-            .plannerTopbar { align-items: flex-start; }
-            .plannerStatusbar { gap: 10px; }
-          }
-        `}</style>
-        <section className="plannerShell layoutPrintArea">
-          <header className="plannerTopbar">
-            <div>
-              <h2>C.A.N.S. Layout Planner</h2>
-              <p>Track-aware module planning workspace</p>
-            </div>
-            <div className="plannerTopActions">
-              <button className="layoutControlBtn" onClick={saveLayoutDesign}>Save</button>
-              <button className="layoutControlBtn" onClick={undoLayoutChange} disabled={layoutHistory.length === 0}>Undo</button>
-              <button className="layoutControlBtn" onClick={redoLayoutChange} disabled={layoutFuture.length === 0}>Redo</button>
-              <button className="layoutControlBtn" onClick={exportLayoutPDF}>Print</button>
-            </div>
-          </header>
-
-        <details className="plannerKey" open>
-          <summary>Symbols & Colors Key</summary>
-          <div className="symbolKeyGrid">
-            <div className="symbolKeyItem"><span className="symbolSwatch" /> Green edge: standard module</div>
-            <div className="symbolKeyItem"><span className="symbolSwatch custom" /> Red edge: custom module</div>
-            <div className="symbolKeyItem"><span className="symbolSwatch bridge" /> Brown edge: bridge module</div>
-            <div className="symbolKeyItem"><span className="symbolSwatch table" /> Blue shape: table</div>
-            <div className="symbolKeyItem"><span className="symbolDot available" /> Blue dot: open track endpoint</div>
-            <div className="symbolKeyItem"><span className="symbolDot candidate" /> Yellow dot: valid snap candidate</div>
-            <div className="symbolKeyItem"><span className="symbolDot connected" /> Green dot: connected track endpoint</div>
-            <div className="symbolKeyItem"><span className="symbolIcon rotate">↻</span> Rotate connected group</div>
-            <div className="symbolKeyItem"><span className="symbolIcon lock">L</span> Lock/unlock connected group</div>
-            <div className="symbolKeyItem"><span className="symbolIcon disconnect">⛓</span> Disconnect module</div>
-            <div className="symbolKeyItem"><span className="symbolIcon number">#</span> Yellow number: module ID</div>
-            <div className="symbolKeyItem"><span className="symbolIcon delete">×</span> Delete table</div>
-          </div>
-        </details>
+      <section className="formCard layoutPrintArea">
+        <h2>Layout View</h2>
     
-        <div className="plannerWorkspace">
-          <aside className="plannerToolbox">
-            <h3 className="plannerPanelTitle">Toolbox</h3>
-            <button className="plannerToolButton active">↖ Select / Move</button>
-            <button className="plannerToolButton" onClick={() => selectedModule && rotateModule({ preventDefault() {}, stopPropagation() {} }, selectedModule, Math.max(0, (moduleNumberMap[selectedModule.id] || 1) - 1))}>↻ Rotate group</button>
-            <button className="plannerToolButton" onClick={() => selectedModuleId && toggleModuleGroupLock(selectedModuleId)}>🔒 Lock group</button>
-            <button className="plannerToolButton" onClick={() => addLayoutTable("6ft")}>▭ Add 6 ft table</button>
-            <button className="plannerToolButton" onClick={() => addLayoutTable("8ft")}>▭ Add 8 ft table</button>
-            <button className="plannerToolButton" onClick={autoArrangeLayout}>✨ Auto arrange</button>
-            <button className="plannerToolButton" onClick={loadLayoutDesign}>↥ Load layout</button>
-            <button className="plannerToolButton" onClick={() => setMobileEditMode((current: boolean) => !current)}>☝ Mobile edit: {mobileEditMode ? "On" : "Off"}</button>
-          </aside>
-
-          <div className="plannerCenter">
-        <div
-          className={mobileEditMode ? "layoutCanvas editMode" : "layoutCanvas"}
-          ref={layoutCanvasRef}
-          tabIndex={0}
-          onWheel={(event) => {
-            if (event.ctrlKey || event.metaKey) return;
-            event.preventDefault();
-            zoomLayout(event.deltaY < 0 ? "in" : "out");
-          }}
-          onPointerMove={(event) => {
-            const rect = event.currentTarget.getBoundingClientRect();
-            setPointerPosition({
-              x: Math.max(0, Math.round((event.clientX - rect.left) / 10)),
-              y: Math.max(0, Math.round((event.clientY - rect.top) / 10)),
-            });
-          }}
-        >
+        <div className={mobileEditMode ? "layoutCanvas editMode" : "layoutCanvas"} ref={layoutCanvasRef}>
           <div className="layoutControls">
             <label>
               Grid width:
@@ -298,6 +155,22 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
               <text className="svgKeyText" x="36" y="104">2 x 2 large squares = 1 sq ft</text>
             </g>
     
+            {layoutConnections.map((connection: any, index: number) => {
+              const line = getConnectionLine(connection);
+              if (!line) return null;
+    
+              return (
+                <line
+                  key={`connection-${connection.a}-${connection.b}-${index}`}
+                  className="svgConnectionLine"
+                  x1={line.a.x}
+                  y1={line.a.y}
+                  x2={line.b.x}
+                  y2={line.b.y}
+                />
+              );
+            })}
+    
             {layoutTables.map((table) => (
               <g
                 key={table.id}
@@ -380,26 +253,9 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
               };
     
               return (
-                <g
-                  key={m.id}
-                  className="svgModuleGroup"
-                  onPointerDown={(event) => {
-                    setSelectedModuleId(m.id);
-                    handleModulePointerDown(event, m, index);
-                  }}
-                >
+                <g key={m.id} className="svgModuleGroup" onPointerDown={(event) => handleModulePointerDown(event, m, index)}>
                   <g transform={moduleTransform}>
-                    {kind === "endCap" ? (
-      <path
-        className="svgModule"
-        d={`M 0 0 H ${size.width - size.height / 2} A ${size.height / 2} ${size.height / 2} 0 0 1 ${size.width - size.height / 2} ${size.height} H 0 Z`}
-      />
-    ) : kind === "custom" && m.custom_shape === "Polygon" ? (
-      <polygon
-        className="svgModule custom"
-        points={getPolygonGeometry(m).pointsString}
-      />
-    ) : kind === "custom" && m.custom_shape === "Angled Inside Corner" ? (
+                    {kind === "custom" && m.custom_shape === "Angled Inside Corner" ? (
       <polygon
         className="svgModule custom"
         points={`0,${size.height} 0,${size.height * 0.35} ${size.width * 0.35},0 ${size.width},0 ${size.width},${size.height} 0,${size.height}`}
@@ -419,39 +275,10 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
         rx="1"
       />
     )}
-
-                    {kind === "endCap" ? (
-                      <line className="svgFrontEdge" x1="0" y1="0" x2="0" y2={size.height} />
-                    ) : kind === "custom" && m.custom_shape === "Polygon" ? (
-                      (() => {
-                        const points = getPolygonGeometry(m).points;
-                        if (points.length < 2) return null;
-                        return (
-                          <line
-                            className="svgFrontEdge"
-                            x1={points[0].x}
-                            y1={points[0].y}
-                            x2={points[1].x}
-                            y2={points[1].y}
-                          />
-                        );
-                      })()
-                    ) : (
-                      <line className="svgFrontEdge" x1="0" y1="0" x2={size.width} y2="0" />
-                    )}
     
-                    {kind === "endCap" ? (
-                      <>
-                        <path
-                          className="svgRail"
-                          d={`M 0 ${rails[0]} H ${size.width - size.height / 2} A ${size.height / 2 - rails[0]} ${size.height / 2 - rails[0]} 0 0 1 ${size.width - size.height / 2} ${size.height - rails[0]} H 0`}
-                        />
-                        <path
-                          className="svgRail"
-                          d={`M 0 ${rails[1]} H ${size.width - size.height / 2} A ${size.height / 2 - rails[1]} ${size.height / 2 - rails[1]} 0 0 1 ${size.width - size.height / 2} ${size.height - rails[1]} H 0`}
-                        />
-                      </>
-                    ) : isCornerKind(kind) ? (
+                    <line className="svgFrontEdge" x1="0" y1="0" x2={size.width} y2="0" />
+    
+                    {isCornerKind(kind) ? (
                       kind === "outsideCorner" ? (
                         <>
                           {rails.map((rail, railIndex) => (
@@ -499,21 +326,15 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                     )}
                   </g>
     
-                  {getTrackEndpointsForModule(m, slot).map((endpoint: any, endpointIndex: number) => {
-                    const connected = isEndpointConnected(m.id, endpoint.key);
-                    const previewed = isEndpointPreviewed(m.id, endpoint.key);
-                    const stateClass = connected ? "connected" : previewed ? "candidate" : "available";
-
-                    return (
-                      <circle
-                        key={`snap-${m.id}-${endpointIndex}`}
-                        className={`svgSnapPoint ${stateClass}`}
-                        cx={endpoint.x}
-                        cy={endpoint.y}
-                        r={connected || previewed ? "8" : "6"}
-                      />
-                    );
-                  })}
+                  {getTrackEndpointsForModule(m, slot).map((endpoint: any, endpointIndex: number) => (
+                    <circle
+                      key={`snap-${m.id}-${endpointIndex}`}
+                      className="svgSnapPoint"
+                      cx={endpoint.x}
+                      cy={endpoint.y}
+                      r="5"
+                    />
+                  ))}
     
                   <text className="svgNumberText" x={numberPosition.x} y={numberPosition.y}>
                     {moduleNumberMap[m.id] ?? ""}
@@ -565,7 +386,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     
                   <g
                     onPointerDown={(event) => event.stopPropagation()}
-                    onClick={() => toggleModuleGroupLock(m.id)}
+                    onClick={() => toggleLayoutLock(m.id)}
                     style={{ cursor: "pointer" }}
                   >
                     <circle
@@ -583,52 +404,22 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
             })}
           </svg>
         </div>
-          </div>
-
-          <aside className="plannerProperties">
-            <h3 className="plannerPanelTitle">Properties</h3>
-            {selectedModule ? (
-              <>
-                <div className="propertyCard">
-                  <strong>{selectedModule.module_name || "Unnamed Module"}</strong>
-                  <div className="propertyRow"><span>Number</span><span>#{moduleNumberMap[selectedModule.id] || "—"}</span></div>
-                  <div className="propertyRow"><span>Owner</span><span>{selectedModule.owner_name || "Unknown"}</span></div>
-                  <div className="propertyRow"><span>Type</span><span>{selectedModule.module_type || "Module"}</span></div>
-                  <div className="propertyRow"><span>Size</span><span>{selectedModule.dimensions || "Custom"}</span></div>
-                  <div className="propertyRow"><span>Group size</span><span>{selectedGroupSize}</span></div>
-                  <div className="propertyRow"><span>Locked</span><span>{layoutLocks[selectedModule.id] ? "Yes" : "No"}</span></div>
-                </div>
-                <button className="plannerToolButton" onClick={() => toggleModuleGroupLock(selectedModule.id)}>Toggle group lock</button>
-                {moduleHasConnection(selectedModule.id) && (
-                  <button
-                    className="plannerToolButton"
-                    onClick={() => {
-                      pushLayoutHistory();
-                      setLayoutConnections((previous: any[]) => previous.filter((connection) => connection.a !== selectedModule.id && connection.b !== selectedModule.id));
-                    }}
-                  >
-                    ⛓ Disconnect module
-                  </button>
-                )}
-              </>
-            ) : (
-              <div className="propertyCard">
-                <strong>No module selected</strong>
-                <span style={{ color: "#9faab5", fontSize: 13 }}>Tap or click a module to see its information and group controls.</span>
-              </div>
-            )}
-          </aside>
-        </div>
-
-        <div className="plannerStatusbar">
-          <span><strong>Zoom</strong> {layoutZoom}%</span>
-          <span><strong>Pointer</strong> {pointerPosition.x}" × {pointerPosition.y}"</span>
-          <span><strong>Snap</strong> {snapStatus}</span>
-          <span><strong>Modules</strong> {layoutModules.length}</span>
-          <span><strong>Selected</strong> {selectedModule ? `#${moduleNumberMap[selectedModule.id] || "—"}` : "None"}</span>
-        </div>
     
         <div className="layoutLegend">
+          <h3 className="legendTitle">Layout Symbols Key</h3>
+          <div className="symbolKeyGrid">
+            <div className="symbolKeyItem"><span className="symbolSwatch" /> Green outline = standard module</div>
+            <div className="symbolKeyItem"><span className="symbolSwatch custom" /> Red outline = custom module</div>
+            <div className="symbolKeyItem"><span className="symbolSwatch bridge" /> Brown outline = bridge module</div>
+            <div className="symbolKeyItem"><span className="symbolSwatch table" /> Blue shape = table</div>
+            <div className="symbolKeyItem"><span className="symbolSwatch snap" /> Blue dots = track connection points</div>
+            <div className="symbolKeyItem"><span className="symbolSwatch connection" /> Orange dashed line = connected modules</div>
+            <div className="symbolKeyItem">↻ = rotate</div>
+            <div className="symbolKeyItem">● / L = lock or unlock position</div>
+            <div className="symbolKeyItem">⛓ = disconnect connected module</div>
+            <div className="symbolKeyItem">× = delete table</div>
+          </div>
+    
           <h3 className="legendTitle">Module Key</h3>
           {filteredModules.map((m) => {
             const isIncluded = !!layoutIncluded[m.id];
@@ -677,8 +468,6 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
           })}
         </div>
       </section>
-      </>
   );
 }
-
 
