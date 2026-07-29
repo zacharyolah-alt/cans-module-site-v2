@@ -376,8 +376,10 @@ function exportToCSV() {
       customShape === "angled inside corner" ||
       customShape === "angled outside corner";
 
-    if (usesCustomDimensions && hasExplicitCustomShape) return "custom";
-    if (isPolygonModule(m)) return "custom";
+    // Any explicitly selected physical shape overrides module_type.
+    // module_type is informational/purpose-only.
+    if (hasExplicitCustomShape) return "custom";
+    if (usesCustomDimensions) return "custom";
 
     if (dimensionsText.startsWith("end cap")) return "endCap";
     if (dimensionsText.startsWith("single")) return "single";
@@ -2429,19 +2431,43 @@ button {
             <label>Interior Angle after Side {sideNumber} (degrees)</label>
             <input
               type="number"
+              inputMode="decimal"
               min="1"
               max="359"
               step="0.1"
-              value={polygonAngles[sideNumber] || "90"}
-              onChange={(e) =>
+              value={polygonAngles[sideNumber] ?? "90"}
+              onChange={(e) => {
+                // Keep the field as a string while the user is editing it.
+                // In particular, allow an empty value so "90" can be erased
+                // before typing a completely different angle such as "135".
                 setPolygonAngles((prev: any) => ({
                   ...prev,
                   [sideNumber]: e.target.value,
-                }))
-              }
+                }));
+              }}
+              onBlur={(e) => {
+                const parsed = Number(e.target.value);
+                const safeAngle = Number.isFinite(parsed)
+                  ? Math.min(359, Math.max(1, parsed))
+                  : 90;
+
+                setPolygonAngles((prev: any) => ({
+                  ...prev,
+                  [sideNumber]: String(safeAngle),
+                }));
+              }}
             />
           </div>
         ))}
+
+        <p style={{ marginTop: "12px", color: "#555", fontSize: "14px" }}>
+          For a closed {polygonSides}-sided polygon, the interior angles should total{" "}
+          {(Math.max(3, Number(polygonSides) || 3) - 2) * 180}°. Current total:{" "}
+          {Array.from({ length: Math.max(3, Number(polygonSides) || 3) }, (_, index) => {
+            const value = Number(polygonAngles[index + 1] ?? 90);
+            return Number.isFinite(value) ? value : 0;
+          }).reduce((sum, value) => sum + value, 0)}°.
+        </p>
       </div>
     )}
 
