@@ -332,53 +332,135 @@ function exportToCSV() {
   const displaySvgWidth = Math.round(gridSvgWidth * (layoutZoom / 100));
   const displaySvgHeight = Math.round(gridSvgHeight * (layoutZoom / 100));
 
+  function normalizeModuleText(value: any) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_-]+/g, " ");
+  }
+
+  function getCustomShapeName(m: any) {
+    return normalizeModuleText(m.custom_shape);
+  }
+
+  function isPolygonModule(m: any) {
+    const shape = getCustomShapeName(m);
+    return (
+      shape.includes("polygon") ||
+      shape === "triangle" ||
+      shape === "quadrilateral" ||
+      shape === "pentagon" ||
+      shape === "hexagon" ||
+      shape === "heptagon" ||
+      shape === "octagon" ||
+      shape === "nonagon" ||
+      shape === "decagon" ||
+      shape === "hendecagon" ||
+      shape === "dodecagon"
+    );
+  }
+
   function getLayoutKind(m: any) {
-    if (m.module_type === "Inside Corner") return "insideCorner";
-    if (m.module_type === "Outside Corner") return "outsideCorner";
-    if (m.dimensions?.startsWith("Corner")) return "outsideCorner";
-    if (m.module_type === "Bridge") return "bridge";
-    if (m.dimensions?.startsWith("End Cap")) return "endCap";
-    if (m.dimensions?.startsWith("Single")) return "single";
-    if (m.dimensions?.startsWith("Double")) return "double";
-    if (m.dimensions?.startsWith("Triple")) return "triple";
-    if (m.dimensions?.startsWith("Quad")) return "quad";
+    const moduleType = normalizeModuleText(m.module_type);
+    const dimensionsText = normalizeModuleText(m.dimensions);
+
+    if (moduleType === "inside corner") return "insideCorner";
+    if (moduleType === "outside corner") return "outsideCorner";
+    if (dimensionsText.startsWith("corner")) return "outsideCorner";
+    if (moduleType === "bridge") return "bridge";
+    if (moduleType === "end cap" || dimensionsText.startsWith("end cap")) return "endCap";
+    if (dimensionsText.startsWith("single")) return "single";
+    if (dimensionsText.startsWith("double")) return "double";
+    if (dimensionsText.startsWith("triple")) return "triple";
+    if (dimensionsText.startsWith("quad")) return "quad";
     return "custom";
   }
 
+  function getPolygonSideCount(m: any) {
+    const shape = getCustomShapeName(m);
+    const namedCounts: Record<string, number> = {
+      triangle: 3,
+      quadrilateral: 4,
+      pentagon: 5,
+      hexagon: 6,
+      heptagon: 7,
+      octagon: 8,
+      nonagon: 9,
+      decagon: 10,
+      hendecagon: 11,
+      dodecagon: 12,
+    };
+
+    const storedCount = Number(m.polygon_sides);
+    const count = Number.isFinite(storedCount) && storedCount >= 3
+      ? storedCount
+      : namedCounts[shape] || 6;
+
+    return Math.max(3, Math.min(12, Math.round(count)));
+  }
+
+  function readPolygonValue(source: any, sideNumber: number) {
+    if (!source || typeof source !== "object") return undefined;
+
+    const possibleKeys: Array<string | number> = [
+      sideNumber,
+      String(sideNumber),
+      `side${sideNumber}`,
+      `side_${sideNumber}`,
+      `Side ${sideNumber}`,
+    ];
+
+    for (const key of possibleKeys) {
+      const value = source[key as any];
+      if (value !== undefined && value !== null && value !== "") return Number(value);
+    }
+
+    return undefined;
+  }
+
   function getPolygonGeometry(m: any) {
-    const sideCount = Math.max(3, Math.min(12, Number(m.polygon_sides || 3)));
+    const sideCount = getPolygonSideCount(m);
     const lengths = m.polygon_side_lengths || {};
     const angles = m.polygon_angles || {};
+    const fallbackLength = Math.max(
+      1,
+      Number(m.custom_width_inches || m.custom_depth_inches || 24)
+    );
 
-    const points: Array<{ x: number; y: number }> = [{ x: 0, y: 0 }];
+    const sideLengths = Array.from({ length: sideCount }, (_, index) => {
+      const value = readPolygonValue(lengths, index + 1);
+      return Math.max(1, Number.isFinite(value) ? Number(value) : fallbackLength) * LAYOUT_SCALE;
+    });
+
+    const suppliedAngles = Array.from({ length: sideCount }, (_, index) =>
+      readPolygonValue(angles, index + 1)
+    );
+    const hasCompleteAngles = suppliedAngles.every(
+      (value) => Number.isFinite(value) && Number(value) > 0 && Number(value) < 360
+    );
+
+    const points: Array<{ x: number; y: number }> = [];
     let x = 0;
     let y = 0;
     let heading = 0;
 
     for (let index = 0; index < sideCount; index += 1) {
-      const sideNumber = index + 1;
-      const lengthInches = Math.max(1, Number(lengths[sideNumber] || 24));
-      const length = lengthInches * LAYOUT_SCALE;
-
-      x += Math.cos(heading) * length;
-      y += Math.sin(heading) * length;
       points.push({ x, y });
+      x += Math.cos(heading) * sideLengths[index];
+      y += Math.sin(heading) * sideLengths[index];
 
-      const interiorAngle = Math.max(1, Math.min(359, Number(angles[sideNumber] || 90)));
-      const exteriorTurn = 180 - interiorAngle;
-      heading += (exteriorTurn * Math.PI) / 180;
+      const turnDegrees = hasCompleteAngles
+        ? 180 - Number(suppliedAngles[index])
+        : 360 / sideCount;
+      heading += (turnDegrees * Math.PI) / 180;
     }
 
-    // The final calculated point should return to the beginning for a valid
-    // polygon. SVG closes the outline automatically, so we only need the
-    // actual corner vertices here.
-    const vertices = points.slice(0, sideCount);
-    const minX = Math.min(...vertices.map((point) => point.x));
-    const minY = Math.min(...vertices.map((point) => point.y));
-    const maxX = Math.max(...vertices.map((point) => point.x));
-    const maxY = Math.max(...vertices.map((point) => point.y));
+    const minX = Math.min(...points.map((point) => point.x));
+    const minY = Math.min(...points.map((point) => point.y));
+    const maxX = Math.max(...points.map((point) => point.x));
+    const maxY = Math.max(...points.map((point) => point.y));
 
-    const normalizedPoints = vertices.map((point) => ({
+    const normalizedPoints = points.map((point) => ({
       x: point.x - minX,
       y: point.y - minY,
     }));
@@ -402,42 +484,33 @@ function exportToCSV() {
     if (kind === "double") return { width: 243, height: 144 };
     if (kind === "triple") return { width: 365, height: 144 };
     if (kind === "quad") return { width: 487, height: 144 };
+
     if (kind === "bridge") {
-  let bridgeWidth = 243;
+      const bridgeSizeName = normalizeModuleText(m.bridge_size);
+      let bridgeWidth = 243;
 
-  if (m.bridge_size === "Single Bridge") {
-    bridgeWidth = 121;
-  }
+      if (bridgeSizeName === "single bridge") bridgeWidth = 121;
+      if (bridgeSizeName === "double bridge") bridgeWidth = 243;
+      if (bridgeSizeName === "triple bridge") bridgeWidth = 365;
+      if (bridgeSizeName === "custom bridge") {
+        bridgeWidth = Math.max(1, Number(m.custom_width_inches || 24)) * LAYOUT_SCALE;
+      }
 
-  if (m.bridge_size === "Double Bridge") {
-    bridgeWidth = 243;
-  }
-
-  if (m.bridge_size === "Triple Bridge") {
-    bridgeWidth = 365;
-  }
-
-  if (m.bridge_size === "Custom Bridge") {
-    bridgeWidth =
-      Number(m.custom_width_inches || 24) * LAYOUT_SCALE;
-  }
-
-  return {
-    width: bridgeWidth,
-    height: 80,
-  };
+      return { width: bridgeWidth, height: 80 };
     }
-if (kind === "custom") {
-  if (m.custom_shape === "Polygon") {
-    const polygon = getPolygonGeometry(m);
-    return { width: polygon.width, height: polygon.height };
-  }
 
-  return {
-    width: Number(m.custom_width_inches || 24) * LAYOUT_SCALE,
-    height: Number(m.custom_depth_inches || 14) * LAYOUT_SCALE,
-  };
-}
+    if (kind === "custom") {
+      if (isPolygonModule(m)) {
+        const polygon = getPolygonGeometry(m);
+        return { width: polygon.width, height: polygon.height };
+      }
+
+      return {
+        width: Math.max(1, Number(m.custom_width_inches || 24)) * LAYOUT_SCALE,
+        height: Math.max(1, Number(m.custom_depth_inches || 14)) * LAYOUT_SCALE,
+      };
+    }
+
     return { width: 160, height: 144 };
   }
 
@@ -2557,6 +2630,8 @@ button {
               getLayoutKind,
               getLayoutSize,
               getPolygonGeometry,
+              getCustomShapeName,
+              isPolygonModule,
               getTrackRails,
               getModuleTransform,
               getRotatedBounds,
@@ -2600,4 +2675,5 @@ button {
     </main>
   );
 }
+
 
