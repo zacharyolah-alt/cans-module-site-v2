@@ -363,16 +363,38 @@ function exportToCSV() {
   function getLayoutKind(m: any) {
     const moduleType = normalizeModuleText(m.module_type);
     const dimensionsText = normalizeModuleText(m.dimensions);
+    const customShape = getCustomShapeName(m);
 
-    if (moduleType === "inside corner") return "insideCorner";
-    if (moduleType === "outside corner") return "outsideCorner";
-    if (dimensionsText.startsWith("corner")) return "outsideCorner";
-    if (moduleType === "bridge") return "bridge";
-    if (moduleType === "end cap" || dimensionsText.startsWith("end cap")) return "endCap";
+    // Module type describes the module's purpose. The physical outline comes
+    // from its selected dimensions/custom-shape fields. A custom outline must
+    // therefore take priority over labels such as Inside Corner or Bridge.
+    const usesCustomDimensions =
+      dimensionsText.includes("other") || dimensionsText.includes("custom");
+    const hasExplicitCustomShape =
+      customShape === "rectangle" ||
+      isPolygonModule(m) ||
+      customShape === "angled inside corner" ||
+      customShape === "angled outside corner";
+
+    if (usesCustomDimensions && hasExplicitCustomShape) return "custom";
+    if (isPolygonModule(m)) return "custom";
+
+    if (dimensionsText.startsWith("end cap")) return "endCap";
     if (dimensionsText.startsWith("single")) return "single";
     if (dimensionsText.startsWith("double")) return "double";
     if (dimensionsText.startsWith("triple")) return "triple";
     if (dimensionsText.startsWith("quad")) return "quad";
+
+    // Standard corner-size selections use the purpose to choose the direction
+    // of the curved track, while their outline remains standard corner geometry.
+    if (dimensionsText.startsWith("corner")) {
+      return moduleType === "inside corner" ? "insideCorner" : "outsideCorner";
+    }
+
+    if (moduleType === "bridge") return "bridge";
+    if (moduleType === "end cap") return "endCap";
+    if (moduleType === "inside corner") return "insideCorner";
+    if (moduleType === "outside corner") return "outsideCorner";
     return "custom";
   }
 
