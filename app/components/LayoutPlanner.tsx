@@ -40,6 +40,9 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     getPlacedSlot,
     getLayoutKind,
     getLayoutSize,
+    getPolygonGeometry,
+    getCustomShapeName,
+    isPolygonModule,
     getTrackRails,
     getModuleTransform,
     getRotatedBounds,
@@ -255,30 +258,81 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
               return (
                 <g key={m.id} className="svgModuleGroup" onPointerDown={(event) => handleModulePointerDown(event, m, index)}>
                   <g transform={moduleTransform}>
-                    {kind === "custom" && m.custom_shape === "Angled Inside Corner" ? (
-      <polygon
-        className="svgModule custom"
-        points={`0,${size.height} 0,${size.height * 0.35} ${size.width * 0.35},0 ${size.width},0 ${size.width},${size.height} 0,${size.height}`}
-      />
-    ) : kind === "custom" && m.custom_shape === "Angled Outside Corner" ? (
-      <polygon
-        className="svgModule custom"
-        points={`0,0 ${size.width},0 ${size.width},${size.height * 0.65} ${size.width * 0.65},${size.height} 0,${size.height} 0,0`}
-      />
-    ) : (
-      <rect
-        className={`svgModule ${kind === "custom" ? "custom" : ""} ${kind === "bridge" ? "bridge" : ""}`}
-        x="0"
-        y="0"
-        width={size.width}
-        height={size.height}
-        rx="1"
-      />
-    )}
+                    {kind === "endCap" ? (
+                      <path
+                        className="svgModule"
+                        d={`M 0 0 H ${size.width - size.height / 2} A ${size.height / 2} ${size.height / 2} 0 0 1 ${size.width - size.height / 2} ${size.height} H 0 Z`}
+                      />
+                    ) : kind === "custom" && isPolygonModule(m) ? (
+                      <polygon
+                        className="svgModule custom"
+                        points={getPolygonGeometry(m).pointsString}
+                      />
+                    ) : kind === "custom" && getCustomShapeName(m) === "angled inside corner" ? (
+                      <polygon
+                        className="svgModule custom"
+                        points={`0,${size.height} 0,${size.height * 0.35} ${size.width * 0.35},0 ${size.width},0 ${size.width},${size.height} 0,${size.height}`}
+                      />
+                    ) : kind === "custom" && getCustomShapeName(m) === "angled outside corner" ? (
+                      <polygon
+                        className="svgModule custom"
+                        points={`0,0 ${size.width},0 ${size.width},${size.height * 0.65} ${size.width * 0.65},${size.height} 0,${size.height}`}
+                      />
+                    ) : kind === "insideCorner" ? (
+                      <path
+                        className="svgModule"
+                        d={`M 0 ${size.height} V 0 H ${size.width} V ${size.height * 0.42} H ${size.width * 0.42} V ${size.height} Z`}
+                      />
+                    ) : kind === "outsideCorner" ? (
+                      <path
+                        className="svgModule"
+                        d={`M 0 0 H ${size.width} V ${size.height} A ${size.width} ${size.height} 0 0 0 0 0 Z`}
+                      />
+                    ) : (
+                      <rect
+                        className={`svgModule ${kind === "custom" ? "custom" : ""} ${kind === "bridge" ? "bridge" : ""}`}
+                        x="0"
+                        y="0"
+                        width={size.width}
+                        height={size.height}
+                        rx="1"
+                      />
+                    )}
+
+                    {kind === "endCap" ? (
+                      <line className="svgFrontEdge" x1="0" y1="0" x2="0" y2={size.height} />
+                    ) : kind === "custom" && isPolygonModule(m) ? (
+                      (() => {
+                        const points = getPolygonGeometry(m).points;
+                        if (points.length < 2) return null;
+                        return (
+                          <line
+                            className="svgFrontEdge"
+                            x1={points[0].x}
+                            y1={points[0].y}
+                            x2={points[1].x}
+                            y2={points[1].y}
+                          />
+                        );
+                      })()
+                    ) : (
+                      <line className="svgFrontEdge" x1="0" y1="0" x2={size.width} y2="0" />
+                    )}
     
-                    <line className="svgFrontEdge" x1="0" y1="0" x2={size.width} y2="0" />
-    
-                    {isCornerKind(kind) ? (
+                    {kind === "endCap" ? (
+                      <>
+                        {rails.slice(0, 2).map((rail: number, railIndex: number) => {
+                          const radius = Math.max(1, size.height / 2 - rail);
+                          return (
+                            <path
+                              key={railIndex}
+                              className="svgRail"
+                              d={`M 0 ${rail} H ${size.width - size.height / 2} A ${radius} ${radius} 0 0 1 ${size.width - size.height / 2} ${size.height - rail} H 0`}
+                            />
+                          );
+                        })}
+                      </>
+                    ) : isCornerKind(kind) ? (
                       kind === "outsideCorner" ? (
                         <>
                           {rails.map((rail, railIndex) => (
