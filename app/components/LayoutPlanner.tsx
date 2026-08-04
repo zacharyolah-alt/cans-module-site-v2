@@ -314,10 +314,25 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                         d={`M 0 0 H ${size.width - size.height / 2} A ${size.height / 2} ${size.height / 2} 0 0 1 ${size.width - size.height / 2} ${size.height} H 0 Z`}
                       />
                     ) : kind === "custom" && plannerShapeIsPolygon(m) ? (
-                      <polygon
-                        className="svgModule custom"
-                        points={getPolygonGeometry(m).pointsString}
-                      />
+  (() => {
+    const poly = getPolygonGeometry(m);
+
+    console.log("=== POLYGON DEBUG ===");
+    console.log("Module:", m.module_name);
+    console.log("Custom Shape:", m.custom_shape);
+    console.log("Sides:", m.polygon_sides);
+    console.log("Side Lengths:", m.polygon_side_lengths);
+    console.log("Angles:", m.polygon_angles);
+    console.log("Points:", poly.points);
+    console.log("Points String:", poly.pointsString);
+
+    return (
+      <polygon
+        className="svgModule custom"
+        points={poly.pointsString}
+      />
+    );
+  })()
                     ) : kind === "custom" && getCustomShapeName(m) === "angled inside corner" ? (
                       <polygon
                         className="svgModule custom"
