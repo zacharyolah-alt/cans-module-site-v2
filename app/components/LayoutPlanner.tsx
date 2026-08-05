@@ -96,7 +96,16 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
 
   function resolveLayoutSize(module: any) {
     const kind = resolveLayoutKind(module);
-
+    
+if (m.module_name === "Test polygon") {
+  alert(
+    JSON.stringify({
+      kind,
+      customShape: m.custom_shape,
+      isPolygon: plannerShapeIsPolygon(m),
+    })
+  );
+}
     if (kind === "custom" && plannerShapeIsPolygon(module)) {
       const polygon = getPolygonGeometry(module);
       return { width: polygon.width, height: polygon.height };
