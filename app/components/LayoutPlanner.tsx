@@ -220,6 +220,38 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
       );
     })}
 </div>
+        <div
+  style={{
+    background: "#fff7cc",
+    border: "2px solid #d6a800",
+    borderRadius: "8px",
+    padding: "10px",
+    marginBottom: "10px",
+    fontFamily: "monospace",
+    fontSize: "12px",
+    whiteSpace: "pre-wrap",
+  }}
+>
+  <strong>POLYGON DEBUG</strong>
+
+  {layoutModules
+    .filter((m: any) => plannerShapeIsPolygon(m))
+    .map((m: any) => {
+      const geometry = getPolygonGeometry(m);
+
+      return (
+        <div key={m.id} style={{ marginTop: "10px" }}>
+          <div><strong>Name:</strong> {m.module_name}</div>
+          <div><strong>Module Type:</strong> {m.module_type}</div>
+          <div><strong>Custom Shape:</strong> {m.custom_shape}</div>
+          <div><strong>Polygon Sides:</strong> {m.polygon_sides}</div>
+          <div><strong>Layout Kind:</strong> {resolveLayoutKind(m)}</div>
+          <div><strong>Is Polygon:</strong> {plannerShapeIsPolygon(m) ? "YES" : "NO"}</div>
+          <div><strong>Points:</strong> {geometry.pointsString}</div>
+        </div>
+      );
+    })}
+</div>  
     <svg
             ref={svgPlannerRef}
             className="svgPlanner"
