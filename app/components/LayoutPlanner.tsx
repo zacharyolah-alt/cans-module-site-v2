@@ -123,7 +123,7 @@ if (m.module_name === "Test polygon") {
 
   return (
       <section className="formCard layoutPrintArea">
-        <h2>Layout View <small style={{ fontSize: "12px", color: "#777" }}>Shape Engine v5</small></h2>
+        <h2>Layout View <small style={{ fontSize: "12px", color: "#777" }}>Shape Engine TEST</small></h2>
     
         <div className={mobileEditMode ? "layoutCanvas editMode" : "layoutCanvas"} ref={layoutCanvasRef}>
           <div className="layoutControls">
