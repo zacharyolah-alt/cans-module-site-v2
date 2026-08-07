@@ -179,7 +179,47 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
       Redo
     </button>
           </div>
-    
+    <div
+  style={{
+    background: "#fff7cc",
+    border: "2px solid #d6a800",
+    borderRadius: "10px",
+    padding: "10px",
+    marginBottom: "10px",
+    fontFamily: "monospace",
+    fontSize: "12px",
+    color: "#111",
+    whiteSpace: "pre-wrap",
+  }}
+>
+  <strong>POLYGON DEBUG</strong>
+
+  {layoutModules
+    .filter((m: any) => plannerShapeIsPolygon(m))
+    .map((m: any) => {
+      const geometry = getPolygonGeometry(m);
+
+      return (
+        <div key={`debug-${m.id}`} style={{ marginTop: "8px" }}>
+          {JSON.stringify(
+            {
+              name: m.module_name,
+              customShape: m.custom_shape,
+              sides: m.polygon_sides,
+              sideLengths: m.polygon_side_lengths,
+              angles: m.polygon_angles,
+              kind: resolveLayoutKind(m),
+              points: geometry.pointsString,
+              width: geometry.width,
+              height: geometry.height,
+            },
+            null,
+            2
+          )}
+        </div>
+      );
+    })}
+</div>
     <svg
             ref={svgPlannerRef}
             className="svgPlanner"
