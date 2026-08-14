@@ -2505,25 +2505,49 @@ button {
             strokeWidth="2"
           />
 
-          {preview.points.map((point: any, index: number) => {
-            const next =
-              preview.points[(index + 1) % preview.points.length];
+     {preview.points.map((point: any, index: number) => {
+  const next =
+    preview.points[(index + 1) % preview.points.length];
 
-            return (
-              <text
-                key={`preview-edge-${index}`}
-                x={(point.x + next.x) / 2}
-                y={(point.y + next.y) / 2}
-                fontSize="12"
-                fontWeight="700"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill="#111"
-              >
-                {index + 1}
-              </text>
-            );
-          })}
+  const cornerLetter = String.fromCharCode(65 + index);
+
+  return (
+    <g key={`preview-edge-${index}`}>
+      <text
+        x={(point.x + next.x) / 2}
+        y={(point.y + next.y) / 2}
+        fontSize="12"
+        fontWeight="700"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fill="#111"
+      >
+        {index + 1}
+      </text>
+
+      <circle
+        cx={point.x}
+        cy={point.y}
+        r="9"
+        fill="#ffd21f"
+        stroke="#111"
+        strokeWidth="1"
+      />
+
+      <text
+        x={point.x}
+        y={point.y}
+        fontSize="10"
+        fontWeight="900"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fill="#111"
+      >
+        {cornerLetter}
+      </text>
+    </g>
+  );
+})}
         </svg>
       );
     })()}
