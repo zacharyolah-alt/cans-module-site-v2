@@ -2429,6 +2429,33 @@ button {
                 }))
               }
             >
+              <label>
+  Track Entry Edge
+  <select
+    value={trackEntryEdge}
+    onChange={(event) => setTrackEntryEdge(event.target.value)}
+  >
+    {Array.from({ length: Math.max(3, Number(polygonSides) || 3) }, (_, index) => (
+      <option key={index + 1} value={String(index + 1)}>
+        Edge {index + 1}
+      </option>
+    ))}
+  </select>
+</label>
+
+<label>
+  Track Exit Edge
+  <select
+    value={trackExitEdge}
+    onChange={(event) => setTrackExitEdge(event.target.value)}
+  >
+    {Array.from({ length: Math.max(3, Number(polygonSides) || 3) }, (_, index) => (
+      <option key={index + 1} value={String(index + 1)}>
+        Edge {index + 1}
+      </option>
+    ))}
+  </select>
+</label>
               {Array.from({ length: 100 }, (_, i) => i + 1).map((inch) => (
                 <option key={inch} value={String(inch)}>
                   {inch}"
