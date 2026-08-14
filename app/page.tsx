@@ -186,13 +186,29 @@ setNotes(m.additional_notes || "");
     if (uploading) return alert("Please wait for photo upload to finish.");
 const polygonSideCount = Math.max(3, Number(polygonSides) || 3);
 
+
+  Array.from({ length: polygonSideCount }, (_, index) => {
+    const sideNumber = index + 1;
+const polygonSideCount = Math.max(3, Number(polygonSides) || 3);
+
+const calculatedCornerA =
+  (polygonSideCount - 2) * 180 -
+  Array.from({ length: polygonSideCount - 1 }, (_, index) => {
+    const value = Number(polygonAngles[index + 1] ?? 90);
+    return Number.isFinite(value) ? value : 0;
+  }).reduce((sum, value) => sum + value, 0);
+
 const completePolygonAngles = Object.fromEntries(
   Array.from({ length: polygonSideCount }, (_, index) => {
     const sideNumber = index + 1;
 
     return [
       String(sideNumber),
-      String(polygonAngles[sideNumber] ?? "90"),
+      String(
+        sideNumber === polygonSideCount
+          ? calculatedCornerA
+          : polygonAngles[sideNumber] ?? "90"
+      ),
     ];
   })
 );
@@ -2509,15 +2525,29 @@ button {
 
   <div style={{ marginTop: "10px", overflow: "auto" }}>
     {(() => {
-      const previewAngles = Object.fromEntries(
-        Array.from(
-          { length: Math.max(3, Number(polygonSides) || 3) },
-          (_, index) => [
-            String(index + 1),
-            String(polygonAngles[index + 1] ?? "90"),
-          ]
-        )
-      );
+     const previewSideCount = Math.max(3, Number(polygonSides) || 3);
+
+const calculatedCornerA =
+  (previewSideCount - 2) * 180 -
+  Array.from({ length: previewSideCount - 1 }, (_, index) => {
+    const value = Number(polygonAngles[index + 1] ?? 90);
+    return Number.isFinite(value) ? value : 0;
+  }).reduce((sum, value) => sum + value, 0);
+
+const previewAngles = Object.fromEntries(
+  Array.from({ length: previewSideCount }, (_, index) => {
+    const sideNumber = index + 1;
+
+    return [
+      String(sideNumber),
+      String(
+        sideNumber === previewSideCount
+          ? calculatedCornerA
+          : polygonAngles[sideNumber] ?? "90"
+      ),
+    ];
+  })
+);
 
       const previewModule = {
         custom_shape: "Polygon",
@@ -2625,38 +2655,65 @@ button {
               ))}
             </select>
 
-            <label>
-  Corner {String.fromCharCode(65 + (sideNumber % Number(polygonSides)))} Angle
-  {" "}(after Side {sideNumber}) (degrees)
-</label>
-            <input
-              type="number"
-              inputMode="decimal"
-              min="1"
-              max="359"
-              step="0.1"
-              value={polygonAngles[sideNumber] ?? "90"}
-              onChange={(e) => {
-                // Keep the field as a string while the user is editing it.
-                // In particular, allow an empty value so "90" can be erased
-                // before typing a completely different angle such as "135".
-                setPolygonAngles((prev: any) => ({
-                  ...prev,
-                  [sideNumber]: e.target.value,
-                }));
-              }}
-              onBlur={(e) => {
-                const parsed = Number(e.target.value);
-                const safeAngle = Number.isFinite(parsed)
-                  ? Math.min(359, Math.max(1, parsed))
-                  : 90;
+           {sideNumber === Number(polygonSides) ? (
+  <>
+    <label>
+      Corner A Angle (calculated)
+    </label>
 
-                setPolygonAngles((prev: any) => ({
-                  ...prev,
-                  [sideNumber]: String(safeAngle),
-                }));
-              }}
-            />
+    <input
+      type="text"
+      readOnly
+      value={`${(
+        (Math.max(3, Number(polygonSides) || 3) - 2) * 180 -
+        Array.from(
+          { length: Math.max(3, Number(polygonSides) || 3) - 1 },
+          (_, index) => {
+            const value = Number(polygonAngles[index + 1] ?? 90);
+            return Number.isFinite(value) ? value : 0;
+          }
+        ).reduce((sum, value) => sum + value, 0)
+      ).toFixed(1)}°`}
+      style={{
+        background: "#eee",
+        fontWeight: "700",
+      }}
+    />
+  </>
+) : (
+  <>
+    <label>
+      Corner {String.fromCharCode(65 + sideNumber)} Angle
+      {" "}(after Side {sideNumber}) (degrees)
+    </label>
+
+    <input
+      type="number"
+      inputMode="decimal"
+      min="1"
+      max="359"
+      step="0.1"
+      value={polygonAngles[sideNumber] ?? "90"}
+      onChange={(e) => {
+        setPolygonAngles((prev: any) => ({
+          ...prev,
+          [sideNumber]: e.target.value,
+        }));
+      }}
+      onBlur={(e) => {
+        const parsed = Number(e.target.value);
+        const safeAngle = Number.isFinite(parsed)
+          ? Math.min(359, Math.max(1, parsed))
+          : 90;
+
+        setPolygonAngles((prev: any) => ({
+          ...prev,
+          [sideNumber]: String(safeAngle),
+        }));
+      }}
+    />
+  </>
+)}
           </div>
         ))}
 
