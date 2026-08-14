@@ -27,6 +27,8 @@ const [customDepthInches, setCustomDepthInches] = useState("14");
   const [polygonSides, setPolygonSides] = useState("6");
   const [polygonSideLengths, setPolygonSideLengths] = useState<any>({});
   const [polygonAngles, setPolygonAngles] = useState<any>({});
+  const [trackEntryEdge, setTrackEntryEdge] = useState("1");
+const [trackExitEdge, setTrackExitEdge] = useState("2");
   const [search, setSearch] = useState("");
   const [standardFilter, setStandardFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -149,6 +151,8 @@ setCustomDepthInches("14");
     setPolygonSides("6");
     setPolygonSideLengths({});
     setPolygonAngles({});
+    setTrackEntryEdge("1");
+setTrackExitEdge("2");
 
 setNotes("");
   }
@@ -170,6 +174,8 @@ setCustomDepthInches(m.custom_depth_inches || "14");
 setPolygonSides(m.polygon_sides || "6");
     setPolygonSideLengths(m.polygon_side_lengths || {});
     setPolygonAngles(m.polygon_angles || {});
+    setTrackEntryEdge(m.track_entry_edge || "1");
+setTrackExitEdge(m.track_exit_edge || "2");
 setNotes(m.additional_notes || "");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -195,6 +201,8 @@ custom_depth_inches: customDepthInches,
       polygon_sides: polygonSides,
 polygon_side_lengths: polygonSideLengths,
       polygon_angles: polygonAngles,
+      track_entry_edge: trackEntryEdge,
+track_exit_edge: trackExitEdge,
       status,
       additional_notes: notes,
     };
