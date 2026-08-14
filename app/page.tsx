@@ -498,24 +498,65 @@ function exportToCSV() {
       heading += (turnDegrees * Math.PI) / 180;
     }
 
-    const minX = Math.min(...points.map((point) => point.x));
-    const minY = Math.min(...points.map((point) => point.y));
-    const maxX = Math.max(...points.map((point) => point.x));
-    const maxY = Math.max(...points.map((point) => point.y));
+const finalPoint = { x, y };
 
-    const normalizedPoints = points.map((point) => ({
-      x: point.x - minX,
-      y: point.y - minY,
-    }));
+const minX = Math.min(
+  ...points.map((point) => point.x),
+  finalPoint.x
+);
+const minY = Math.min(
+  ...points.map((point) => point.y),
+  finalPoint.y
+);
+const maxX = Math.max(
+  ...points.map((point) => point.x),
+  finalPoint.x
+);
+const maxY = Math.max(
+  ...points.map((point) => point.y),
+  finalPoint.y
+);
 
-    return {
-      points: normalizedPoints,
-      pointsString: normalizedPoints
-        .map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`)
-        .join(" "),
-      width: Math.max(20, maxX - minX),
-      height: Math.max(20, maxY - minY),
-    };
+const normalizedPoints = points.map((point) => ({
+  x: point.x - minX,
+  y: point.y - minY,
+}));
+
+const normalizedFinalPoint = {
+  x: finalPoint.x - minX,
+  y: finalPoint.y - minY,
+};
+
+const enteredPathPoints = [
+  ...normalizedPoints,
+  normalizedFinalPoint,
+];
+
+const closureDistance = Math.hypot(
+  normalizedFinalPoint.x - normalizedPoints[0].x,
+  normalizedFinalPoint.y - normalizedPoints[0].y
+);
+
+return {
+  points: normalizedPoints,
+
+  pointsString: normalizedPoints
+    .map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`)
+    .join(" "),
+
+  enteredPathPoints,
+
+  enteredPathString: enteredPathPoints
+    .map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`)
+    .join(" "),
+
+  finalPoint: normalizedFinalPoint,
+
+  closureDistance,
+
+  width: Math.max(20, maxX - minX),
+  height: Math.max(20, maxY - minY),
+};
   }
 
   function getLayoutSize(m: any) {
@@ -2498,12 +2539,22 @@ button {
             borderRadius: "8px",
           }}
         >
-          <polygon
-            points={preview.pointsString}
-            fill="rgba(198, 226, 178, .55)"
-            stroke="#3d6b2d"
-            strokeWidth="2"
-          />
+         <polyline
+  points={preview.enteredPathString}
+  fill="none"
+  stroke="#3d6b2d"
+  strokeWidth="2"
+/>
+
+<line
+  x1={preview.finalPoint.x}
+  y1={preview.finalPoint.y}
+  x2={preview.points[0].x}
+  y2={preview.points[0].y}
+  stroke="#b00020"
+  strokeWidth="2"
+  strokeDasharray="6 4"
+/>
 
      {preview.points.map((point: any, index: number) => {
   const next =
@@ -2574,7 +2625,10 @@ button {
               ))}
             </select>
 
-            <label>Interior Angle after Side {sideNumber} (degrees)</label>
+            <label>
+  Corner {String.fromCharCode(65 + (sideNumber % Number(polygonSides)))} Angle
+  {" "}(after Side {sideNumber}) (degrees)
+</label>
             <input
               type="number"
               inputMode="decimal"
