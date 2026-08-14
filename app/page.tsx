@@ -184,11 +184,8 @@ setNotes(m.additional_notes || "");
     if (!user) return alert("Please log in first.");
     if (!name.trim()) return alert("Please enter a module name.");
     if (uploading) return alert("Please wait for photo upload to finish.");
-const polygonSideCount = Math.max(3, Number(polygonSides) || 3);
 
 
-  Array.from({ length: polygonSideCount }, (_, index) => {
-    const sideNumber = index + 1;
 const polygonSideCount = Math.max(3, Number(polygonSides) || 3);
 
 const calculatedCornerA =
