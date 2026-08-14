@@ -2454,6 +2454,81 @@ button {
   </select>
 </label>
 
+<div
+  style={{
+    marginTop: "16px",
+    marginBottom: "16px",
+    padding: "12px",
+    border: "1px solid #ccc",
+    borderRadius: "12px",
+    background: "#fafafa",
+  }}
+>
+  <strong>Live Module Preview</strong>
+
+  <div style={{ marginTop: "10px", overflow: "auto" }}>
+    {(() => {
+      const previewAngles = Object.fromEntries(
+        Array.from(
+          { length: Math.max(3, Number(polygonSides) || 3) },
+          (_, index) => [
+            String(index + 1),
+            String(polygonAngles[index + 1] ?? "90"),
+          ]
+        )
+      );
+
+      const previewModule = {
+        custom_shape: "Polygon",
+        polygon_sides: polygonSides,
+        polygon_side_lengths: polygonSideLengths,
+        polygon_angles: previewAngles,
+      };
+
+      const preview = getPolygonGeometry(previewModule);
+
+      return (
+        <svg
+          width="320"
+          height="220"
+          viewBox={`-20 -20 ${preview.width + 40} ${preview.height + 40}`}
+          style={{
+            background: "white",
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+          }}
+        >
+          <polygon
+            points={preview.pointsString}
+            fill="rgba(198, 226, 178, .55)"
+            stroke="#3d6b2d"
+            strokeWidth="2"
+          />
+
+          {preview.points.map((point: any, index: number) => {
+            const next =
+              preview.points[(index + 1) % preview.points.length];
+
+            return (
+              <text
+                key={`preview-edge-${index}`}
+                x={(point.x + next.x) / 2}
+                y={(point.y + next.y) / 2}
+                fontSize="12"
+                fontWeight="700"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="#111"
+              >
+                {index + 1}
+              </text>
+            );
+          })}
+        </svg>
+      );
+    })()}
+  </div>
+</div>
         {Array.from({ length: Number(polygonSides) }, (_, i) => i + 1).map((sideNumber) => (
           <div key={sideNumber}>
             <label>Side {sideNumber} Length (inches)</label>
