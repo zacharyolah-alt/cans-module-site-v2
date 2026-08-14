@@ -184,7 +184,18 @@ setNotes(m.additional_notes || "");
     if (!user) return alert("Please log in first.");
     if (!name.trim()) return alert("Please enter a module name.");
     if (uploading) return alert("Please wait for photo upload to finish.");
+const polygonSideCount = Math.max(3, Number(polygonSides) || 3);
 
+const completePolygonAngles = Object.fromEntries(
+  Array.from({ length: polygonSideCount }, (_, index) => {
+    const sideNumber = index + 1;
+
+    return [
+      String(sideNumber),
+      String(polygonAngles[sideNumber] ?? "90"),
+    ];
+  })
+);
     const payload = {
       module_name: name,
       owner_name: ownerName || user.email,
@@ -200,7 +211,7 @@ custom_depth_inches: customDepthInches,
       custom_shape: customShape,
       polygon_sides: polygonSides,
 polygon_side_lengths: polygonSideLengths,
-      polygon_angles: polygonAngles,
+     polygon_angles: completePolygonAngles,
       track_entry_edge: trackEntryEdge,
 track_exit_edge: trackExitEdge,
       status,
