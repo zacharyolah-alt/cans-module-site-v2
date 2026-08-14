@@ -2416,20 +2416,7 @@ button {
             </option>
           ))}
         </select>
-
-        {Array.from({ length: Number(polygonSides) }, (_, i) => i + 1).map((sideNumber) => (
-          <div key={sideNumber}>
-            <label>Side {sideNumber} Length (inches)</label>
-            <select
-              value={polygonSideLengths[sideNumber] || "24"}
-              onChange={(e) =>
-                setPolygonSideLengths((prev: any) => ({
-                  ...prev,
-                  [sideNumber]: e.target.value,
-                }))
-              }
-            >
-              <label>
+<label>
   Track Entry Edge
   <select
     value={trackEntryEdge}
@@ -2442,6 +2429,19 @@ button {
     ))}
   </select>
 </label>
+        {Array.from({ length: Number(polygonSides) }, (_, i) => i + 1).map((sideNumber) => (
+          <div key={sideNumber}>
+            <label>Side {sideNumber} Length (inches)</label>
+            <select
+              value={polygonSideLengths[sideNumber] || "24"}
+              onChange={(e) =>
+                setPolygonSideLengths((prev: any) => ({
+                  ...prev,
+                  [sideNumber]: e.target.value,
+                }))
+              }
+            >
+              
 
 <label>
   Track Exit Edge
