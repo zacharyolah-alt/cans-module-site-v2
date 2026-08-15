@@ -2912,6 +2912,17 @@ const outerTrackRadius =
         stroke="#3d6b2d"
         strokeWidth="2"
       />
+      {[0.42, 0.58].map((fraction, index) => (
+  <line
+    key={`rect-track-${index}`}
+    x1="0"
+    y1={Math.max(1, Number(customDepthInches)) * LAYOUT_SCALE * fraction}
+    x2={Math.max(1, Number(customWidthInches)) * LAYOUT_SCALE}
+    y2={Math.max(1, Number(customDepthInches)) * LAYOUT_SCALE * fraction}
+    stroke="#444"
+    strokeWidth="2"
+  />
+))}
     </svg>
   </div>
 </div>
