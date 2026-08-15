@@ -575,7 +575,46 @@ return {
   height: Math.max(20, maxY - minY),
 };
   }
+function getPreviewDimensions() {
+  const mmToPreview = (mm: number) => (mm / 25.4) * LAYOUT_SCALE;
 
+  if (dimensions === 'Single - 308 mm (12.13")') {
+    return { width: mmToPreview(308), height: mmToPreview(365.1) };
+  }
+
+  if (dimensions === 'Double - 618 mm (24.33")') {
+    return { width: mmToPreview(618), height: mmToPreview(365.1) };
+  }
+
+  if (dimensions === 'Triple - 928 mm (36.54")') {
+    return { width: mmToPreview(928), height: mmToPreview(365.1) };
+  }
+
+  if (dimensions === 'Quad - 1238 mm (48.74")') {
+    return { width: mmToPreview(1238), height: mmToPreview(365.1) };
+  }
+
+  if (dimensions === 'Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")') {
+    return { width: mmToPreview(365.1), height: mmToPreview(365.1) };
+  }
+
+  if (dimensions === 'End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")') {
+    return { width: mmToPreview(731.8), height: mmToPreview(365.1) };
+  }
+
+  if (dimensions === 'Interchange Double - 390 mm x 618 mm (15.35" x 24.33")') {
+    return { width: mmToPreview(618), height: mmToPreview(390) };
+  }
+
+  if (dimensions === 'Interchange Triple - 474 mm x 928 mm (18.66" x 36.54")') {
+    return { width: mmToPreview(928), height: mmToPreview(474) };
+  }
+
+  return {
+    width: Math.max(1, Number(customWidthInches) || 24) * LAYOUT_SCALE,
+    height: Math.max(1, Number(customDepthInches) || 14) * LAYOUT_SCALE,
+  };
+}
   function getLayoutSize(m: any) {
     const kind = getLayoutKind(m);
 
@@ -2896,7 +2935,7 @@ const outerTrackRadius =
     <svg
       width="320"
       height="220"
-      viewBox={`0 0 ${Math.max(1, Number(customWidthInches)) * LAYOUT_SCALE} ${Math.max(1, Number(customDepthInches)) * LAYOUT_SCALE}`}
+      viewBox={`0 0 ${getPreviewDimensions().width} ${getPreviewDimensions().height}`}
       style={{
         background: "white",
         border: "1px solid #ddd",
@@ -2904,14 +2943,14 @@ const outerTrackRadius =
       }}
     >
       <rect
-        x="0"
-        y="0"
-        width={Math.max(1, Number(customWidthInches)) * LAYOUT_SCALE}
-        height={Math.max(1, Number(customDepthInches)) * LAYOUT_SCALE}
-        fill="rgba(198, 226, 178, .55)"
-        stroke="#3d6b2d"
-        strokeWidth="2"
-      />
+  x="0"
+  y="0"
+  width={getPreviewDimensions().width}
+  height={getPreviewDimensions().height}
+  fill="rgba(198, 226, 178, .55)"
+  stroke="#3d6b2d"
+  strokeWidth="2"
+/>
       {[0.42, 0.58].map((fraction, index) => (
   <line
     key={`rect-track-${index}`}
@@ -2929,6 +2968,60 @@ const outerTrackRadius =
       </div>
     )}
   </>
+)}{dimensions && dimensions !== "Other / custom" && (
+  <div
+    style={{
+      marginTop: "16px",
+      marginBottom: "16px",
+      padding: "12px",
+      border: "1px solid #ccc",
+      borderRadius: "12px",
+      background: "#fafafa",
+    }}
+  >
+    <strong>Live Module Preview</strong>
+
+    <div style={{ marginTop: "10px" }}>
+      {(() => {
+        const previewSize = getPreviewDimensions();
+
+        return (
+          <svg
+            width="320"
+            height="220"
+            viewBox={`0 0 ${previewSize.width} ${previewSize.height}`}
+            style={{
+              background: "white",
+              border: "1px solid #ddd",
+              borderRadius: "8px",
+            }}
+          >
+            <rect
+              x="0"
+              y="0"
+              width={previewSize.width}
+              height={previewSize.height}
+              fill="rgba(198, 226, 178, .55)"
+              stroke="#3d6b2d"
+              strokeWidth="2"
+            />
+
+            {[0.42, 0.58].map((fraction, index) => (
+              <line
+                key={`standard-track-${index}`}
+                x1="0"
+                y1={previewSize.height * fraction}
+                x2={previewSize.width}
+                y2={previewSize.height * fraction}
+                stroke="#444"
+                strokeWidth="2"
+              />
+            ))}
+          </svg>
+        );
+      })()}
+    </div>
+  </div>
 )}
 
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
