@@ -2996,15 +2996,32 @@ const outerTrackRadius =
               borderRadius: "8px",
             }}
           >
-            <rect
-              x="0"
-              y="0"
-              width={previewSize.width}
-              height={previewSize.height}
-              fill="rgba(198, 226, 178, .55)"
-              stroke="#3d6b2d"
-              strokeWidth="2"
-            />
+            {dimensions === 'Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")' ? (
+  <path
+    d={`
+      M 0 ${previewSize.height}
+      V 0
+      H ${previewSize.width}
+      V ${previewSize.height * 0.42}
+      H ${previewSize.width * 0.42}
+      V ${previewSize.height}
+      Z
+    `}
+    fill="rgba(198, 226, 178, .55)"
+    stroke="#3d6b2d"
+    strokeWidth="2"
+  />
+) : (
+  <rect
+    x="0"
+    y="0"
+    width={previewSize.width}
+    height={previewSize.height}
+    fill="rgba(198, 226, 178, .55)"
+    stroke="#3d6b2d"
+    strokeWidth="2"
+  />
+)}
 
             {[0.42, 0.58].map((fraction, index) => (
               <line
