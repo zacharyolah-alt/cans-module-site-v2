@@ -3005,25 +3005,40 @@ const outerTrackRadius =
               stroke="#3d6b2d"
               strokeWidth="2"
             />
-
-         {dimensions === 'Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")' ? (
+{dimensions === 'Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")' ? (
   <>
-    {[0.42, 0.58].map((fraction, index) => {
-      const radius = previewSize.width * fraction;
+    {(() => {
+      const radiusPairs: Record<string, [number, number]> = {
+        "Small Inside Corner - 195 mm / 220 mm": [195, 220],
+        "Medium Inside Corner - 220 mm / 245 mm": [220, 245],
+        "Large Inside Corner - 245 mm / 270 mm": [245, 270],
+        "Large Radius - 315 mm / 348 mm": [315, 348],
+        "Large Radius - 348 mm / 381 mm": [348, 381],
+        "Large Radius - 381 mm / 414 mm": [381, 414],
+        "Large Radius - 447 mm / 480 mm": [447, 480],
+      };
 
-      return (
-        <path
-          key={`corner-track-${index}`}
-          d={`
-            M 0 ${radius}
-            A ${radius} ${radius} 0 0 1 ${radius} 0
-          `}
-          fill="none"
-          stroke="#444"
-          strokeWidth="2"
-        />
-      );
-    })}
+      const selectedPair =
+        radiusPairs[cornerSize] || [220, 245];
+
+      return selectedPair.map((radiusMm, index) => {
+        const radius =
+          (radiusMm / 25.4) * LAYOUT_SCALE;
+
+        return (
+          <path
+            key={`corner-track-${index}`}
+            d={`
+              M 0 ${radius}
+              A ${radius} ${radius} 0 0 0 ${radius} 0
+            `}
+            fill="none"
+            stroke="#444"
+            strokeWidth="2"
+          />
+        );
+      });
+    })()}
   </>
 ) : (
   <>
