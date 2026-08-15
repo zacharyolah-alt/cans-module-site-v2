@@ -578,41 +578,107 @@ return {
 function getPreviewDimensions() {
   const mmToPreview = (mm: number) => (mm / 25.4) * LAYOUT_SCALE;
 
+  const radiusPairs: Record<string, [number, number]> = {
+    "Small Inside Corner - 195 mm / 220 mm": [195, 220],
+    "Medium Inside Corner - 220 mm / 245 mm": [220, 245],
+    "Large Inside Corner - 245 mm / 270 mm": [245, 270],
+    "Large Radius - 315 mm / 348 mm": [315, 348],
+    "Large Radius - 348 mm / 381 mm": [348, 381],
+    "Large Radius - 381 mm / 414 mm": [381, 414],
+    "Large Radius - 447 mm / 480 mm": [447, 480],
+  };
+
+  let width = Math.max(1, Number(customWidthInches) || 24) * LAYOUT_SCALE;
+  let height = Math.max(1, Number(customDepthInches) || 14) * LAYOUT_SCALE;
+
   if (dimensions === 'Single - 308 mm (12.13")') {
-    return { width: mmToPreview(308), height: mmToPreview(365.1) };
+    width = mmToPreview(308);
+    height = mmToPreview(365.1);
+  } else if (dimensions === 'Double - 618 mm (24.33")') {
+    width = mmToPreview(618);
+    height = mmToPreview(365.1);
+  } else if (dimensions === 'Triple - 928 mm (36.54")') {
+    width = mmToPreview(928);
+    height = mmToPreview(365.1);
+  } else if (dimensions === 'Quad - 1238 mm (48.74")') {
+    width = mmToPreview(1238);
+    height = mmToPreview(365.1);
+  } else if (
+    dimensions === 'Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")'
+  ) {
+    width = mmToPreview(365.1);
+    height = mmToPreview(365.1);
+  } else if (
+    dimensions === 'End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")'
+  ) {
+    width = mmToPreview(731.8);
+    height = mmToPreview(365.1);
+  } else if (
+    dimensions === 'Interchange Double - 390 mm x 618 mm (15.35" x 24.33")'
+  ) {
+    width = mmToPreview(618);
+    height = mmToPreview(390);
+  } else if (
+    dimensions === 'Interchange Triple - 474 mm x 928 mm (18.66" x 36.54")'
+  ) {
+    width = mmToPreview(928);
+    height = mmToPreview(474);
   }
 
-  if (dimensions === 'Double - 618 mm (24.33")') {
-    return { width: mmToPreview(618), height: mmToPreview(365.1) };
-  }
+  const selectedRadiusPair = radiusPairs[cornerSize] || null;
 
-  if (dimensions === 'Triple - 928 mm (36.54")') {
-    return { width: mmToPreview(928), height: mmToPreview(365.1) };
-  }
+  const isCorner =
+    moduleType === "Inside Corner" ||
+    moduleType === "Outside Corner";
 
-  if (dimensions === 'Quad - 1238 mm (48.74")') {
-    return { width: mmToPreview(1238), height: mmToPreview(365.1) };
-  }
+  const isEndCap =
+    dimensions === 'End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")' ||
+    cornerSize === 'End Cap - 365 mm x 732 mm (14.37" x 28.82")';
 
-  if (dimensions === 'Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")') {
-    return { width: mmToPreview(365.1), height: mmToPreview(365.1) };
-  }
-
-  if (dimensions === 'End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")') {
-    return { width: mmToPreview(731.8), height: mmToPreview(365.1) };
-  }
-
-  if (dimensions === 'Interchange Double - 390 mm x 618 mm (15.35" x 24.33")') {
-    return { width: mmToPreview(618), height: mmToPreview(390) };
-  }
-
-  if (dimensions === 'Interchange Triple - 474 mm x 928 mm (18.66" x 36.54")') {
-    return { width: mmToPreview(928), height: mmToPreview(474) };
-  }
+  const isCustom = dimensions === "Other / custom";
 
   return {
-    width: Math.max(1, Number(customWidthInches) || 24) * LAYOUT_SCALE,
-    height: Math.max(1, Number(customDepthInches) || 14) * LAYOUT_SCALE,
+    width,
+    height,
+
+    // Physical tabletop
+    outlineType:
+      isCustom && customShape === "Polygon"
+        ? "polygon"
+        : isEndCap
+          ? "endCap"
+          : "rectangle",
+
+    // Track information
+    trackPath: trackType,
+
+    turnDirection:
+      moduleType === "Outside Corner"
+        ? "right"
+        : moduleType === "Inside Corner"
+          ? "left"
+          : "straight",
+
+    sweepDegrees:
+      isEndCap
+        ? 180
+        : isCorner
+          ? 90
+          : 0,
+
+    radiusPairMm: selectedRadiusPair,
+
+    innerRadius:
+      selectedRadiusPair
+        ? mmToPreview(selectedRadiusPair[0])
+        : null,
+
+    outerRadius:
+      selectedRadiusPair
+        ? mmToPreview(selectedRadiusPair[1])
+        : null,
+
+    isCustom,
   };
 }
   function getLayoutSize(m: any) {
