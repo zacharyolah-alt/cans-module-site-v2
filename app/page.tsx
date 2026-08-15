@@ -2996,44 +2996,50 @@ const outerTrackRadius =
               borderRadius: "8px",
             }}
           >
-            {dimensions === 'Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")' ? (
-  <path
-    d={`
-      M 0 ${previewSize.height}
-      V 0
-      H ${previewSize.width}
-      V ${previewSize.height * 0.42}
-      H ${previewSize.width * 0.42}
-      V ${previewSize.height}
-      Z
-    `}
-    fill="rgba(198, 226, 178, .55)"
-    stroke="#3d6b2d"
-    strokeWidth="2"
-  />
-) : (
-  <rect
-    x="0"
-    y="0"
-    width={previewSize.width}
-    height={previewSize.height}
-    fill="rgba(198, 226, 178, .55)"
-    stroke="#3d6b2d"
-    strokeWidth="2"
-  />
-)}
+            <rect
+              x="0"
+              y="0"
+              width={previewSize.width}
+              height={previewSize.height}
+              fill="rgba(198, 226, 178, .55)"
+              stroke="#3d6b2d"
+              strokeWidth="2"
+            />
 
-            {[0.42, 0.58].map((fraction, index) => (
-              <line
-                key={`standard-track-${index}`}
-                x1="0"
-                y1={previewSize.height * fraction}
-                x2={previewSize.width}
-                y2={previewSize.height * fraction}
-                stroke="#444"
-                strokeWidth="2"
-              />
-            ))}
+         {dimensions === 'Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")' ? (
+  <>
+    {[0.42, 0.58].map((fraction, index) => {
+      const radius = previewSize.width * fraction;
+
+      return (
+        <path
+          key={`corner-track-${index}`}
+          d={`
+            M 0 ${radius}
+            A ${radius} ${radius} 0 0 1 ${radius} 0
+          `}
+          fill="none"
+          stroke="#444"
+          strokeWidth="2"
+        />
+      );
+    })}
+  </>
+) : (
+  <>
+    {[0.42, 0.58].map((fraction, index) => (
+      <line
+        key={`standard-track-${index}`}
+        x1="0"
+        y1={previewSize.height * fraction}
+        x2={previewSize.width}
+        y2={previewSize.height * fraction}
+        stroke="#444"
+        strokeWidth="2"
+      />
+    ))}
+  </>
+)}
           </svg>
         );
       })()}
