@@ -2618,12 +2618,24 @@ const curveDirection =
       ? -1
       : 0;
 
-const curveAmount = 45;
-
-const curveControl = {
-  x: trackMidpoint.x + centerVector.x * curveDirection + normalX * curveAmount * curveDirection,
-  y: trackMidpoint.y + centerVector.y * curveDirection + normalY * curveAmount * curveDirection,
+const tTrakRadiusPairs: Record<string, [number, number]> = {
+  "Small Inside Corner - 195 mm / 220 mm": [195, 220],
+  "Medium Inside Corner - 220 mm / 245 mm": [220, 245],
+  "Large Inside Corner - 245 mm / 270 mm": [245, 270],
+  "Large Radius - 315 mm / 348 mm": [315, 348],
+  "Large Radius - 348 mm / 381 mm": [348, 381],
+  "Large Radius - 381 mm / 414 mm": [381, 414],
+  "Large Radius - 447 mm / 480 mm": [447, 480],
 };
+
+const selectedRadiusPair =
+  tTrakRadiusPairs[cornerSize] || [220, 245];
+
+const innerTrackRadius =
+  (selectedRadiusPair[0] / 25.4) * LAYOUT_SCALE;
+
+const outerTrackRadius =
+  (selectedRadiusPair[1] / 25.4) * LAYOUT_SCALE;
       return (
         <svg
           width="320"
@@ -2651,7 +2663,7 @@ const curveControl = {
   strokeWidth="2"
   strokeDasharray="6 4"
 />
-{[ -trackSpacing / 2, trackSpacing / 2 ].map((offset, index) => {
+{[-trackSpacing / 2, trackSpacing / 2].map((offset, index) => {
   const startX = trackEntry.x + normalX * offset;
   const startY = trackEntry.y + normalY * offset;
   const endX = trackExit.x + normalX * offset;
@@ -2671,13 +2683,28 @@ const curveControl = {
     );
   }
 
-  const controlX = curveControl.x + normalX * offset;
-  const controlY = curveControl.y + normalY * offset;
+  const radius =
+    index === 0 ? innerTrackRadius : outerTrackRadius;
+
+  const chordLength = Math.hypot(
+    endX - startX,
+    endY - startY
+  );
+
+  const safeRadius = Math.max(
+    radius,
+    chordLength / 2 + 0.01
+  );
+
+  const largeArcFlag = 0;
+
+  const sweepFlag =
+    trackType === "Inside Curve" ? 1 : 0;
 
   return (
     <path
       key={`track-${index}`}
-      d={`M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`}
+      d={`M ${startX} ${startY} A ${safeRadius} ${safeRadius} 0 ${largeArcFlag} ${sweepFlag} ${endX} ${endY}`}
       fill="none"
       stroke="#444"
       strokeWidth="2"
