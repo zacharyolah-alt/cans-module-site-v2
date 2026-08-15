@@ -2513,11 +2513,14 @@ button {
     value={trackExitEdge}
     onChange={(event) => setTrackExitEdge(event.target.value)}
   >
-    {Array.from({ length: Math.max(3, Number(polygonSides) || 3) }, (_, index) => (
-      <option key={index + 1} value={String(index + 1)}>
-        Edge {index + 1}
-      </option>
-    ))}
+    {Array.from(
+      { length: Math.max(3, Number(polygonSides) || 3) },
+      (_, index) => (
+        <option key={index + 1} value={String(index + 1)}>
+          Edge {index + 1}
+        </option>
+      )
+    )}
   </select>
 </label>
 
@@ -2535,7 +2538,7 @@ button {
 
   <div style={{ marginTop: "10px", overflow: "auto" }}>
     {(() => {
-     const previewSideCount = Math.max(3, Number(polygonSides) || 3);
+const previewSideCount = Math.max(3, Number(polygonSides) || 3);
 
 const calculatedCornerA =
   (previewSideCount - 2) * 180 -
@@ -2877,10 +2880,46 @@ const outerTrackRadius =
             </option>
           ))}
         </select>
+        <div
+  style={{
+    marginTop: "16px",
+    marginBottom: "16px",
+    padding: "12px",
+    border: "1px solid #ccc",
+    borderRadius: "12px",
+    background: "#fafafa",
+  }}
+>
+  <strong>Live Module Preview</strong>
+
+  <div style={{ marginTop: "10px" }}>
+    <svg
+      width="320"
+      height="220"
+      viewBox={`0 0 ${Math.max(1, Number(customWidthInches)) * LAYOUT_SCALE} ${Math.max(1, Number(customDepthInches)) * LAYOUT_SCALE}`}
+      style={{
+        background: "white",
+        border: "1px solid #ddd",
+        borderRadius: "8px",
+      }}
+    >
+      <rect
+        x="0"
+        y="0"
+        width={Math.max(1, Number(customWidthInches)) * LAYOUT_SCALE}
+        height={Math.max(1, Number(customDepthInches)) * LAYOUT_SCALE}
+        fill="rgba(198, 226, 178, .55)"
+        stroke="#3d6b2d"
+        strokeWidth="2"
+      />
+    </svg>
+  </div>
+</div>
       </div>
     )}
   </>
 )}
+
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option>Planning</option>
                 <option>Under Construction</option>
