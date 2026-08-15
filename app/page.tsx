@@ -3028,10 +3028,17 @@ const outerTrackRadius =
         return (
           <path
             key={`corner-track-${index}`}
-            d={`
-              M 0 ${radius}
-              A ${radius} ${radius} 0 0 0 ${radius} 0
-            `}
+          d={
+  moduleType === "Outside Corner"
+    ? `
+      M 0 ${previewSize.height - radius}
+      A ${radius} ${radius} 0 0 1 ${radius} ${previewSize.height}
+    `
+    : `
+      M 0 ${radius}
+      A ${radius} ${radius} 0 0 0 ${radius} 0
+    `
+}
             fill="none"
             stroke="#444"
             strokeWidth="2"
