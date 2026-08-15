@@ -2412,6 +2412,7 @@ button {
   <option>Outside Corner</option>
   <option>Bridge</option>
 </select>
+<label>Track Path</label>
 <select
   value={trackType}
   onChange={(e) => setTrackType(e.target.value)}
@@ -2419,7 +2420,6 @@ button {
   <option>Straight</option>
   <option>Inside Curve</option>
   <option>Outside Curve</option>
-  <option>Turnout</option>
 </select>
               {moduleType === "Bridge" && (
   <select
@@ -2567,7 +2567,63 @@ const previewAngles = Object.fromEntries(
       };
 
       const preview = getPolygonGeometry(previewModule);
+const previewPathPoints = preview.enteredPathPoints;
 
+const getPreviewEdgeMidpoint = (edgeValue: string) => {
+  const edgeNumber = Math.max(
+    1,
+    Math.min(Number(edgeValue) || 1, previewPathPoints.length - 1)
+  );
+
+  const start = previewPathPoints[edgeNumber - 1];
+  const end = previewPathPoints[edgeNumber];
+
+  return {
+    x: (start.x + end.x) / 2,
+    y: (start.y + end.y) / 2,
+  };
+};
+
+const trackEntry = getPreviewEdgeMidpoint(trackEntryEdge);
+const trackExit = getPreviewEdgeMidpoint(trackExitEdge);
+
+const trackDx = trackExit.x - trackEntry.x;
+const trackDy = trackExit.y - trackEntry.y;
+const trackLength = Math.max(1, Math.hypot(trackDx, trackDy));
+
+const normalX = -trackDy / trackLength;
+const normalY = trackDx / trackLength;
+
+const trackSpacing = 6;
+
+const moduleCenter = {
+  x: preview.width / 2,
+  y: preview.height / 2,
+};
+
+const trackMidpoint = {
+  x: (trackEntry.x + trackExit.x) / 2,
+  y: (trackEntry.y + trackExit.y) / 2,
+};
+
+const centerVector = {
+  x: moduleCenter.x - trackMidpoint.x,
+  y: moduleCenter.y - trackMidpoint.y,
+};
+
+const curveDirection =
+  trackType === "Inside Curve"
+    ? 1
+    : trackType === "Outside Curve"
+      ? -1
+      : 0;
+
+const curveAmount = 45;
+
+const curveControl = {
+  x: trackMidpoint.x + centerVector.x * curveDirection + normalX * curveAmount * curveDirection,
+  y: trackMidpoint.y + centerVector.y * curveDirection + normalY * curveAmount * curveDirection,
+};
       return (
         <svg
           width="320"
@@ -2595,7 +2651,39 @@ const previewAngles = Object.fromEntries(
   strokeWidth="2"
   strokeDasharray="6 4"
 />
+{[ -trackSpacing / 2, trackSpacing / 2 ].map((offset, index) => {
+  const startX = trackEntry.x + normalX * offset;
+  const startY = trackEntry.y + normalY * offset;
+  const endX = trackExit.x + normalX * offset;
+  const endY = trackExit.y + normalY * offset;
 
+  if (trackType === "Straight") {
+    return (
+      <line
+        key={`track-${index}`}
+        x1={startX}
+        y1={startY}
+        x2={endX}
+        y2={endY}
+        stroke="#444"
+        strokeWidth="2"
+      />
+    );
+  }
+
+  const controlX = curveControl.x + normalX * offset;
+  const controlY = curveControl.y + normalY * offset;
+
+  return (
+    <path
+      key={`track-${index}`}
+      d={`M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`}
+      fill="none"
+      stroke="#444"
+      strokeWidth="2"
+    />
+  );
+})}
      {preview.points.map((point: any, index: number) => {
   const next =
     preview.points[(index + 1) % preview.points.length];
