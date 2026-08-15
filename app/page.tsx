@@ -34,6 +34,7 @@ const [trackExitEdge, setTrackExitEdge] = useState("2");
   const [statusFilter, setStatusFilter] = useState("All");
   const [uploading, setUploading] = useState(false);
 const [moduleType, setModuleType] = useState("Straight");
+const [trackType, setTrackType] = useState("Straight");
   const [bridgeSize, setBridgeSize] = useState("");
 const [cornerSize, setCornerSize] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
@@ -143,6 +144,7 @@ const svgPlannerRef = useRef<SVGSVGElement | null>(null);
     setDimensions("");
 setStatus("Active");
 setModuleType("Straight");
+setTrackType("Straight");
 setCornerSize("");
 setBridgeSize("");
 setCustomWidthInches("24");
@@ -165,6 +167,7 @@ setNotes("");
     setDimensions(m.dimensions || "");
 setStatus(m.status || "Active");
     setModuleType(m.module_type || "Straight");
+    setTrackType(m.track_type || "Straight");
 setCornerSize(m.corner_size || "");
 setBridgeSize(m.bridge_size || "");
 
@@ -216,6 +219,7 @@ const completePolygonAngles = Object.fromEntries(
       photo_url: photo,
       standard,
       module_type: moduleType,
+      track_type: trackType,
       bridge_size: bridgeSize,
 corner_size: cornerSize,
       dimensions,
@@ -2407,6 +2411,15 @@ button {
   <option>Inside Corner</option>
   <option>Outside Corner</option>
   <option>Bridge</option>
+</select>
+<select
+  value={trackType}
+  onChange={(e) => setTrackType(e.target.value)}
+>
+  <option>Straight</option>
+  <option>Inside Curve</option>
+  <option>Outside Curve</option>
+  <option>Turnout</option>
 </select>
               {moduleType === "Bridge" && (
   <select
