@@ -3081,7 +3081,11 @@ const outerTrackRadius =
       </div>
     )}
   </>
-)}{dimensions && dimensions !== "Other / custom" && (
+)}{(
+  moduleType === "Inside Corner" ||
+  moduleType === "Outside Corner" ||
+  (dimensions && dimensions !== "Other / custom")
+) && (
   <div
     style={{
       marginTop: "16px",
