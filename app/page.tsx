@@ -2505,10 +2505,16 @@ button {
               </select>
 <select
   value={moduleType}
-  onChange={(e) => {
-    setModuleType(e.target.value);
-    setCornerSize("");
-  }}
+onChange={(e) => {
+  const value = e.target.value;
+
+  setModuleType(value);
+  setCornerSize("");
+
+  if (value === "Inside Corner" || value === "Outside Corner") {
+    setDimensions("");
+  }
+}}
 >
   <option>Straight</option>
   <option>Inside Corner</option>
