@@ -2575,22 +2575,27 @@ button {
   End Cap - 180° return
 </option>
   </select>
+  )}
+{moduleType !== "Inside Corner" && moduleType !== "Outside Corner" && (
+  <>
+    <label>Standard Module Size</label>
+    <select
+      value={dimensions}
+      onChange={(e) => setDimensions(e.target.value)}
+    >
+      <option value="">Select module size</option>
+      <option>Single - 308 mm (12.13")</option>
+      <option>Double - 618 mm (24.33")</option>
+      <option>Triple - 928 mm (36.54")</option>
+      <option>Quad - 1238 mm (48.74")</option>
+      <option>Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")</option>
+      <option>End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")</option>
+      <option>Interchange Double - 390 mm x 618 mm (15.35" x 24.33")</option>
+      <option>Interchange Triple - 474 mm x 928 mm (18.66" x 36.54")</option>
+      <option>Other / custom</option>
+    </select>
+  </>
 )}
-              <select
-  value={dimensions}
-  onChange={(e) => setDimensions(e.target.value)}
->
-  <option value="">Select module size</option>
-  <option>Single - 308 mm (12.13")</option>
-  <option>Double - 618 mm (24.33")</option>
-  <option>Triple - 928 mm (36.54")</option>
-  <option>Quad - 1238 mm (48.74")</option>
-  <option>Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")</option>
-  <option>End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")</option>
-  <option>Interchange Double - 390 mm x 618 mm (15.35" x 24.33")</option>
-  <option>Interchange Triple - 474 mm x 928 mm (18.66" x 36.54")</option>
-  <option>Other / custom</option>
-</select>
 {(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
   <div>
     <label>Actual Module Width (inches)</label>
