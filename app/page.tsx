@@ -3082,25 +3082,14 @@ const outerTrackRadius =
   stroke="#3d6b2d"
   strokeWidth="2"
 />
-  {[
-  {
-    offset: previewSize.frontTrackCenterOffset,
-    color: "red",
-    name: "Red Track",
-  },
-  {
-    offset: previewSize.rearTrackCenterOffset,
-    color: "#d4a900",
-    name: "Yellow Track",
-  },
-].map((track, index) => (
+      {[0.42, 0.58].map((fraction, index) => (
   <line
-    key={`standard-track-${index}`}
+    key={`rect-track-${index}`}
     x1="0"
-    y1={previewSize.height - track.offset}
-    x2={previewSize.width}
-    y2={previewSize.height - track.offset}
-    stroke={track.color}
+    y1={Math.max(1, Number(customDepthInches)) * LAYOUT_SCALE * fraction}
+    x2={Math.max(1, Number(customWidthInches)) * LAYOUT_SCALE}
+    y2={Math.max(1, Number(customDepthInches)) * LAYOUT_SCALE * fraction}
+    stroke="#444"
     strokeWidth="2"
   />
 ))}
@@ -3179,17 +3168,26 @@ previewSize.outerRadius ? (
   </>
 ) : (
   <>
-    {[0.42, 0.58].map((fraction, index) => (
-      <line
-        key={`standard-track-${index}`}
-        x1="0"
-        y1={previewSize.height * fraction}
-        x2={previewSize.width}
-        y2={previewSize.height * fraction}
-        stroke="#444"
-        strokeWidth="2"
-      />
-    ))}
+   {[
+  {
+    offset: previewSize.frontTrackCenterOffset,
+    color: "red",
+  },
+  {
+    offset: previewSize.rearTrackCenterOffset,
+    color: "#d4a900",
+  },
+].map((track, index) => (
+  <line
+    key={`standard-track-${index}`}
+    x1="0"
+    y1={previewSize.height - track.offset}
+    x2={previewSize.width}
+    y2={previewSize.height - track.offset}
+    stroke={track.color}
+    strokeWidth="2"
+  />
+))}
   </>
 )}
           </svg>
