@@ -579,14 +579,11 @@ function getPreviewDimensions() {
   const mmToPreview = (mm: number) => (mm / 25.4) * LAYOUT_SCALE;
 
   const radiusPairs: Record<string, [number, number]> = {
-    "Small Inside Corner - 195 mm / 220 mm": [195, 220],
-    "Medium Inside Corner - 220 mm / 245 mm": [220, 245],
-    "Large Inside Corner - 245 mm / 270 mm": [245, 270],
-    "Large Radius - 315 mm / 348 mm": [315, 348],
-    "Large Radius - 348 mm / 381 mm": [348, 381],
-    "Large Radius - 381 mm / 414 mm": [381, 414],
-    "Large Radius - 447 mm / 480 mm": [447, 480],
-  };
+  "Standard Corner": [282, 315],
+  "Medium Corner": [348, 381],
+  "Large Corner": [447, 480],
+  "Extra-Large Corner": [481, 481],
+};
 
   let width = Math.max(1, Number(customWidthInches) || 24) * LAYOUT_SCALE;
   let height = Math.max(1, Number(customDepthInches) || 14) * LAYOUT_SCALE;
@@ -604,11 +601,12 @@ function getPreviewDimensions() {
     width = mmToPreview(1238);
     height = mmToPreview(365.1);
   } else if (
-    dimensions === 'Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")'
-  ) {
-    width = mmToPreview(365.1);
-    height = mmToPreview(365.1);
-  } else if (
+  moduleType === "Inside Corner" ||
+  moduleType === "Outside Corner"
+) {
+  width = Math.max(1, Number(customWidthInches) || 14.38) * LAYOUT_SCALE;
+  height = Math.max(1, Number(customDepthInches) || 14.38) * LAYOUT_SCALE;
+} else if (
     dimensions === 'End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")'
   ) {
     width = mmToPreview(731.8);
@@ -2541,18 +2539,41 @@ button {
               {(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
   <select
     value={cornerSize}
-    onChange={(e) => setCornerSize(e.target.value)}
+   onChange={(e) => {
+  const value = e.target.value;
+  setCornerSize(value);
+
+  const presetSizesInches: Record<string, string> = {
+    "Standard Corner": (365 / 25.4).toFixed(2),
+    "Medium Corner": (431 / 25.4).toFixed(2),
+    "Large Corner": (530 / 25.4).toFixed(2),
+    "Extra-Large Corner": (564 / 25.4).toFixed(2),
+  };
+
+  const presetSize = presetSizesInches[value];
+
+  if (presetSize) {
+    setCustomWidthInches(presetSize);
+    setCustomDepthInches(presetSize);
+  }
+}}
   >
     <option value="">Select corner size</option>
-    <option>Small Inside Corner - 195 mm / 220 mm</option>
-    <option>Medium Inside Corner - 220 mm / 245 mm</option>
-    <option>Large Inside Corner - 245 mm / 270 mm</option>
-    <option>Standard Corner - 365 mm (14.37")</option>
-    <option>End Cap - 365 mm x 732 mm (14.37" x 28.82")</option>
-    <option>Large Radius - 315 mm / 348 mm</option>
-    <option>Large Radius - 348 mm / 381 mm</option>
-    <option>Large Radius - 381 mm / 414 mm</option>
-    <option>Large Radius - 447 mm / 480 mm</option>
+<option value="Standard Corner">
+  Standard Corner - 282 / 315 mm - 365 mm square
+</option>
+<option value="Medium Corner">
+  Medium Corner - 348 / 381 mm - 431 mm square
+</option>
+<option value="Large Corner">
+  Large Corner - 447 / 480 mm - 530 mm square
+</option>
+<option value="Extra-Large Corner">
+  Extra-Large Corner - 481 mm + extensions - 564 mm square
+</option>
+<option value="End Cap">
+  End Cap - 180° return
+</option>
   </select>
 )}
               <select
@@ -2570,6 +2591,27 @@ button {
   <option>Interchange Triple - 474 mm x 928 mm (18.66" x 36.54")</option>
   <option>Other / custom</option>
 </select>
+{(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
+  <div>
+    <label>Actual Module Width (inches)</label>
+    <input
+      type="number"
+      min="1"
+      step="0.01"
+      value={customWidthInches}
+      onChange={(e) => setCustomWidthInches(e.target.value)}
+    />
+
+    <label>Actual Module Depth (inches)</label>
+    <input
+      type="number"
+      min="1"
+      step="0.01"
+      value={customDepthInches}
+      onChange={(e) => setCustomDepthInches(e.target.value)}
+    />
+  </div>
+)}
               {(dimensions === "Other / custom" ||
   bridgeSize === "Custom Bridge") && (
   <>
