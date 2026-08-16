@@ -577,6 +577,15 @@ return {
   }
 function getPreviewDimensions() {
   const mmToPreview = (mm: number) => (mm / 25.4) * LAYOUT_SCALE;
+  const frontBallastSetbackMm = 38.1;
+const unitrackRoadbedWidthMm = 25;
+const trackSpacingMm = 33;
+
+const frontTrackCenterMm =
+  frontBallastSetbackMm + unitrackRoadbedWidthMm / 2;
+
+const rearTrackCenterMm =
+  frontTrackCenterMm + trackSpacingMm;
 
   const radiusPairs: Record<string, [number, number]> = {
   "Standard Corner": [282, 315],
@@ -638,7 +647,8 @@ function getPreviewDimensions() {
   return {
     width,
     height,
-
+frontTrackCenterOffset: mmToPreview(frontTrackCenterMm),
+rearTrackCenterOffset: mmToPreview(rearTrackCenterMm),
     // Physical tabletop
     outlineType:
       isCustom && customShape === "Polygon"
@@ -3072,14 +3082,25 @@ const outerTrackRadius =
   stroke="#3d6b2d"
   strokeWidth="2"
 />
-      {[0.42, 0.58].map((fraction, index) => (
+  {[
+  {
+    offset: previewSize.frontTrackCenterOffset,
+    color: "red",
+    name: "Red Track",
+  },
+  {
+    offset: previewSize.rearTrackCenterOffset,
+    color: "#d4a900",
+    name: "Yellow Track",
+  },
+].map((track, index) => (
   <line
-    key={`rect-track-${index}`}
+    key={`standard-track-${index}`}
     x1="0"
-    y1={Math.max(1, Number(customDepthInches)) * LAYOUT_SCALE * fraction}
-    x2={Math.max(1, Number(customWidthInches)) * LAYOUT_SCALE}
-    y2={Math.max(1, Number(customDepthInches)) * LAYOUT_SCALE * fraction}
-    stroke="#444"
+    y1={previewSize.height - track.offset}
+    x2={previewSize.width}
+    y2={previewSize.height - track.offset}
+    stroke={track.color}
     strokeWidth="2"
   />
 ))}
