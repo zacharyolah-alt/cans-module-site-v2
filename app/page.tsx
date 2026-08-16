@@ -3008,7 +3008,9 @@ const outerTrackRadius =
       </div>
     )}
 
-    {customShape !== "Polygon" && (
+   {customShape !== "Polygon" &&
+  moduleType !== "Inside Corner" &&
+  moduleType !== "Outside Corner" && (
       <div>
         <label>Custom Width (inches)</label>
         <select
