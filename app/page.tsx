@@ -3082,14 +3082,23 @@ const outerTrackRadius =
   stroke="#3d6b2d"
   strokeWidth="2"
 />
-      {[0.42, 0.58].map((fraction, index) => (
+  {[
+  {
+    offset: getPreviewDimensions().frontTrackCenterOffset,
+    color: "red",
+  },
+  {
+    offset: getPreviewDimensions().rearTrackCenterOffset,
+    color: "#d4a900",
+  },
+].map((track, index) => (
   <line
     key={`rect-track-${index}`}
     x1="0"
-    y1={Math.max(1, Number(customDepthInches)) * LAYOUT_SCALE * fraction}
-    x2={Math.max(1, Number(customWidthInches)) * LAYOUT_SCALE}
-    y2={Math.max(1, Number(customDepthInches)) * LAYOUT_SCALE * fraction}
-    stroke="#444"
+    y1={getPreviewDimensions().height - track.offset}
+    x2={getPreviewDimensions().width}
+    y2={getPreviewDimensions().height - track.offset}
+    stroke={track.color}
     strokeWidth="2"
   />
 ))}
