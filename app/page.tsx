@@ -3182,6 +3182,29 @@ previewSize.outerRadius ? (
   />
 ))}
   </>
+) : (
+  <>
+    {[
+      {
+        offset: previewSize.frontTrackCenterOffset,
+        color: "red",
+      },
+      {
+        offset: previewSize.rearTrackCenterOffset,
+        color: "#d4a900",
+      },
+    ].map((track, index) => (
+      <line
+        key={`standard-track-${index}`}
+        x1="0"
+        y1={previewSize.height - track.offset}
+        x2={previewSize.width}
+        y2={previewSize.height - track.offset}
+        stroke={track.color}
+        strokeWidth="2"
+      />
+    ))}
+  </>
 )}
           </svg>
         );
