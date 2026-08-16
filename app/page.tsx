@@ -3153,46 +3153,30 @@ const outerTrackRadius =
 previewSize.innerRadius &&
 previewSize.outerRadius ? (
   <>
-    {[previewSize.innerRadius, previewSize.outerRadius].map(
-      (radius, index) => (
-        <path
-          key={`corner-track-${index}`}
-          d={
-            previewSize.turnDirection === "right"
-              ? `
-                M 0 ${previewSize.height - radius}
-                A ${radius} ${radius} 0 0 1 ${radius} ${previewSize.height}
-              `
-              : `
-                M 0 ${radius}
-                A ${radius} ${radius} 0 0 0 ${radius} 0
-              `
-          }
-          fill="none"
-          stroke="#444"
-          strokeWidth="2"
-        />
-      )
-    )}
-  </>
-) : (
-  <>
    {[
   {
-    offset: previewSize.frontTrackCenterOffset,
-    color: "red",
-  },
-  {
-    offset: previewSize.rearTrackCenterOffset,
+    radius: previewSize.innerRadius,
     color: "#d4a900",
   },
+  {
+    radius: previewSize.outerRadius,
+    color: "red",
+  },
 ].map((track, index) => (
-  <line
-    key={`standard-track-${index}`}
-    x1="0"
-    y1={previewSize.height - track.offset}
-    x2={previewSize.width}
-    y2={previewSize.height - track.offset}
+  <path
+    key={`corner-track-${index}`}
+    d={
+      previewSize.turnDirection === "right"
+        ? `
+          M 0 ${previewSize.height - track.radius}
+          A ${track.radius} ${track.radius} 0 0 1 ${track.radius} ${previewSize.height}
+        `
+        : `
+          M 0 ${track.radius}
+          A ${track.radius} ${track.radius} 0 0 0 ${track.radius} 0
+        `
+    }
+    fill="none"
     stroke={track.color}
     strokeWidth="2"
   />
