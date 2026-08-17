@@ -2691,8 +2691,13 @@ onChange={(e) => {
 )}
   
 
-{(dimensions === "Other / custom" ||
-  bridgeSize === "Custom Bridge") && (
+{(
+  dimensions === "Other / custom" ||
+  bridgeSize === "Custom Bridge" ||
+  customShape === "Polygon" ||
+  customShape === "Angled Inside Corner" ||
+  customShape === "Angled Outside Corner"
+) && (
   <>
     {(
   customShape === "Polygon" ||
