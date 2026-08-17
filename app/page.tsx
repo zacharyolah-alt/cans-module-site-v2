@@ -2558,7 +2558,7 @@ button {
     value={customShape}
     onChange={(e) => setCustomShape(e.target.value)}
   >
-    <option>Rectangle</option>
+    <option value="Rectangle">Square / Rectangle</option>
     <option>Angled Inside Corner</option>
     <option>Angled Outside Corner</option>
     <option>Polygon</option>
@@ -2844,17 +2844,14 @@ const curveDirection =
       : 0;
 
 const tTrakRadiusPairs: Record<string, [number, number]> = {
-  "Small Inside Corner - 195 mm / 220 mm": [195, 220],
-  "Medium Inside Corner - 220 mm / 245 mm": [220, 245],
-  "Large Inside Corner - 245 mm / 270 mm": [245, 270],
-  "Large Radius - 315 mm / 348 mm": [315, 348],
-  "Large Radius - 348 mm / 381 mm": [348, 381],
-  "Large Radius - 381 mm / 414 mm": [381, 414],
-  "Large Radius - 447 mm / 480 mm": [447, 480],
+  "Standard Corner": [282, 315],
+  "Medium Corner": [348, 381],
+  "Large Corner": [447, 480],
+  "Extra-Large Corner": [481, 481],
 };
 
 const selectedRadiusPair =
-  tTrakRadiusPairs[cornerSize] || [220, 245];
+  tTrakRadiusPairs[cornerSize] || [282, 315];
 
 const innerTrackRadius =
   (selectedRadiusPair[0] / 25.4) * LAYOUT_SCALE;
@@ -2902,7 +2899,7 @@ const outerTrackRadius =
         y1={startY}
         x2={endX}
         y2={endY}
-        stroke="#444"
+        stroke={index === 0 ? "#d4a900" : "red"}
         strokeWidth="2"
       />
     );
