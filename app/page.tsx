@@ -2930,91 +2930,56 @@ const outerTrackRadius =
     strokeDasharray="6 4"
   />
 </>
+<>
+  {[-trackSpacing / 2, trackSpacing / 2].map((offset, index) => {
+    const startX = trackEntry.x + normalX * offset;
+    const startY = trackEntry.y + normalY * offset;
+    const endX = trackExit.x + normalX * offset;
+    const endY = trackExit.y + normalY * offset;
 
-{customShape === "Angled Inside Corner" ||
-customShape === "Pie-Shaped Outside Corner" ? (
-  <>
-    {[
-      {
-        radius: innerTrackRadius,
-        color: "#d4a900",
-      },
-      {
-        radius: outerTrackRadius,
-        color: "red",
-      },
-    ].map((track, index) => (
-      <path
-        key={`angled-corner-track-${index}`}
-        d={
-          customShape === "Pie-Shaped Outside Corner"
-            ? `
-              M 0 ${preview.height - track.radius}
-              A ${track.radius} ${track.radius} 0 0 1 ${track.radius} ${preview.height}
-            `
-            : `
-              M 0 ${track.radius}
-              A ${track.radius} ${track.radius} 0 0 0 ${track.radius} 0
-            `
-        }
-        fill="none"
-        stroke={track.color}
-        strokeWidth="2"
-      />
-    ))}
-  </>
-) : (
-  <>
-    {[-trackSpacing / 2, trackSpacing / 2].map((offset, index) => {
-      const startX = trackEntry.x + normalX * offset;
-      const startY = trackEntry.y + normalY * offset;
-      const endX = trackExit.x + normalX * offset;
-      const endY = trackExit.y + normalY * offset;
-
-      if (trackType === "Straight") {
-        return (
-          <line
-            key={`track-${index}`}
-            x1={startX}
-            y1={startY}
-            x2={endX}
-            y2={endY}
-            stroke={index === 0 ? "#d4a900" : "red"}
-            strokeWidth="2"
-          />
-        );
-      }
-
-      const radius =
-        index === 0 ? innerTrackRadius : outerTrackRadius;
-
-      const chordLength = Math.hypot(
-        endX - startX,
-        endY - startY
-      );
-
-      const safeRadius = Math.max(
-        radius,
-        chordLength / 2 + 0.01
-      );
-
-      const largeArcFlag = 0;
-
-      const sweepFlag =
-        trackType === "Inside Curve" ? 1 : 0;
-
+    if (trackType === "Straight") {
       return (
-        <path
+        <line
           key={`track-${index}`}
-          d={`M ${startX} ${startY} A ${safeRadius} ${safeRadius} 0 ${largeArcFlag} ${sweepFlag} ${endX} ${endY}`}
-          fill="none"
+          x1={startX}
+          y1={startY}
+          x2={endX}
+          y2={endY}
           stroke={index === 0 ? "#d4a900" : "red"}
           strokeWidth="2"
         />
       );
-    })}
-  </>
-)}
+    }
+
+    const radius =
+      index === 0 ? innerTrackRadius : outerTrackRadius;
+
+    const chordLength = Math.hypot(
+      endX - startX,
+      endY - startY
+    );
+
+    const safeRadius = Math.max(
+      radius,
+      chordLength / 2 + 0.01
+    );
+
+    const largeArcFlag = 0;
+
+    const sweepFlag =
+      trackType === "Inside Curve" ? 1 : 0;
+
+    return (
+      <path
+        key={`track-${index}`}
+        d={`M ${startX} ${startY} A ${safeRadius} ${safeRadius} 0 ${largeArcFlag} ${sweepFlag} ${endX} ${endY}`}
+        fill="none"
+        stroke={index === 0 ? "#d4a900" : "red"}
+        strokeWidth="2"
+      />
+    );
+  })}
+</>
      {preview.points.map((point: any, index: number) => {
   const next =
     preview.points[(index + 1) % preview.points.length];
