@@ -2557,14 +2557,11 @@ button {
   <select
   
     value={customShape}
-    onChange={(e) => {
+  onChange={(e) => {
   const value = e.target.value;
   setCustomShape(value);
 
-  if (
-    value === "Angled Inside Corner" ||
-    value === "Angled Outside Corner"
-  ) {
+  if (value === "Angled Inside Corner") {
     setPolygonSides("5");
 
     setPolygonSideLengths({
@@ -2585,12 +2582,30 @@ button {
     setTrackEntryEdge("1");
     setTrackExitEdge("4");
   }
+
+  if (value === "Pie-Shaped Outside Corner") {
+    setPolygonSides("3");
+
+    setPolygonSideLengths({
+      1: "14",
+      2: "14",
+      3: "20",
+    });
+
+    setPolygonAngles({
+      1: "90",
+      2: "45",
+    });
+
+    setTrackEntryEdge("1");
+    setTrackExitEdge("2");
+  }
 }}
   >
-    <option value="Rectangle">Square / Rectangle</option>
-    <option>Angled Inside Corner</option>
-    <option>Angled Outside Corner</option>
-    <option>Polygon</option>
+  <option value="Rectangle">Square / Rectangle</option>
+<option>Angled Inside Corner</option>
+<option>Pie-Shaped Outside Corner</option>
+<option>Polygon</option>
   </select>
 </div>
 {moduleType !== "Inside Corner" && moduleType !== "Outside Corner" && (
@@ -2898,24 +2913,44 @@ const outerTrackRadius =
             borderRadius: "8px",
           }}
         >
-         <polyline
-  points={preview.enteredPathString}
-  fill="none"
-  stroke="#3d6b2d"
-  strokeWidth="2"
-/>
+      {customShape === "Pie-Shaped Outside Corner" ? (
+  <path
+    d={`
+      M 0 0
+      L ${Math.min(preview.width, preview.height)} 0
+      A ${Math.min(preview.width, preview.height)}
+        ${Math.min(preview.width, preview.height)}
+        0 0 1
+        0 ${Math.min(preview.width, preview.height)}
+      Z
+    `}
+    fill="rgba(198, 226, 178, .55)"
+    stroke="#3d6b2d"
+    strokeWidth="2"
+  />
+) : (
+  <>
+    <polyline
+      points={preview.enteredPathString}
+      fill="none"
+      stroke="#3d6b2d"
+      strokeWidth="2"
+    />
 
-<line
-  x1={preview.finalPoint.x}
-  y1={preview.finalPoint.y}
-  x2={preview.points[0].x}
-  y2={preview.points[0].y}
-  stroke="#b00020"
-  strokeWidth="2"
-  strokeDasharray="6 4"
-/>
+    <line
+      x1={preview.finalPoint.x}
+      y1={preview.finalPoint.y}
+      x2={preview.points[0].x}
+      y2={preview.points[0].y}
+      stroke="#b00020"
+      strokeWidth="2"
+      strokeDasharray="6 4"
+    />
+  </>
+)}
+
 {customShape === "Angled Inside Corner" ||
-customShape === "Angled Outside Corner" ? (
+customShape === "Pie-Shaped Outside Corner" ? (
   <>
     {[
       {
