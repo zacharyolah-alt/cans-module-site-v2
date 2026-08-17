@@ -1678,7 +1678,10 @@ dragHistoryStartedRef.current = true;
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 14px;
-        .uploadBox { padding: 14px; border-radius: 15px; border: 2px dashed #999; background: #fafafa; font-weight: 900; text-align: center; cursor: pointer; }
+}
+
+.uploadBox {
+         padding: 14px; border-radius: 15px; border: 2px dashed #999; background: #fafafa; font-weight: 900; text-align: center; cursor: pointer; }
         .preview { margin-top: 15px; width: 200px; max-width: 100%; border-radius: 16px; border: 1px solid #ddd; }
         .sectionHeader { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
         .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
@@ -1694,6 +1697,8 @@ dragHistoryStartedRef.current = true;
   gap: 8px;
   margin-bottom: 14px;
 }
+
+.uploadBox {
 
 .typeTag {
   background: #050505;
