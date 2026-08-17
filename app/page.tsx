@@ -2694,7 +2694,11 @@ onChange={(e) => {
 {(dimensions === "Other / custom" ||
   bridgeSize === "Custom Bridge") && (
   <>
-    {customShape === "Polygon" && (
+    {(
+  customShape === "Polygon" ||
+  customShape === "Angled Inside Corner" ||
+  customShape === "Angled Outside Corner"
+) && (
       <div>
         <label>Number of Sides</label>
         <select
@@ -3069,7 +3073,11 @@ const outerTrackRadius =
       </div>
     )}
 
-   {customShape !== "Polygon" &&
+   {(
+  customShape === "Polygon" ||
+  customShape === "Angled Inside Corner" ||
+  customShape === "Angled Outside Corner"
+) && (
   moduleType !== "Inside Corner" &&
   moduleType !== "Outside Corner" && (
       <div>
@@ -3154,7 +3162,7 @@ const outerTrackRadius =
     )}
   </>
 )}{(
-  customShape !== "Polygon" &&
+ customShape === "Rectangle" &&
   (
     moduleType === "Inside Corner" ||
     moduleType === "Outside Corner" ||
