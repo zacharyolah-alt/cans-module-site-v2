@@ -2555,8 +2555,37 @@ button {
  <div>
   <label>Module Shape</label>
   <select
+  
     value={customShape}
-    onChange={(e) => setCustomShape(e.target.value)}
+    onChange={(e) => {
+  const value = e.target.value;
+  setCustomShape(value);
+
+  if (
+    value === "Angled Inside Corner" ||
+    value === "Angled Outside Corner"
+  ) {
+    setPolygonSides("5");
+
+    setPolygonSideLengths({
+      1: "14",
+      2: "14",
+      3: "10",
+      4: "14",
+      5: "10",
+    });
+
+    setPolygonAngles({
+      1: "90",
+      2: "135",
+      3: "135",
+      4: "90",
+    });
+
+    setTrackEntryEdge("1");
+    setTrackExitEdge("4");
+  }
+}}
   >
     <option value="Rectangle">Square / Rectangle</option>
     <option>Angled Inside Corner</option>
