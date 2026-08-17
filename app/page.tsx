@@ -3159,7 +3159,7 @@ const outerTrackRadius =
   </div>
 </div>
       </div>
-    )}
+    ))}
   </>
 )}{(
  customShape === "Rectangle" &&
