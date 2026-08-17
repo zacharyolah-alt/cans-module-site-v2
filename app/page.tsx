@@ -2504,15 +2504,49 @@ button {
                   }}
                 />
               </label>
-              <select
-                value={standard}
-                onChange={(e) => setStandard(e.target.value)}
-              >
-                <option>T-Trak</option>
-                <option>N-Trak</option>
-                <option>Free-moN</option>
-                <option>Other</option>
-              </select>
+              <label>Module Standard</label>
+<select
+  value={standard}
+  onChange={(e) => setStandard(e.target.value)}
+>
+  <option>T-Trak</option>
+  <option>N-Trak</option>
+  <option>Free-moN</option>
+  <option>Other</option>
+</select>
+ <div>
+  <label>Module Shape</label>
+  <select
+    value={customShape}
+    onChange={(e) => setCustomShape(e.target.value)}
+  >
+    <option>Rectangle</option>
+    <option>Angled Inside Corner</option>
+    <option>Angled Outside Corner</option>
+    <option>Polygon</option>
+  </select>
+</div>
+{moduleType !== "Inside Corner" && moduleType !== "Outside Corner" && (
+  <>
+    <label>Standard Module Size</label>
+    <select
+      value={dimensions}
+      onChange={(e) => setDimensions(e.target.value)}
+    >
+      <option value="">Select module size</option>
+      <option>Single - 308 mm (12.13")</option>
+      <option>Double - 618 mm (24.33")</option>
+      <option>Triple - 928 mm (36.54")</option>
+      <option>Quad - 1238 mm (48.74")</option>
+      <option>Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")</option>
+      <option>End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")</option>
+      <option>Interchange Double - 390 mm x 618 mm (15.35" x 24.33")</option>
+      <option>Interchange Triple - 474 mm x 928 mm (18.66" x 36.54")</option>
+      <option>Other / custom</option>
+    </select>
+  </>
+)}
+<label>Module Type</label>
 <select
   value={moduleType}
 onChange={(e) => {
@@ -2531,7 +2565,7 @@ onChange={(e) => {
   <option>Outside Corner</option>
   <option>Bridge</option>
 </select>
-<label>Track Path</label>
+
 <select
   value={trackType}
   onChange={(e) => setTrackType(e.target.value)}
@@ -2542,7 +2576,7 @@ onChange={(e) => {
 </select>
               {moduleType === "Bridge" && (
   <select
-    value={bridgeSize}
+   value={bridgeSize}
     onChange={(e) => setBridgeSize(e.target.value)}
   >
     <option value="">Select bridge size</option>
@@ -2552,9 +2586,11 @@ onChange={(e) => {
     <option>Custom Bridge</option>
   </select>
 )}
-              {(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
-  <select
-    value={cornerSize}
+  {(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
+  <>
+    <label>Corner Size</label>
+    <select
+      value={cornerSize}
    onChange={(e) => {
   const value = e.target.value;
   setCornerSize(value);
@@ -2590,28 +2626,10 @@ onChange={(e) => {
 <option value="End Cap">
   End Cap - 180° return
 </option>
-  </select>
-  )}
-{moduleType !== "Inside Corner" && moduleType !== "Outside Corner" && (
-  <>
-    <label>Standard Module Size</label>
-    <select
-      value={dimensions}
-      onChange={(e) => setDimensions(e.target.value)}
-    >
-      <option value="">Select module size</option>
-      <option>Single - 308 mm (12.13")</option>
-      <option>Double - 618 mm (24.33")</option>
-      <option>Triple - 928 mm (36.54")</option>
-      <option>Quad - 1238 mm (48.74")</option>
-      <option>Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")</option>
-      <option>End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")</option>
-      <option>Interchange Double - 390 mm x 618 mm (15.35" x 24.33")</option>
-      <option>Interchange Triple - 474 mm x 928 mm (18.66" x 36.54")</option>
-      <option>Other / custom</option>
-    </select>
+      </select>
   </>
 )}
+
 {(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
   <div>
     <label>Actual Module Width (inches)</label>
@@ -2633,22 +2651,11 @@ onChange={(e) => {
     />
   </div>
 )}
-              {(dimensions === "Other / custom" ||
+  
+
+{(dimensions === "Other / custom" ||
   bridgeSize === "Custom Bridge") && (
   <>
-    <div>
-      <label>Custom Shape</label>
-      <select
-        value={customShape}
-        onChange={(e) => setCustomShape(e.target.value)}
-      >
-        <option>Rectangle</option>
-        <option>Angled Inside Corner</option>
-        <option>Angled Outside Corner</option>
-        <option>Polygon</option>
-      </select>
-    </div>
-
     {customShape === "Polygon" && (
       <div>
         <label>Number of Sides</label>
