@@ -2743,10 +2743,9 @@ onChange={(e) => {
  customShape === "Pie-Shaped Outside Corner"
 ) && (
   <>
-   {(
+  {(
   customShape === "Polygon" ||
-  customShape === "Angled Inside Corner" ||
-  customShape === "Pie-Shaped Outside Corner"
+  customShape === "Angled Inside Corner"
 ) && (
       <div>
         <label>Number of Sides</label>
@@ -3177,8 +3176,7 @@ customShape === "Pie-Shaped Outside Corner" ? (
 
    {(
   customShape === "Polygon" ||
-  customShape === "Angled Inside Corner" ||
-customShape === "Pie-Shaped Outside Corner"
+  customShape === "Angled Inside Corner" 
 ) && (
   moduleType !== "Inside Corner" &&
   moduleType !== "Outside Corner" && (
@@ -3263,7 +3261,81 @@ customShape === "Pie-Shaped Outside Corner"
       </div>
     ))}
   </>
-)}{(
+)}
+{customShape === "Pie-Shaped Outside Corner" && (
+  <div
+    style={{
+      marginTop: "16px",
+      marginBottom: "16px",
+      padding: "12px",
+      border: "1px solid #ccc",
+      borderRadius: "12px",
+      background: "#fafafa",
+    }}
+  >
+    <strong>Live Module Preview</strong>
+
+    <div style={{ marginTop: "10px" }}>
+      {(() => {
+        const previewSize = getPreviewDimensions();
+        const sectorRadius = Math.min(
+          previewSize.width,
+          previewSize.height
+        );
+
+        return (
+          <svg
+            width="320"
+            height="220"
+            viewBox={`0 0 ${sectorRadius} ${sectorRadius}`}
+            style={{
+              background: "white",
+              border: "1px solid #ddd",
+              borderRadius: "8px",
+            }}
+          >
+            <path
+              d={`
+                M 0 ${sectorRadius}
+                L 0 0
+                A ${sectorRadius} ${sectorRadius} 0 0 1 ${sectorRadius} ${sectorRadius}
+                Z
+              `}
+              fill="rgba(198, 226, 178, .55)"
+              stroke="#3d6b2d"
+              strokeWidth="2"
+            />
+
+            {previewSize.innerRadius &&
+              previewSize.outerRadius &&
+              [
+                {
+                  radius: previewSize.innerRadius,
+                  color: "#d4a900",
+                },
+                {
+                  radius: previewSize.outerRadius,
+                  color: "red",
+                },
+              ].map((track, index) => (
+                <path
+                  key={`pie-track-${index}`}
+                  d={`
+                    M 0 ${sectorRadius - track.radius}
+                    A ${track.radius} ${track.radius} 0 0 1 ${track.radius} ${sectorRadius}
+                  `}
+                  fill="none"
+                  stroke={track.color}
+                  strokeWidth="2"
+                />
+              ))}
+          </svg>
+        );
+      })()}
+    </div>
+  </div>
+)}
+{(
  customShape === "Rectangle" &&
   (
     moduleType === "Inside Corner" ||
