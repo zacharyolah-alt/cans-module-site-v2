@@ -3109,9 +3109,12 @@ const outerTrackRadius =
     )}
   </>
 )}{(
-  moduleType === "Inside Corner" ||
-  moduleType === "Outside Corner" ||
-  (dimensions && dimensions !== "Other / custom")
+  customShape !== "Polygon" &&
+  (
+    moduleType === "Inside Corner" ||
+    moduleType === "Outside Corner" ||
+    (dimensions && dimensions !== "Other / custom")
+  )
 ) && (
   <div
     style={{
