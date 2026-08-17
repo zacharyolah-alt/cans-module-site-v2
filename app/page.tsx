@@ -2912,41 +2912,24 @@ const outerTrackRadius =
             borderRadius: "8px",
           }}
         >
-      {customShape === "Pie-Shaped Outside Corner" ? (
-  <path
-    d={`
-      M 0 0
-      L ${Math.min(preview.width, preview.height)} 0
-      A ${Math.min(preview.width, preview.height)}
-        ${Math.min(preview.width, preview.height)}
-        0 0 1
-        0 ${Math.min(preview.width, preview.height)}
-      Z
-    `}
-    fill="rgba(198, 226, 178, .55)"
+      <>
+  <polyline
+    points={preview.enteredPathString}
+    fill="none"
     stroke="#3d6b2d"
     strokeWidth="2"
   />
-) : (
-  <>
-    <polyline
-      points={preview.enteredPathString}
-      fill="none"
-      stroke="#3d6b2d"
-      strokeWidth="2"
-    />
 
-    <line
-      x1={preview.finalPoint.x}
-      y1={preview.finalPoint.y}
-      x2={preview.points[0].x}
-      y2={preview.points[0].y}
-      stroke="#b00020"
-      strokeWidth="2"
-      strokeDasharray="6 4"
-    />
-  </>
-)}
+  <line
+    x1={preview.finalPoint.x}
+    y1={preview.finalPoint.y}
+    x2={preview.points[0].x}
+    y2={preview.points[0].y}
+    stroke="#b00020"
+    strokeWidth="2"
+    strokeDasharray="6 4"
+  />
+</>
 
 {customShape === "Angled Inside Corner" ||
 customShape === "Pie-Shaped Outside Corner" ? (
