@@ -2740,13 +2740,13 @@ onChange={(e) => {
   bridgeSize === "Custom Bridge" ||
   customShape === "Polygon" ||
   customShape === "Angled Inside Corner" ||
-  customShape === "Angled Outside Corner"
+ customShape === "Pie-Shaped Outside Corner"
 ) && (
   <>
-    {(
+   {(
   customShape === "Polygon" ||
   customShape === "Angled Inside Corner" ||
-  customShape === "Angled Outside Corner"
+  customShape === "Pie-Shaped Outside Corner"
 ) && (
       <div>
         <label>Number of Sides</label>
@@ -2965,7 +2965,7 @@ customShape === "Pie-Shaped Outside Corner" ? (
       <path
         key={`angled-corner-track-${index}`}
         d={
-          customShape === "Angled Outside Corner"
+          customShape === "Pie-Shaped Outside Corner"
             ? `
               M 0 ${preview.height - track.radius}
               A ${track.radius} ${track.radius} 0 0 1 ${track.radius} ${preview.height}
@@ -3178,7 +3178,7 @@ customShape === "Pie-Shaped Outside Corner" ? (
    {(
   customShape === "Polygon" ||
   customShape === "Angled Inside Corner" ||
-  customShape === "Angled Outside Corner"
+customShape === "Pie-Shaped Outside Corner"
 ) && (
   moduleType !== "Inside Corner" &&
   moduleType !== "Outside Corner" && (
