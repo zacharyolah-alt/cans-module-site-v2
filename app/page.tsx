@@ -1639,7 +1639,41 @@ dragHistoryStartedRef.current = true;
         .yellowBtn { background: #ffd21f; color: black; margin-top: 14px; margin-right: 10px; }
         .grayBtn { background: #ddd; color: black; margin-top: 14px; }
         .formCard { background: white; padding: 22px; border-radius: 24px; border-top: 8px solid #ffd21f; box-shadow: 0 10px 26px rgba(0,0,0,.08); margin-bottom: 26px; }
+        
+.filtersTitle {
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 28px;
+}
+        .filters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+       input, select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+  background: white;
+}
+        button { border: 0; border-radius: 15px; padding: 14px 18px; font-weight: 900; cursor: pointer; }
+        .blackBtn { background: #050505; color: #ffd21f; }
+        .yellowBtn { background: #ffd21f; color: black; margin-top: 14px; margin-right: 10px; }
+        .grayBtn { background: #ddd; color: black; margin-top: 14px; }
+        .formCard { background: white; padding: 22px; border-radius: 24px; border-top: 8px solid #ffd21f; box-shadow: 0 10px 26px rgba(0,0,0,.08); margin-bottom: 26px; }
         .formGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .uploadBox { padding: 14px; border-radius: 15px; border: 2px dashed #999; background: #fafafa; font-weight: 900; text-align: center; cursor: pointer; }
+        .preview { margin-top: 15px; width: 200px; max-width: 100%; border-radius: 16px; border: 1px solid #ddd; }
+        .sectionHeader { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 12px 28px rgba(0,0,0,.13); }
+        .moduleImage { width: 100%; height: 210px; object-fit: cover; background: #ddd; }
+        .noImage { height: 210px; background: #ddd; display: flex; align-items: center; justify-content: center; color: #555; font-weight: 900; }
+        .cardBody { padding: 18px; }
+        .tag { background: #ffd21f; padding: 6px 11px; border-radius: 999px; font-weight: 900; font-size: 13px; display: inline-block; }
+        .status { display: inline-block; margin-left: 8px; background: #eee; padding: 6px 11px; border-radius: 999px; font-weight: 800; font-size: 13px; }
+        .badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
         .uploadBox { padding: 14px; border-radius: 15px; border: 2px dashed #999; background: #fafafa; font-weight: 900; text-align: center; cursor: pointer; }
         .preview { margin-top: 15px; width: 200px; max-width: 100%; border-radius: 16px; border: 1px solid #ddd; }
         .sectionHeader { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
