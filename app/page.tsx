@@ -1658,7 +1658,11 @@ dragHistoryStartedRef.current = true;
         .yellowBtn { background: #ffd21f; color: black; margin-top: 14px; margin-right: 10px; }
         .grayBtn { background: #ddd; color: black; margin-top: 14px; }
         .formCard { background: white; padding: 22px; border-radius: 24px; border-top: 8px solid #ffd21f; box-shadow: 0 10px 26px rgba(0,0,0,.08); margin-bottom: 26px; }
-        .formGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .formGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
         .uploadBox { padding: 14px; border-radius: 15px; border: 2px dashed #999; background: #fafafa; font-weight: 900; text-align: center; cursor: pointer; }
         .preview { margin-top: 15px; width: 200px; max-width: 100%; border-radius: 16px; border: 1px solid #ddd; }
         .sectionHeader { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
