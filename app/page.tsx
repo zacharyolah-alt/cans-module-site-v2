@@ -3609,11 +3609,19 @@ previewSize.outerRadius ? (
       ×
     </button>
 
-    <img
-      src={selectedImage}
-      alt="Full size module"
-      className="imageModalPhoto"
-    />
+<img
+  src={selectedImage}
+  alt="Full size module"
+  className="imageModalPhoto"
+  style={{
+    maxWidth: "90vw",
+    maxHeight: "80vh",
+    width: "auto",
+    height: "auto",
+    objectFit: "contain",
+    display: "block",
+  }}
+/>
   </div>
 )}
       </div>
