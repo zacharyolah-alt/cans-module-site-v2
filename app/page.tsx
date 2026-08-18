@@ -3572,8 +3572,21 @@ previewSize.outerRadius ? (
         strokeWidth="2"
       />
     ))}
-  </>
+   </>
 )}
+
+{moduleType !== "Inside Corner" &&
+ moduleType !== "Outside Corner" && (
+  <line
+    x1="0"
+    y1={previewSize.height - 2}
+    x2={previewSize.width}
+    y2={previewSize.height - 2}
+    stroke="#2f5f24"
+    strokeWidth="5"
+  />
+)}
+
           </svg>
         );
       })()}
