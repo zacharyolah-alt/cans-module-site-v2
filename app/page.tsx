@@ -2584,7 +2584,7 @@ button {
       4: "90",
     });
 
-    setTrackEntryEdge("1");
+    setTrackEntryEdge("2");
     setTrackExitEdge("4");
   }
 
@@ -2936,54 +2936,238 @@ const outerTrackRadius =
   />
 </>
 <>
-  {[-trackSpacing / 2, trackSpacing / 2].map((offset, index) => {
-    const startX = trackEntry.x + normalX * offset;
-    const startY = trackEntry.y + normalY * offset;
-    const endX = trackExit.x + normalX * offset;
-    const endY = trackExit.y + normalY * offset;
+ {customShape === "Angled Inside Corner" ? (
+  <>
+    {[
+      {
+        radius: innerTrackRadius,
+        color: "#d4a900",
+      },
+      {
+        radius: outerTrackRadius,
+        color: "red",
+      },
+    ].map((track, index) => {
+      // Side 2 = points 1 -> 2
+      // Side 4 = points 3 -> 4
+      const side2Start = preview.points[1];
+      const side2End = preview.points[2];
+      const side4Start = preview.points[3];
+      const side4End = preview.points[4];
 
-    if (trackType === "Straight") {
+      const lineIntersection = (
+        a1: any,
+        a2: any,
+        b1: any,
+        b2: any
+      ) => {
+        const x1 = a1.x;
+        const y1 = a1.y;
+        const x2 = a2.x;
+        const y2 = a2.y;
+        const x3 = b1.x;
+        const y3 = b1.y;
+        const x4 = b2.x;
+        const y4 = b2.y;
+
+        const denominator =
+          (x1 - x2) * (y3 - y4) -
+          (y1 - y2) * (x3 - x4);
+
+        if (Math.abs(denominator) < 0.0001) return null;
+
+        return {
+          x:
+            ((x1 * y2 - y1 * x2) * (x3 - x4) -
+              (x1 - x2) * (x3 * y4 - y3 * x4)) /
+            denominator,
+          y:
+            ((x1 * y2 - y1 * x2) * (y3 - y4) -
+              (y1 - y2) * (x3 * y4 - y3 * x4)) /
+            denominator,
+        };
+      };
+
+      const corner = lineIntersection(
+        side2Start,
+        side2End,
+        side4Start,
+        side4End
+      );
+
+      if (!corner) return null;
+
+      const pointToSegmentDistance = (
+        point: any,
+        start: any,
+        end: any
+      ) => {
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const lengthSquared = dx * dx + dy * dy;
+
+        if (lengthSquared === 0) {
+          return Math.hypot(
+            point.x - start.x,
+            point.y - start.y
+          );
+        }
+
+        const t = Math.max(
+          0,
+          Math.min(
+            1,
+            ((point.x - start.x) * dx +
+              (point.y - start.y) * dy) /
+              lengthSquared
+          )
+        );
+
+        const closestX = start.x + t * dx;
+        const closestY = start.y + t * dy;
+
+        return Math.hypot(
+          point.x - closestX,
+          point.y - closestY
+        );
+      };
+
+      const tangentPoint = (
+        start: any,
+        end: any,
+        radius: number
+      ) => {
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const length = Math.max(0.0001, Math.hypot(dx, dy));
+
+        const ux = dx / length;
+        const uy = dy / length;
+
+        const candidateA = {
+          x: corner.x + ux * radius,
+          y: corner.y + uy * radius,
+        };
+
+        const candidateB = {
+          x: corner.x - ux * radius,
+          y: corner.y - uy * radius,
+        };
+
+        return pointToSegmentDistance(candidateA, start, end) <=
+          pointToSegmentDistance(candidateB, start, end)
+          ? candidateA
+          : candidateB;
+      };
+
+      const start = tangentPoint(
+        side2Start,
+        side2End,
+        track.radius
+      );
+
+      const end = tangentPoint(
+        side4Start,
+        side4End,
+        track.radius
+      );
+
+      const center = {
+        x: start.x + end.x - corner.x,
+        y: start.y + end.y - corner.y,
+      };
+
+      const startVector = {
+        x: start.x - center.x,
+        y: start.y - center.y,
+      };
+
+      const endVector = {
+        x: end.x - center.x,
+        y: end.y - center.y,
+      };
+
+      const cross =
+        startVector.x * endVector.y -
+        startVector.y * endVector.x;
+
+      const sweepFlag = cross > 0 ? 0 : 1;
+
       return (
-        <line
-          key={`track-${index}`}
-          x1={startX}
-          y1={startY}
-          x2={endX}
-          y2={endY}
-          stroke={index === 0 ? "#d4a900" : "red"}
+        <path
+          key={`angled-inside-track-${index}`}
+          d={`M ${start.x} ${start.y}
+              A ${track.radius} ${track.radius}
+              0 0 ${sweepFlag}
+              ${end.x} ${end.y}`}
+          fill="none"
+          stroke={track.color}
           strokeWidth="2"
         />
       );
-    }
+    })}
+  </>
+) : (
+  <>
+    {[-trackSpacing / 2, trackSpacing / 2].map(
+      (offset, index) => {
+        const startX = trackEntry.x + normalX * offset;
+        const startY = trackEntry.y + normalY * offset;
+        const endX = trackExit.x + normalX * offset;
+        const endY = trackExit.y + normalY * offset;
 
-    const radius =
-      index === 0 ? innerTrackRadius : outerTrackRadius;
+        if (trackType === "Straight") {
+          return (
+            <line
+              key={`track-${index}`}
+              x1={startX}
+              y1={startY}
+              x2={endX}
+              y2={endY}
+              stroke={
+                index === 0 ? "#d4a900" : "red"
+              }
+              strokeWidth="2"
+            />
+          );
+        }
 
-    const chordLength = Math.hypot(
-      endX - startX,
-      endY - startY
-    );
+        const radius =
+          index === 0
+            ? innerTrackRadius
+            : outerTrackRadius;
 
-    const safeRadius = Math.max(
-      radius,
-      chordLength / 2 + 0.01
-    );
+        const chordLength = Math.hypot(
+          endX - startX,
+          endY - startY
+        );
 
-    const largeArcFlag = 0;
+        const safeRadius = Math.max(
+          radius,
+          chordLength / 2 + 0.01
+        );
 
-    const sweepFlag =
-      trackType === "Inside Curve" ? 1 : 0;
+        const sweepFlag =
+          trackType === "Inside Curve" ? 1 : 0;
 
-    return (
-      <path
-        key={`track-${index}`}
-        d={`M ${startX} ${startY} A ${safeRadius} ${safeRadius} 0 ${largeArcFlag} ${sweepFlag} ${endX} ${endY}`}
-        fill="none"
-        stroke={index === 0 ? "#d4a900" : "red"}
-        strokeWidth="2"
-      />
-    );
-  })}
+        return (
+          <path
+            key={`track-${index}`}
+            d={`M ${startX} ${startY}
+                A ${safeRadius} ${safeRadius}
+                0 0 ${sweepFlag}
+                ${endX} ${endY}`}
+            fill="none"
+            stroke={
+              index === 0 ? "#d4a900" : "red"
+            }
+            strokeWidth="2"
+          />
+        );
+      }
+    )}
+  </>
+)}
 </>
      {preview.points.map((point: any, index: number) => {
   const next =
