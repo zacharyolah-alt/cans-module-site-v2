@@ -2941,11 +2941,12 @@ const outerTrackRadius =
     {[
       {
         radius: innerTrackRadius,
-        color: "#d4a900",
+        color: "red",
       },
       {
         radius: outerTrackRadius,
-        color: "red",
+        color: "#d4a900",
+        
       },
     ].map((track, index) => {
       // Side 2 = points 1 -> 2
