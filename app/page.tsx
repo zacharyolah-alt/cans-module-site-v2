@@ -3545,11 +3545,17 @@ previewSize.outerRadius ? (
    {[
   {
     radius: previewSize.innerRadius,
-    color: "#d4a900",
+    color:
+      moduleType === "Inside Corner"
+        ? "red"
+        : "#d4a900",
   },
   {
     radius: previewSize.outerRadius,
-    color: "red",
+    color:
+      moduleType === "Inside Corner"
+        ? "#d4a900"
+        : "red",
   },
 ].map((track, index) => (
   <path
