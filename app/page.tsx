@@ -3559,11 +3559,11 @@ previewSize.outerRadius ? (
   moduleType === "Outside Corner"
     ? `
       M 0 ${track.radius}
-      A ${track.radius} ${track.radius} 0 0 1 ${track.radius} 0
+      A ${track.radius} ${track.radius} 0 0 0 ${track.radius} 0
     `
     : `
       M ${previewSize.width - track.radius} ${previewSize.height}
-      A ${track.radius} ${track.radius} 0 0 0 ${previewSize.width} ${previewSize.height - track.radius}
+      A ${track.radius} ${track.radius} 0 0 1 ${previewSize.width} ${previewSize.height - track.radius}
     `
 }
     fill="none"
