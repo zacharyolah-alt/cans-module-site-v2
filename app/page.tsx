@@ -2895,7 +2895,7 @@ const tTrakRadiusPairs: Record<string, [number, number]> = {
   "Standard Corner": [282, 315],
   "Medium Corner": [348, 381],
   "Large Corner": [447, 480],
-  "Extra-Large Corner": [481, 481],
+  "Extra-Large Corner": [481, 514],
 };
 
 const selectedRadiusPair =
