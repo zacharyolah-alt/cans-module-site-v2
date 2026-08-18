@@ -3556,16 +3556,16 @@ previewSize.outerRadius ? (
   <path
     key={`corner-track-${index}`}
     d={
-      previewSize.turnDirection === "right"
-        ? `
-          M 0 ${previewSize.height - track.radius}
-          A ${track.radius} ${track.radius} 0 0 1 ${track.radius} ${previewSize.height}
-        `
-        : `
-          M 0 ${track.radius}
-          A ${track.radius} ${track.radius} 0 0 0 ${track.radius} 0
-        `
-    }
+  moduleType === "Outside Corner"
+    ? `
+      M 0 ${track.radius}
+      A ${track.radius} ${track.radius} 0 0 1 ${track.radius} 0
+    `
+    : `
+      M ${previewSize.width - track.radius} ${previewSize.height}
+      A ${track.radius} ${track.radius} 0 0 0 ${previewSize.width} ${previewSize.height - track.radius}
+    `
+}
     fill="none"
     stroke={track.color}
     strokeWidth="2"
@@ -3609,6 +3609,30 @@ previewSize.outerRadius ? (
   />
 )}
 
+{(moduleType === "Inside Corner" ||
+  moduleType === "Outside Corner") && (
+  <>
+    {/* Bottom/front exposed edge */}
+    <line
+      x1="0"
+      y1={previewSize.height - 2}
+      x2={previewSize.width}
+      y2={previewSize.height - 2}
+      stroke="#2f5f24"
+      strokeWidth="5"
+    />
+
+    {/* Right/front exposed edge */}
+    <line
+      x1={previewSize.width - 2}
+      y1="0"
+      x2={previewSize.width - 2}
+      y2={previewSize.height}
+      stroke="#2f5f24"
+      strokeWidth="5"
+    />
+  </>
+)}
           </svg>
         );
       })()}
