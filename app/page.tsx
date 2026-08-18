@@ -2918,6 +2918,7 @@ const outerTrackRadius =
           }}
         >
       <>
+<>
   <polyline
     points={preview.enteredPathString}
     fill="none"
@@ -2934,8 +2935,20 @@ const outerTrackRadius =
     strokeWidth="2"
     strokeDasharray="6 4"
   />
+
+  {customShape === "Angled Inside Corner" &&
+    preview.points[2] &&
+    preview.points[3] && (
+      <line
+        x1={preview.points[2].x}
+        y1={preview.points[2].y}
+        x2={preview.points[3].x}
+        y2={preview.points[3].y}
+        stroke="#2f5f24"
+        strokeWidth="5"
+      />
+    )}
 </>
-<>
  {customShape === "Angled Inside Corner" ? (
   <>
     {[
@@ -3443,6 +3456,15 @@ const outerTrackRadius =
               stroke="#3d6b2d"
               strokeWidth="2"
             />
+            <path
+  d={`
+    M 0 0
+    A ${sectorRadius} ${sectorRadius} 0 0 1 ${sectorRadius} ${sectorRadius}
+  `}
+  fill="none"
+  stroke="#2f5f24"
+  strokeWidth="5"
+/>
 
             {previewSize.innerRadius &&
               previewSize.outerRadius &&
