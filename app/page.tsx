@@ -3469,15 +3469,21 @@ const outerTrackRadius =
             {previewSize.innerRadius &&
               previewSize.outerRadius &&
               [
-                {
-                  radius: previewSize.innerRadius,
-                  color: "#d4a900",
-                },
-                {
-                  radius: previewSize.outerRadius,
-                  color: "red",
-                },
-              ].map((track, index) => (
+  {
+    radius: previewSize.innerRadius,
+    color:
+      moduleType === "Inside Corner"
+        ? "red"
+        : "#d4a900",
+  },
+  {
+    radius: previewSize.outerRadius,
+    color:
+      moduleType === "Inside Corner"
+        ? "#d4a900"
+        : "red",
+  },
+].map((track, index) => (
                 <path
                   key={`pie-track-${index}`}
                   d={`
