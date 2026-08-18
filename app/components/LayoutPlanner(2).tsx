@@ -86,6 +86,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     if (shape === "rectangle") return "custom";
     if (shape === "angled inside corner") return "custom";
     if (shape === "angled outside corner") return "custom";
+    if (shape === "pie-shaped outside corner") return "custom";
 
     if (dimensions.includes("other") || dimensions.includes("custom")) {
       return "custom";
@@ -98,9 +99,15 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     const kind = resolveLayoutKind(module);
     
 
-    if (kind === "custom" && plannerShapeIsPolygon(module)) {
+    if (
+      kind === "custom" &&
+      (plannerShapeIsPolygon(module) ||
+        normalizeShapeValue(module?.custom_shape) === "angled inside corner")
+    ) {
       const polygon = getPolygonGeometry(module);
-      return { width: polygon.width, height: polygon.height };
+      if (polygon?.width && polygon?.height) {
+        return { width: polygon.width, height: polygon.height };
+      }
     }
 
     if (kind === "custom") {
@@ -115,7 +122,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
 
   return (
       <section className="formCard layoutPrintArea">
-        <h2>Layout View <small style={{ fontSize: "12px", color: "#777" }}>Shape Engine TEST</small></h2>
+        <h2>Layout View</h2>
     
         <div className={mobileEditMode ? "layoutCanvas editMode" : "layoutCanvas"} ref={layoutCanvasRef}>
           <div className="layoutControls">
@@ -179,79 +186,6 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
       Redo
     </button>
           </div>
-    <div
-  style={{
-    background: "#fff7cc",
-    border: "2px solid #d6a800",
-    borderRadius: "10px",
-    padding: "10px",
-    marginBottom: "10px",
-    fontFamily: "monospace",
-    fontSize: "12px",
-    color: "#111",
-    whiteSpace: "pre-wrap",
-  }}
->
-  <strong>POLYGON DEBUG</strong>
-
-  {layoutModules
-    .filter((m: any) => plannerShapeIsPolygon(m))
-    .map((m: any) => {
-      const geometry = getPolygonGeometry(m);
-
-      return (
-        <div key={`debug-${m.id}`} style={{ marginTop: "8px" }}>
-          {JSON.stringify(
-            {
-              name: m.module_name,
-              customShape: m.custom_shape,
-              sides: m.polygon_sides,
-              sideLengths: m.polygon_side_lengths,
-              angles: m.polygon_angles,
-              kind: resolveLayoutKind(m),
-              points: geometry.pointsString,
-              width: geometry.width,
-              height: geometry.height,
-            },
-            null,
-            2
-          )}
-        </div>
-      );
-    })}
-</div>
-        <div
-  style={{
-    background: "#fff7cc",
-    border: "2px solid #d6a800",
-    borderRadius: "8px",
-    padding: "10px",
-    marginBottom: "10px",
-    fontFamily: "monospace",
-    fontSize: "12px",
-    whiteSpace: "pre-wrap",
-  }}
->
-  <strong>POLYGON DEBUG</strong>
-
-  {layoutModules
-    .filter((m: any) => plannerShapeIsPolygon(m))
-    .map((m: any) => {
-      const geometry = getPolygonGeometry(m);
-
-      return (
-        <div key={m.id} style={{ marginTop: "10px" }}>
-          <div><strong>Name:</strong> {m.module_name}</div>
-          <div><strong>Module Type:</strong> {m.module_type}</div>
-          <div><strong>Custom Shape:</strong> {m.custom_shape}</div>
-          <div><strong>Polygon Sides:</strong> {m.polygon_sides}</div>
-          <div><strong>Layout Kind:</strong> {resolveLayoutKind(m)}</div>
-          <div><strong>Is Polygon:</strong> {plannerShapeIsPolygon(m) ? "YES" : "NO"}</div>
-          <div><strong>Points:</strong> {geometry.pointsString}</div>
-        </div>
-      );
-    })}
-</div>  
     <svg
             ref={svgPlannerRef}
             className="svgPlanner"
@@ -390,14 +324,6 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
   (() => {
     const poly = getPolygonGeometry(m);
 
-    console.log("=== POLYGON DEBUG ===");
-    console.log("Module:", m.module_name);
-    console.log("Custom Shape:", m.custom_shape);
-    console.log("Sides:", m.polygon_sides);
-    console.log("Side Lengths:", m.polygon_side_lengths);
-    console.log("Angles:", m.polygon_angles);
-    console.log("Points:", poly.points);
-    console.log("Points String:", poly.pointsString);
 
     return (
       <polygon
@@ -407,9 +333,24 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     );
   })()
                     ) : kind === "custom" && getCustomShapeName(m) === "angled inside corner" ? (
-                      <polygon
+                      (() => {
+                        const poly = getPolygonGeometry(m);
+                        return poly?.pointsString ? (
+                          <polygon
+                            className="svgModule custom"
+                            points={poly.pointsString}
+                          />
+                        ) : (
+                          <polygon
+                            className="svgModule custom"
+                            points={`0,${size.height} 0,${size.height * 0.35} ${size.width * 0.35},0 ${size.width},0 ${size.width},${size.height} 0,${size.height}`}
+                          />
+                        );
+                      })()
+                    ) : kind === "custom" && getCustomShapeName(m) === "pie-shaped outside corner" ? (
+                      <path
                         className="svgModule custom"
-                        points={`0,${size.height} 0,${size.height * 0.35} ${size.width * 0.35},0 ${size.width},0 ${size.width},${size.height} 0,${size.height}`}
+                        d={`M 0 ${size.height} L 0 0 A ${size.width} ${size.height} 0 0 1 ${size.width} ${size.height} Z`}
                       />
                     ) : kind === "custom" && getCustomShapeName(m) === "angled outside corner" ? (
                       <polygon
@@ -453,6 +394,27 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                           />
                         );
                       })()
+                    ) : kind === "custom" && getCustomShapeName(m) === "angled inside corner" ? (
+                      (() => {
+                        const points = getPolygonGeometry(m)?.points || [];
+                        if (points.length >= 4) {
+                          return (
+                            <line
+                              className="svgFrontEdge"
+                              x1={points[2].x}
+                              y1={points[2].y}
+                              x2={points[3].x}
+                              y2={points[3].y}
+                            />
+                          );
+                        }
+                        return null;
+                      })()
+                    ) : kind === "custom" && getCustomShapeName(m) === "pie-shaped outside corner" ? (
+                      <path
+                        className="svgFrontEdge"
+                        d={`M 0 0 A ${size.width} ${size.height} 0 0 1 ${size.width} ${size.height}`}
+                      />
                     ) : (
                       <line className="svgFrontEdge" x1="0" y1="0" x2={size.width} y2="0" />
                     )}
@@ -466,6 +428,64 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                               key={railIndex}
                               className="svgRail"
                               d={`M 0 ${rail} H ${size.width - size.height / 2} A ${radius} ${radius} 0 0 1 ${size.width - size.height / 2} ${size.height - rail} H 0`}
+                            />
+                          );
+                        })}
+                      </>
+                    ) : kind === "custom" && getCustomShapeName(m) === "angled inside corner" ? (
+                      (() => {
+                        const poly = getPolygonGeometry(m);
+                        const points = poly?.points || [];
+                        if (points.length < 5) return null;
+
+                        const edgeMid = (edgeIndex: number) => {
+                          const a = points[edgeIndex];
+                          const b = points[(edgeIndex + 1) % points.length];
+                          return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+                        };
+
+                        // Designer convention: tracks connect on sides 2 and 4.
+                        const entry = edgeMid(1);
+                        const exit = edgeMid(3);
+                        const dx = exit.x - entry.x;
+                        const dy = exit.y - entry.y;
+                        const chord = Math.max(1, Math.hypot(dx, dy));
+                        const nx = -dy / chord;
+                        const ny = dx / chord;
+                        const spacing = 6;
+
+                        return (
+                          <>
+                            {[-spacing / 2, spacing / 2].map((offset, railIndex) => {
+                              const sx = entry.x + nx * offset;
+                              const sy = entry.y + ny * offset;
+                              const ex = exit.x + nx * offset;
+                              const ey = exit.y + ny * offset;
+                              const radius = Math.max(chord / 2 + 0.01, size.width * 0.55 + railIndex * spacing);
+                              return (
+                                <path
+                                  key={`angled-rail-${railIndex}`}
+                                  d={`M ${sx} ${sy} A ${radius} ${radius} 0 0 1 ${ex} ${ey}`}
+                                  fill="none"
+                                  stroke={railIndex === 0 ? "#d4a900" : "red"}
+                                  strokeWidth="2"
+                                />
+                              );
+                            })}
+                          </>
+                        );
+                      })()
+                    ) : kind === "custom" && getCustomShapeName(m) === "pie-shaped outside corner" ? (
+                      <>
+                        {[0.62, 0.72].map((factor, railIndex) => {
+                          const radius = Math.min(size.width, size.height) * factor;
+                          return (
+                            <path
+                              key={`pie-rail-${railIndex}`}
+                              d={`M 0 ${size.height - radius} A ${radius} ${radius} 0 0 1 ${radius} ${size.height}`}
+                              fill="none"
+                              stroke={railIndex === 0 ? "#d4a900" : "red"}
+                              strokeWidth="2"
                             />
                           );
                         })}
