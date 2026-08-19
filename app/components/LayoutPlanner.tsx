@@ -786,6 +786,41 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
           </div>
         </div>
 
+        <div
+          style={{
+            margin: "12px",
+            padding: "10px 12px",
+            border: "1px solid #d6a800",
+            borderRadius: "10px",
+            background: "#fff9d9",
+            fontSize: "12px",
+            lineHeight: 1.4,
+          }}
+        >
+          <strong>Temporary Pie Corner Diagnostic</strong>
+          {layoutModules
+            .filter((m: any) => {
+              const shape = normalize(getCustomShapeName(m));
+              const type = normalize(m?.module_type);
+              return (
+                shape.includes("pie") ||
+                (type === "outside corner" && Number(m?.polygon_sides) === 3)
+              );
+            })
+            .map((m: any) => (
+              <div key={`pie-debug-${m.id}`} style={{ marginTop: "8px" }}>
+                <div><strong>{m.module_name || "Unnamed Module"}</strong></div>
+                <div>module_type: {String(m.module_type || "")}</div>
+                <div>custom_shape: {String(m.custom_shape || "")}</div>
+                <div>dimensions: {String(m.dimensions || "")}</div>
+                <div>corner_size: {String(m.corner_size || "")}</div>
+                <div>polygon_sides: {String(m.polygon_sides || "")}</div>
+                <div>track_entry_edge: {String(m.track_entry_edge || "")}</div>
+                <div>track_exit_edge: {String(m.track_exit_edge || "")}</div>
+              </div>
+            ))}
+        </div>
+
         <h3 className="legendTitle">
           Module Key
         </h3>
