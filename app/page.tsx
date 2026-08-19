@@ -2723,7 +2723,51 @@ onChange={(e) => {
 />
    </div>
 )}
+{(moduleType === "Inside Corner" || moduleType === "Outside Corner") &&
+  cornerSize && (() => {
+    const outerRadiusMm: Record<string, number> = {
+      "Standard Corner": 315,
+      "Medium Corner": 381,
+      "Large Corner": 480,
+      "Extra-Large Corner": 481,
+    };
 
+    const outerRadius = outerRadiusMm[cornerSize];
+
+    if (!outerRadius) return null;
+
+    const outerRadiusInches = outerRadius / 25.4;
+
+    const width = Number(customWidthInches);
+    const depth = Number(customDepthInches);
+
+    const fits =
+      Number.isFinite(width) &&
+      Number.isFinite(depth) &&
+      width >= outerRadiusInches &&
+      depth >= outerRadiusInches;
+
+    if (fits) return null;
+
+    return (
+      <div
+        style={{
+          marginTop: "10px",
+          padding: "10px 12px",
+          border: "2px solid #b00020",
+          borderRadius: "10px",
+          background: "#fff1f1",
+          color: "#7a0015",
+          fontWeight: 700,
+        }}
+      >
+        ⚠ Selected T-TRAK curve may not fit inside this module.
+        The outer track radius is approximately{" "}
+        {outerRadiusInches.toFixed(2)} inches. Increase the module width/depth
+        or choose a smaller Corner Size.
+      </div>
+    );
+  })()}
 {(
   dimensions === "Other / custom" ||
   bridgeSize === "Custom Bridge" ||
