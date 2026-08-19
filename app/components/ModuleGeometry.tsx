@@ -156,6 +156,19 @@ export default function ModuleGeometry({
       );
     }
 
+    if (kind === "insideCorner" || kind === "outsideCorner") {
+      return (
+        <rect
+          {...bodyProps}
+          x="0"
+          y="0"
+          width={size.width}
+          height={size.height}
+          rx="1"
+        />
+      );
+    }
+
     if (shape === "pie shaped outside corner") {
       const radius = Math.min(size.width, size.height);
       return (
