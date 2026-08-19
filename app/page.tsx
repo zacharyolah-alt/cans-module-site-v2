@@ -3759,21 +3759,29 @@ previewSize.outerRadius ? (
     <strong>Notes:</strong> {m.additional_notes}
   </p>
 )}
-                    {user && user.id === m.user_id && (
- {user && (
+                              {user && user.id === m.user_id && (
   <div className="actions">
     <button className="editBtn" onClick={() => startEdit(m)}>
       Edit
     </button>
-
-    {user.id === m.user_id && (
-      <button
-        className="deleteBtn"
-        onClick={() => deleteModule(m.id)}
-      >
-        Delete
-      </button>
-    )}
+    <button
+      className="deleteBtn"
+      onClick={() => deleteModule(m.id)}
+    >
+      Delete
+    </button>
+  </div>
+)}
+  <div className="actions">
+    <button className="editBtn" onClick={() => startEdit(m)}>
+      Edit
+    </button>
+    <button
+      className="deleteBtn"
+      onClick={() => deleteModule(m.id)}
+    >
+      Delete
+    </button>
   </div>
 )}
               </div>
