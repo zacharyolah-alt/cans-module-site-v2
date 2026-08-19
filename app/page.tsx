@@ -2678,23 +2678,8 @@ onChange={(e) => {
     <label>Corner Size</label>
     <select
       value={cornerSize}
-   onChange={(e) => {
-  const value = e.target.value;
-  setCornerSize(value);
-
-  const presetSizesInches: Record<string, string> = {
-    "Standard Corner": (365 / 25.4).toFixed(2),
-    "Medium Corner": (431 / 25.4).toFixed(2),
-    "Large Corner": (530 / 25.4).toFixed(2),
-    "Extra-Large Corner": (564 / 25.4).toFixed(2),
-  };
-
-  const presetSize = presetSizesInches[value];
-
-  if (presetSize) {
-    setCustomWidthInches(presetSize);
-    setCustomDepthInches(presetSize);
-  }
+  onChange={(e) => {
+  setCornerSize(e.target.value);
 }}
   >
     <option value="">Select corner size</option>
@@ -2719,25 +2704,22 @@ onChange={(e) => {
 
 {(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
   <div>
-    <label>Actual Module Width (inches)</label>
-    <input
-      type="number"
-      min="1"
-      step="0.01"
-      value={customWidthInches}
-      onChange={(e) => setCustomWidthInches(e.target.value)}
-    />
-
-    <label>Actual Module Depth (inches)</label>
-    <input
-      type="number"
-      min="1"
-      step="0.01"
-      value={customDepthInches}
-      onChange={(e) => setCustomDepthInches(e.target.value)}
-    />
-  </div>
-)}
+   <label>Actual Module Width (inches)</label>
+<input
+  type="text"
+  inputMode="decimal"
+  value={customWidthInches}
+  onChange={(e) => setCustomWidthInches(e.target.value)}
+  placeholder='e.g. 18.5'
+/>
+<label>Actual Module Depth (inches)</label>
+<input
+  type="text"
+  inputMode="decimal"
+  value={customDepthInches}
+  onChange={(e) => setCustomDepthInches(e.target.value)}
+  placeholder='e.g. 24'
+/>
   
 
 {(
