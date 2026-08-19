@@ -3174,64 +3174,269 @@ const outerTrackRadius =
   </>
 ) : (
   <>
-    {[-trackSpacing / 2, trackSpacing / 2].map(
-      (offset, index) => {
-        const startX = trackEntry.x + normalX * offset;
-        const startY = trackEntry.y + normalY * offset;
-        const endX = trackExit.x + normalX * offset;
-        const endY = trackExit.y + normalY * offset;
+    {(() => {
+      // Straight polygon track keeps the existing midpoint-to-midpoint behavior.
+      if (trackType === "Straight") {
+        return [-trackSpacing / 2, trackSpacing / 2].map(
+          (offset, index) => {
+            const startX = trackEntry.x + normalX * offset;
+            const startY = trackEntry.y + normalY * offset;
+            const endX = trackExit.x + normalX * offset;
+            const endY = trackExit.y + normalY * offset;
 
-        if (trackType === "Straight") {
-          return (
-            <line
-              key={`track-${index}`}
-              x1={startX}
-              y1={startY}
-              x2={endX}
-              y2={endY}
-              stroke={
-                index === 0 ? "#d4a900" : "red"
-              }
-              strokeWidth="2"
-            />
+            return (
+              <line
+                key={`track-${index}`}
+                x1={startX}
+                y1={startY}
+                x2={endX}
+                y2={endY}
+                stroke={index === 0 ? "#d4a900" : "red"}
+                strokeWidth="2"
+              />
+            );
+          }
+        );
+      }
+
+      const edgeCount = previewPathPoints.length - 1;
+
+      const getEdge = (edgeValue: string) => {
+        const edgeNumber = Math.max(
+          1,
+          Math.min(Number(edgeValue) || 1, edgeCount)
+        );
+
+        return {
+          start: previewPathPoints[edgeNumber - 1],
+          end: previewPathPoints[edgeNumber],
+        };
+      };
+
+      const entryEdge = getEdge(trackEntryEdge);
+      const exitEdge = getEdge(trackExitEdge);
+
+      const lineIntersection = (
+        a1: any,
+        a2: any,
+        b1: any,
+        b2: any
+      ) => {
+        const x1 = a1.x;
+        const y1 = a1.y;
+        const x2 = a2.x;
+        const y2 = a2.y;
+        const x3 = b1.x;
+        const y3 = b1.y;
+        const x4 = b2.x;
+        const y4 = b2.y;
+
+        const denominator =
+          (x1 - x2) * (y3 - y4) -
+          (y1 - y2) * (x3 - x4);
+
+        if (Math.abs(denominator) < 0.0001) return null;
+
+        return {
+          x:
+            ((x1 * y2 - y1 * x2) * (x3 - x4) -
+              (x1 - x2) * (x3 * y4 - y3 * x4)) /
+            denominator,
+          y:
+            ((x1 * y2 - y1 * x2) * (y3 - y4) -
+              (y1 - y2) * (x3 * y4 - y3 * x4)) /
+            denominator,
+        };
+      };
+
+      const corner = lineIntersection(
+        entryEdge.start,
+        entryEdge.end,
+        exitEdge.start,
+        exitEdge.end
+      );
+
+      if (!corner) {
+        return (
+          <text
+            x={preview.width / 2}
+            y={preview.height / 2}
+            textAnchor="middle"
+            fill="#b00020"
+            fontSize="12"
+            fontWeight="700"
+          >
+            Entry and exit edges do not form a usable T-TRAK corner.
+          </text>
+        );
+      }
+
+      const entryDx = entryEdge.end.x - entryEdge.start.x;
+      const entryDy = entryEdge.end.y - entryEdge.start.y;
+      const exitDx = exitEdge.end.x - exitEdge.start.x;
+      const exitDy = exitEdge.end.y - exitEdge.start.y;
+
+      const entryLength = Math.max(
+        0.0001,
+        Math.hypot(entryDx, entryDy)
+      );
+
+      const exitLength = Math.max(
+        0.0001,
+        Math.hypot(exitDx, exitDy)
+      );
+
+      // A standard T-TRAK corner requires approximately perpendicular
+      // entry and exit interfaces.
+      const dot =
+        (entryDx / entryLength) * (exitDx / exitLength) +
+        (entryDy / entryLength) * (exitDy / exitLength);
+
+      if (Math.abs(dot) > 0.12) {
+        return (
+          <text
+            x={preview.width / 2}
+            y={preview.height / 2}
+            textAnchor="middle"
+            fill="#b00020"
+            fontSize="12"
+            fontWeight="700"
+          >
+            Entry and exit edges must form approximately a 90° T-TRAK corner.
+          </text>
+        );
+      }
+
+      const pointToSegmentDistance = (
+        point: any,
+        start: any,
+        end: any
+      ) => {
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const lengthSquared = dx * dx + dy * dy;
+
+        if (lengthSquared === 0) {
+          return Math.hypot(
+            point.x - start.x,
+            point.y - start.y
           );
         }
 
-        const radius =
-          index === 0
-            ? innerTrackRadius
-            : outerTrackRadius;
-
-        const chordLength = Math.hypot(
-          endX - startX,
-          endY - startY
+        const t = Math.max(
+          0,
+          Math.min(
+            1,
+            ((point.x - start.x) * dx +
+              (point.y - start.y) * dy) /
+              lengthSquared
+          )
         );
 
-       if (chordLength > radius * 2) {
-  return null;
-}
+        const closestX = start.x + t * dx;
+        const closestY = start.y + t * dy;
 
-const safeRadius = radius;
+        return Math.hypot(
+          point.x - closestX,
+          point.y - closestY
+        );
+      };
 
-        const sweepFlag =
-          trackType === "Inside Curve" ? 1 : 0;
+      const tangentPoint = (
+        edge: any,
+        radius: number
+      ) => {
+        const midpoint = {
+          x: (edge.start.x + edge.end.x) / 2,
+          y: (edge.start.y + edge.end.y) / 2,
+        };
+
+        const dx = midpoint.x - corner.x;
+        const dy = midpoint.y - corner.y;
+        const length = Math.max(
+          0.0001,
+          Math.hypot(dx, dy)
+        );
+
+        return {
+          x: corner.x + (dx / length) * radius,
+          y: corner.y + (dy / length) * radius,
+        };
+      };
+
+      return [
+        {
+          radius: innerTrackRadius,
+          color: "#d4a900",
+        },
+        {
+          radius: outerTrackRadius,
+          color: "red",
+        },
+      ].map((track, index) => {
+        const start = tangentPoint(
+          entryEdge,
+          track.radius
+        );
+
+        const end = tangentPoint(
+          exitEdge,
+          track.radius
+        );
+
+        const startFits =
+          pointToSegmentDistance(
+            start,
+            entryEdge.start,
+            entryEdge.end
+          ) < 1.5;
+
+        const endFits =
+          pointToSegmentDistance(
+            end,
+            exitEdge.start,
+            exitEdge.end
+          ) < 1.5;
+
+        if (!startFits || !endFits) {
+          return null;
+        }
+
+        const center = {
+          x: start.x + end.x - corner.x,
+          y: start.y + end.y - corner.y,
+        };
+
+        const startVector = {
+          x: start.x - center.x,
+          y: start.y - center.y,
+        };
+
+        const endVector = {
+          x: end.x - center.x,
+          y: end.y - center.y,
+        };
+
+        const cross =
+          startVector.x * endVector.y -
+          startVector.y * endVector.x;
+
+        const sweepFlag = cross > 0 ? 0 : 1;
 
         return (
           <path
-            key={`track-${index}`}
-            d={`M ${startX} ${startY}
-                A ${safeRadius} ${safeRadius}
+            key={`polygon-ttrak-track-${index}`}
+            d={`M ${start.x} ${start.y}
+                A ${track.radius} ${track.radius}
                 0 0 ${sweepFlag}
-                ${endX} ${endY}`}
+                ${end.x} ${end.y}`}
             fill="none"
-            stroke={
-              index === 0 ? "#d4a900" : "red"
-            }
+            stroke={track.color}
             strokeWidth="2"
           />
         );
-      }
-    )}
+      });
+    })()}
   </>
 )}
 </>
