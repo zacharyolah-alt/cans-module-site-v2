@@ -2934,6 +2934,29 @@ const innerTrackRadius =
 
 const outerTrackRadius =
   (selectedRadiusPair[1] / 25.4) * LAYOUT_SCALE;
+  const polygonCurveCompatible =
+  trackType === "Straight" ||
+  trackLength <= innerTrackRadius * 2;
+  if (!polygonCurveCompatible) {
+  return (
+    <div
+      style={{
+        marginTop: "10px",
+        padding: "12px",
+        border: "2px solid #b00020",
+        borderRadius: "10px",
+        background: "#fff1f1",
+        color: "#7a0015",
+        fontWeight: 700,
+      }}
+    >
+      ⚠ This polygon cannot accommodate the selected T-TRAK curve between
+      the chosen Track Entry Edge and Track Exit Edge. Choose different
+      entry/exit edges, enlarge the module shape, or select a smaller
+      T-TRAK Corner Size.
+    </div>
+  );
+}
       return (
         <svg
           width="320"
@@ -3184,10 +3207,11 @@ const outerTrackRadius =
           endY - startY
         );
 
-        const safeRadius = Math.max(
-          radius,
-          chordLength / 2 + 0.01
-        );
+       if (chordLength > radius * 2) {
+  return null;
+}
+
+const safeRadius = radius;
 
         const sweepFlag =
           trackType === "Inside Curve" ? 1 : 0;
