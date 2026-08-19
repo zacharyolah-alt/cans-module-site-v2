@@ -333,12 +333,18 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
               width="290"
               height="92"
               rx="8"
+              fill="rgba(255,255,255,.94)"
+              stroke="#ffd21f"
+              strokeWidth="1.5"
             />
 
             <text
               className="svgKeyTitle"
               x="36"
               y="44"
+              fill="#050505"
+              fontSize="15"
+              fontWeight="900"
             >
               Grid Scale
             </text>
@@ -347,6 +353,8 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
               className="svgKeyText"
               x="36"
               y="64"
+              fill="#111111"
+              fontSize="12"
             >
               1 small square = 2 inches
             </text>
@@ -355,6 +363,8 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
               className="svgKeyText"
               x="36"
               y="84"
+              fill="#111111"
+              fontSize="12"
             >
               1 large square = 6 inches
             </text>
@@ -363,6 +373,8 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
               className="svgKeyText"
               x="36"
               y="104"
+              fill="#111111"
+              fontSize="12"
             >
               2 x 2 large squares = 1 sq ft
             </text>
@@ -382,6 +394,10 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                   y1={line.a.y}
                   x2={line.b.x}
                   y2={line.b.y}
+                  stroke="#ff8c00"
+                  strokeWidth="3"
+                  strokeDasharray="10 7"
+                  opacity=".85"
                 />
               );
             }
@@ -433,6 +449,9 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                     cx="28"
                     cy="28"
                     r="13"
+                    fill="#ffd21f"
+                    stroke="#050505"
+                    strokeWidth="1.5"
                   />
 
                   <text
@@ -462,6 +481,9 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                     cx={table.width - 28}
                     cy="28"
                     r="12"
+                    fill={layoutLocks[table.id] ? "#777777" : "#b00020"}
+                    stroke="#ffffff"
+                    strokeWidth="2"
                   />
 
                   <text
@@ -487,6 +509,9 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                     cx={table.width - 28}
                     cy={table.height - 28}
                     r="12"
+                    fill="#b00020"
+                    stroke="#ffffff"
+                    strokeWidth="2"
                   />
 
                   <text
@@ -574,6 +599,9 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                       cx={endpoint.x}
                       cy={endpoint.y}
                       r="5"
+                      fill="#1f6fff"
+                      stroke="#ffffff"
+                      strokeWidth="2.5"
                     />
                   )
                 )}
@@ -604,6 +632,9 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                     cx={numberPosition.x + 34}
                     cy={numberPosition.y}
                     r="11"
+                    fill="#ffd21f"
+                    stroke="#050505"
+                    strokeWidth="1.5"
                   />
 
                   <text
@@ -675,6 +706,9 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                     cx={lockButton.x}
                     cy={lockButton.y}
                     r="10"
+                    fill={layoutLocks[m.id] ? "#777777" : "#b00020"}
+                    stroke="#ffffff"
+                    strokeWidth="2"
                   />
 
                   <text
@@ -698,7 +732,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
 
         <div className="symbolKeyGrid">
           <div className="symbolKeyItem">
-            <span className="symbolSwatch" />
+            <span style={{ width: "22px", height: "14px", borderRadius: "4px", border: "2px solid #3d6b2d", background: "rgba(198, 226, 178, .55)", display: "inline-block" }} />
             Green = module tabletop
           </div>
 
@@ -733,17 +767,17 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
           </div>
 
           <div className="symbolKeyItem">
-            <span className="symbolSwatch table" />
+            <span style={{ width: "22px", height: "14px", borderRadius: "4px", border: "2px solid #1f6fbf", background: "rgba(70, 155, 255, .28)", display: "inline-block" }} />
             Blue = table
           </div>
 
           <div className="symbolKeyItem">
-            <span className="symbolSwatch snap" />
+            <span style={{ width: "14px", height: "14px", borderRadius: "999px", background: "#1f6fff", border: "2px solid #ffffff", boxShadow: "0 0 0 1px #777", display: "inline-block" }} />
             Blue dot = connection point
           </div>
 
           <div className="symbolKeyItem">
-            <span className="symbolSwatch connection" />
+            <span style={{ width: "28px", borderTop: "3px dashed #ff8c00", display: "inline-block" }} />
             Orange dash = connected modules
           </div>
 
