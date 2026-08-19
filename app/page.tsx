@@ -2610,7 +2610,9 @@ button {
   <option value="Rectangle">Square / Rectangle</option>
 <option>Angled Inside Corner</option>
 <option>Pie-Shaped Outside Corner</option>
-<option>Polygon</option>
+<option value="Polygon" disabled>
+  Polygon (Legacy - not layout compatible)
+</option>
   </select>
 </div>
 {moduleType !== "Inside Corner" && moduleType !== "Outside Corner" && (
@@ -2776,6 +2778,23 @@ onChange={(e) => {
  customShape === "Pie-Shaped Outside Corner"
 ) && (
   <>
+  {customShape === "Polygon" && (
+  <div
+    style={{
+      marginBottom: "14px",
+      padding: "12px",
+      border: "2px solid #b00020",
+      borderRadius: "10px",
+      background: "#fff1f1",
+      color: "#7a0015",
+      fontWeight: 700,
+    }}
+  >
+    ⚠ Legacy Polygon modules are kept for directory records, but they are not
+    supported for automatic T-TRAK layout geometry or snapping. Use one of the
+    supported named module shapes instead.
+  </div>
+)}
   {(
   customShape === "Polygon" ||
   customShape === "Angled Inside Corner"
