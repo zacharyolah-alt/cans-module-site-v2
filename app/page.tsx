@@ -2706,20 +2706,20 @@ onChange={(e) => {
   <div>
   <label>Actual Module Width (inches)</label>
 <input
-  type="number"
-  min="1"
-  step="0.01"
+  type="text"
+  inputMode="decimal"
   value={customWidthInches}
   onChange={(e) => setCustomWidthInches(e.target.value)}
+  placeholder="e.g. 18.5"
 />
 
 <label>Actual Module Depth (inches)</label>
 <input
-  type="number"
-  min="1"
-  step="0.01"
+  type="text"
+  inputMode="decimal"
   value={customDepthInches}
   onChange={(e) => setCustomDepthInches(e.target.value)}
+  placeholder="e.g. 24"
 />
    </div>
 )}
