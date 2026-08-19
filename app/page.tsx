@@ -3772,18 +3772,6 @@ previewSize.outerRadius ? (
     </button>
   </div>
 )}
-  <div className="actions">
-    <button className="editBtn" onClick={() => startEdit(m)}>
-      Edit
-    </button>
-    <button
-      className="deleteBtn"
-      onClick={() => deleteModule(m.id)}
-    >
-      Delete
-    </button>
-  </div>
-)}
               </div>
             </article>
           ))}
