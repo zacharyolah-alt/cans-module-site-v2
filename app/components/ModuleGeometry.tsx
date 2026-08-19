@@ -22,6 +22,7 @@ function normalize(value: any) {
   return String(value || "")
     .trim()
     .toLowerCase()
+    .replace(/[‐‑‒–—−]/g, "-")
     .replace(/[\s_-]+/g, " ");
 }
 
@@ -155,7 +156,7 @@ export default function ModuleGeometry({
       );
     }
 
-    if (shape === "pie-shaped outside corner") {
+    if (shape === "pie shaped outside corner") {
       const radius = Math.min(size.width, size.height);
       return (
         <path
@@ -216,7 +217,7 @@ export default function ModuleGeometry({
       return null;
     }
 
-    if (shape === "pie-shaped outside corner") {
+    if (shape === "pie shaped outside corner") {
       const radius = Math.min(size.width, size.height);
       return (
         <path
@@ -375,7 +376,7 @@ export default function ModuleGeometry({
       return renderAngledInsideTracks();
     }
 
-    if (shape === "pie-shaped outside corner") {
+    if (shape === "pie shaped outside corner") {
       const sectorRadius = Math.min(size.width, size.height);
 
       const tracks = [
