@@ -69,20 +69,27 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
       .replace(/[\s_-]+/g, " ");
   }
 
-  function getPlannerKind(module: any) {
-    const shape = normalize(getCustomShapeName(module));
+ function getPlannerKind(module: any) {
+  const shape = normalize(getCustomShapeName(module));
+  const moduleType = normalize(module?.module_type);
 
-    if (
-      shape === "rectangle" ||
-      shape === "angled inside corner" ||
-      shape === "angled outside corner" ||
-      shape === "pie-shaped outside corner"
-    ) {
-      return "custom";
-    }
+  if (shape === "rectangle") {
+    if (moduleType === "inside corner") return "insideCorner";
+    if (moduleType === "outside corner") return "outsideCorner";
 
-    return getLayoutKind(module);
+    return "custom";
   }
+
+  if (
+    shape === "angled inside corner" ||
+    shape === "angled outside corner" ||
+    shape === "pie-shaped outside corner"
+  ) {
+    return "custom";
+  }
+
+  return getLayoutKind(module);
+}
 
   function getPlannerSize(module: any) {
     const kind = getPlannerKind(module);

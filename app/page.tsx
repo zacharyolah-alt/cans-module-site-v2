@@ -162,6 +162,7 @@ setNotes("");
   function startEdit(m: any) {
     setEditingId(m.id);
     setName(m.module_name || "");
+    setOwnerName(m.owner_name || "");
     setPhoto(m.photo_url || "");
     setStandard(m.standard || "T-Trak");
     setDimensions(m.dimensions || "");
@@ -212,10 +213,13 @@ const completePolygonAngles = Object.fromEntries(
     ];
   })
 );
+const existingModule = editingId
+  ? modules.find((m: any) => m.id === editingId)
+  : null;
     const payload = {
       module_name: name,
       owner_name: ownerName || user.email,
-      user_id: user.id,
+      user_id: existingModule?.user_id || user.id,
       photo_url: photo,
       standard,
       module_type: moduleType,
