@@ -2704,23 +2704,25 @@ onChange={(e) => {
 
 {(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
   <div>
-   <label>Actual Module Width (inches)</label>
+  <label>Actual Module Width (inches)</label>
 <input
-  type="text"
-  inputMode="decimal"
+  type="number"
+  min="1"
+  step="0.01"
   value={customWidthInches}
   onChange={(e) => setCustomWidthInches(e.target.value)}
-  placeholder='e.g. 18.5'
 />
+
 <label>Actual Module Depth (inches)</label>
 <input
-  type="text"
-  inputMode="decimal"
+  type="number"
+  min="1"
+  step="0.01"
   value={customDepthInches}
   onChange={(e) => setCustomDepthInches(e.target.value)}
-  placeholder='e.g. 24'
 />
-  
+   </div>
+)}
 
 {(
   dimensions === "Other / custom" ||
