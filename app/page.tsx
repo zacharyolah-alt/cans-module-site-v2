@@ -2795,10 +2795,7 @@ onChange={(e) => {
     supported named module shapes instead.
   </div>
 )}
-  {(
-  customShape === "Polygon" ||
-  customShape === "Angled Inside Corner"
-) && (
+{customShape === "Angled Inside Corner" && (
       <div>
         <label>Number of Sides</label>
         <select

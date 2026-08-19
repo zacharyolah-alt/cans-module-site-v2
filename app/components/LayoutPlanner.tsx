@@ -73,7 +73,6 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     const shape = normalize(getCustomShapeName(module));
 
     if (
-      isPolygonModule(module) ||
       shape === "rectangle" ||
       shape === "angled inside corner" ||
       shape === "angled outside corner" ||
@@ -91,7 +90,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
 
     if (
       kind === "custom" &&
-      (isPolygonModule(module) || shape === "angled inside corner")
+      shape === "angled inside corner"
     ) {
       const polygon = getPolygonGeometry(module);
       if (polygon?.width && polygon?.height) {
@@ -526,7 +525,9 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
             </g>
           ))}
 
-          {layoutModules.map((m: any, index: number) => {
+          {layoutModules
+  .filter((m: any) => !isPolygonModule(m))
+  .map((m: any, index: number) => {
             const permanentIndex = Math.max(
               0,
               (moduleNumberMap[m.id] || index + 1) - 1
@@ -799,7 +800,9 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
               "repeat(auto-fit, minmax(300px, 1fr))",
           }}
         >
-          {filteredModules.map((m: any) => {
+          {filteredModules
+  .filter((m: any) => !isPolygonModule(m))
+  .map((m: any) => {
             const isIncluded =
               !!layoutIncluded[m.id];
 
