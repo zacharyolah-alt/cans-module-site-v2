@@ -3760,16 +3760,20 @@ previewSize.outerRadius ? (
   </p>
 )}
                     {user && user.id === m.user_id && (
+ {user && (
   <div className="actions">
     <button className="editBtn" onClick={() => startEdit(m)}>
       Edit
     </button>
-    <button
-      className="deleteBtn"
-      onClick={() => deleteModule(m.id)}
-    >
-      Delete
-    </button>
+
+    {user.id === m.user_id && (
+      <button
+        className="deleteBtn"
+        onClick={() => deleteModule(m.id)}
+      >
+        Delete
+      </button>
+    )}
   </div>
 )}
               </div>
