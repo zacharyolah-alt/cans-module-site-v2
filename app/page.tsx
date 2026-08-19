@@ -404,6 +404,10 @@ function exportToCSV() {
     const moduleType = normalizeModuleText(m.module_type);
     const dimensionsText = normalizeModuleText(m.dimensions);
     const customShape = getCustomShapeName(m);
+    if (customShape === "rectangle") {
+  if (moduleType === "inside corner") return "insideCorner";
+  if (moduleType === "outside corner") return "outsideCorner";
+}
 
     // Module type describes the module's purpose. The physical outline comes
     // from its selected dimensions/custom-shape fields. A custom outline must
@@ -411,10 +415,9 @@ function exportToCSV() {
     const usesCustomDimensions =
       dimensionsText.includes("other") || dimensionsText.includes("custom");
     const hasExplicitCustomShape =
-      customShape === "rectangle" ||
-      isPolygonModule(m) ||
-      customShape === "angled inside corner" ||
-      customShape === "angled outside corner";
+  isPolygonModule(m) ||
+  customShape === "angled inside corner" ||
+  customShape === "angled outside corner";
 
     // Any explicitly selected physical shape overrides module_type.
     // module_type is informational/purpose-only.

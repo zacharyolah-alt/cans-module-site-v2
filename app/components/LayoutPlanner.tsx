@@ -419,13 +419,16 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
             >
               <g transform={getTableTransform(table)}>
                 <rect
-                  className="svgTable"
-                  x="0"
-                  y="0"
-                  width={table.width}
-                  height={table.height}
-                  rx="4"
-                />
+  className="svgTable"
+  x="0"
+  y="0"
+  width={table.width}
+  height={table.height}
+  rx="4"
+  fill="rgba(70, 155, 255, .28)"
+  stroke="#1f6fbf"
+  strokeWidth="2"
+/>
 
                 <text
                   className="svgTableLabel"
