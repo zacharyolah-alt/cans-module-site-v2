@@ -3759,7 +3759,7 @@ previewSize.outerRadius ? (
     <strong>Notes:</strong> {m.additional_notes}
   </p>
 )}
-                              {user && user.id === m.user_id && (
+                          {user && (
   <div className="actions">
     <button className="editBtn" onClick={() => startEdit(m)}>
       Edit
