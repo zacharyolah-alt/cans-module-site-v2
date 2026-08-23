@@ -1000,6 +1000,7 @@ const tangentPoint = (
           outerRadius
         );
 
+  
         const localPoint = {
           x: (inner.x + outer.x) / 2,
           y: (inner.y + outer.y) / 2,
@@ -1089,7 +1090,70 @@ const tangentPoint = (
     }
   }
 }
+if (
+  customShape === "pie-shaped outside corner" ||
+  customShape === "pie shaped outside corner"
+) {
+  const sectorRadius = Math.min(size.width, size.height);
 
+  const leftConnectionPoint = {
+    x: 0,
+    y:
+      sectorRadius -
+      (innerRadius + outerRadius) / 2,
+  };
+
+  const bottomConnectionPoint = {
+    x:
+      (innerRadius + outerRadius) / 2,
+    y: sectorRadius,
+  };
+
+  const leftRotated = rotatePoint(
+    leftConnectionPoint.x,
+    leftConnectionPoint.y,
+    rotation,
+    size
+  );
+
+  const bottomRotated = rotatePoint(
+    bottomConnectionPoint.x,
+    bottomConnectionPoint.y,
+    rotation,
+    size
+  );
+
+  const leftDirection = rotateDirection(
+    -1,
+    0,
+    rotation
+  );
+
+  const bottomDirection = rotateDirection(
+    0,
+    1,
+    rotation
+  );
+
+  return [
+    {
+      x: slot.x + leftRotated.x,
+      y: slot.y + leftRotated.y,
+      side: "left",
+      key: "left",
+      dx: leftDirection.dx,
+      dy: leftDirection.dy,
+    },
+    {
+      x: slot.x + bottomRotated.x,
+      y: slot.y + bottomRotated.y,
+      side: "bottom",
+      key: "bottom",
+      dx: bottomDirection.dx,
+      dy: bottomDirection.dy,
+    },
+  ];
+}
     const localPoints =
       kind === "endCap"
         ? [{ x: 0, y: connectionCenter, side: "left" }]
