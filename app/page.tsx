@@ -729,7 +729,16 @@ rearTrackCenterOffset: mmToPreview(rearTrackCenterMm),
     height: Math.max(1, Number(m.custom_depth_inches || 14.38)) * LAYOUT_SCALE,
   };
 }
-    if (kind === "endCap") return { width: 288, height: 144 };
+if (kind === "endCap") {
+  return {
+    width:
+      Math.max(1, Number(m.custom_depth_inches || 14.38)) *
+      LAYOUT_SCALE,
+    height:
+      Math.max(1, Number(m.custom_width_inches || 28.81)) *
+      LAYOUT_SCALE,
+  };
+}
     if (kind === "single") return { width: 121, height: 144 };
     if (kind === "double") return { width: 243, height: 144 };
     if (kind === "triple") return { width: 365, height: 144 };
