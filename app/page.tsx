@@ -4444,7 +4444,8 @@ previewSize.outerRadius ? (
 
 {moduleType !== "Inside Corner" &&
  moduleType !== "Outside Corner" &&
- moduleType !== "End Cap" && (
+ moduleType !== "End Cap" &&
+ moduleType !== "NT Junction" && (
   <line
     x1="0"
     y1={previewSize.height - 2}
@@ -4455,6 +4456,16 @@ previewSize.outerRadius ? (
   />
 )}
 
+{moduleType === "NT Junction" && (
+  <line
+    x1="0"
+    y1="2"
+    x2={previewSize.width}
+    y2="2"
+    stroke="#2f5f24"
+    strokeWidth="5"
+  />
+)}
 {moduleType === "End Cap" && (
   <>
     {/* Top exposed edge */}
