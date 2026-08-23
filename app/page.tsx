@@ -4166,7 +4166,10 @@ previewSize.outerRadius ? (
         color: "red",
       },
     ].map((track, index) => {
-      const centerX = previewSize.width - track.radius;
+      // Both track ends are on the LEFT connection edge.
+      // The selected T-TRAK radius remains fixed and is never
+      // stretched to fill the module.
+      const centerX = 0;
       const centerY = previewSize.height / 2;
 
       return (
@@ -4174,7 +4177,8 @@ previewSize.outerRadius ? (
           key={`endcap-track-${index}`}
           d={`
             M ${centerX} ${centerY - track.radius}
-            A ${track.radius} ${track.radius} 0 0 1
+            A ${track.radius} ${track.radius}
+              0 0 1
               ${centerX} ${centerY + track.radius}
           `}
           fill="none"
@@ -4252,7 +4256,8 @@ previewSize.outerRadius ? (
 )}
 
 {moduleType !== "Inside Corner" &&
- moduleType !== "Outside Corner" && (
+ moduleType !== "Outside Corner" &&
+ moduleType !== "End Cap" && (
   <line
     x1="0"
     y1={previewSize.height - 2}
@@ -4261,6 +4266,40 @@ previewSize.outerRadius ? (
     stroke="#2f5f24"
     strokeWidth="5"
   />
+)}
+
+{moduleType === "End Cap" && (
+  <>
+    {/* Top exposed edge */}
+    <line
+      x1="0"
+      y1="2"
+      x2={previewSize.width}
+      y2="2"
+      stroke="#2f5f24"
+      strokeWidth="5"
+    />
+
+    {/* Right exposed edge */}
+    <line
+      x1={previewSize.width - 2}
+      y1="0"
+      x2={previewSize.width - 2}
+      y2={previewSize.height}
+      stroke="#2f5f24"
+      strokeWidth="5"
+    />
+
+    {/* Bottom exposed edge */}
+    <line
+      x1="0"
+      y1={previewSize.height - 2}
+      x2={previewSize.width}
+      y2={previewSize.height - 2}
+      stroke="#2f5f24"
+      strokeWidth="5"
+    />
+  </>
 )}
 
 {(moduleType === "Inside Corner" ||
