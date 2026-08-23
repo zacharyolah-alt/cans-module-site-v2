@@ -3062,7 +3062,8 @@ button {
 </div>
 {moduleType !== "Inside Corner" &&
  moduleType !== "Outside Corner" &&
- moduleType !== "Bridge" && (
+ moduleType !== "Bridge" &&
+ moduleType !== "NT Junction" && (
   <>
     <label>Standard Module Size</label>
     <select
