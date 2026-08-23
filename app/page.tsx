@@ -2981,9 +2981,10 @@ onChange={(e) => {
 }}
 >
   <option>Straight</option>
-  <option>Inside Corner</option>
-  <option>Outside Corner</option>
-  <option>Bridge</option>
+<option>Inside Corner</option>
+<option>Outside Corner</option>
+<option>End Cap</option>
+<option>Bridge</option>
 </select>
 
 <select
@@ -3006,7 +3007,11 @@ onChange={(e) => {
     <option>Custom Bridge</option>
   </select>
 )}
-  {(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
+ {(
+  moduleType === "Inside Corner" ||
+  moduleType === "Outside Corner" ||
+  moduleType === "End Cap"
+) && (
   <>
     <label>Corner Size</label>
     <select
@@ -3028,14 +3033,15 @@ onChange={(e) => {
 <option value="Extra-Large Corner">
   Extra-Large Corner - 481 mm + extensions - 564 mm square
 </option>
-<option value="End Cap">
-  End Cap - 180° return
-</option>
       </select>
   </>
 )}
 
-{(moduleType === "Inside Corner" || moduleType === "Outside Corner") && (
+{(
+  moduleType === "Inside Corner" ||
+  moduleType === "Outside Corner" ||
+  moduleType === "End Cap"
+) && (
   <div>
   <label>Actual Module Width (inches)</label>
 <input
@@ -3056,7 +3062,11 @@ onChange={(e) => {
 />
    </div>
 )}
-{(moduleType === "Inside Corner" || moduleType === "Outside Corner") &&
+{(
+  moduleType === "Inside Corner" ||
+  moduleType === "Outside Corner" ||
+  moduleType === "End Cap"
+) &&
   cornerSize && (() => {
     const outerRadiusMm: Record<string, number> = {
       "Standard Corner": 315,
@@ -4142,44 +4152,79 @@ const outerTrackRadius =
               stroke="#3d6b2d"
               strokeWidth="2"
             />
-{previewSize.sweepDegrees === 90 &&
+{previewSize.sweepDegrees === 180 &&
 previewSize.innerRadius &&
 previewSize.outerRadius ? (
   <>
-   {[
-  {
-    radius: previewSize.innerRadius,
-    color:
-      moduleType === "Inside Corner"
-        ? "red"
-        : "#d4a900",
-  },
-  {
-    radius: previewSize.outerRadius,
-    color:
-      moduleType === "Inside Corner"
-        ? "#d4a900"
-        : "red",
-  },
-].map((track, index) => (
-  <path
-    key={`corner-track-${index}`}
-    d={
-  moduleType === "Outside Corner"
-    ? `
-      M 0 ${track.radius}
-      A ${track.radius} ${track.radius} 0 0 0 ${track.radius} 0
-    `
-    : `
-      M ${previewSize.width - track.radius} ${previewSize.height}
-      A ${track.radius} ${track.radius} 0 0 1 ${previewSize.width} ${previewSize.height - track.radius}
-    `
-}
-    fill="none"
-    stroke={track.color}
-    strokeWidth="2"
-  />
-))}
+    {[
+      {
+        radius: previewSize.innerRadius,
+        color: "#d4a900",
+      },
+      {
+        radius: previewSize.outerRadius,
+        color: "red",
+      },
+    ].map((track, index) => {
+      const centerX = previewSize.width - track.radius;
+      const centerY = previewSize.height / 2;
+
+      return (
+        <path
+          key={`endcap-track-${index}`}
+          d={`
+            M ${centerX} ${centerY - track.radius}
+            A ${track.radius} ${track.radius} 0 0 1
+              ${centerX} ${centerY + track.radius}
+          `}
+          fill="none"
+          stroke={track.color}
+          strokeWidth="2"
+        />
+      );
+    })}
+  </>
+) : previewSize.sweepDegrees === 90 &&
+  previewSize.innerRadius &&
+  previewSize.outerRadius ? (
+  <>
+    {[
+      {
+        radius: previewSize.innerRadius,
+        color:
+          moduleType === "Inside Corner"
+            ? "red"
+            : "#d4a900",
+      },
+      {
+        radius: previewSize.outerRadius,
+        color:
+          moduleType === "Inside Corner"
+            ? "#d4a900"
+            : "red",
+      },
+    ].map((track, index) => (
+      <path
+        key={`corner-track-${index}`}
+        d={
+          moduleType === "Outside Corner"
+            ? `
+              M 0 ${track.radius}
+              A ${track.radius} ${track.radius}
+              0 0 0 ${track.radius} 0
+            `
+            : `
+              M ${previewSize.width - track.radius} ${previewSize.height}
+              A ${track.radius} ${track.radius}
+              0 0 1
+              ${previewSize.width} ${previewSize.height - track.radius}
+            `
+        }
+        fill="none"
+        stroke={track.color}
+        strokeWidth="2"
+      />
+    ))}
   </>
 ) : (
   <>
@@ -4203,7 +4248,7 @@ previewSize.outerRadius ? (
         strokeWidth="2"
       />
     ))}
-   </>
+  </>
 )}
 
 {moduleType !== "Inside Corner" &&
