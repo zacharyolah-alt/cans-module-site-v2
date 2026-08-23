@@ -3009,7 +3009,9 @@ button {
 </option>
   </select>
 </div>
-{moduleType !== "Inside Corner" && moduleType !== "Outside Corner" && (
+{moduleType !== "Inside Corner" &&
+ moduleType !== "Outside Corner" &&
+ moduleType !== "Bridge" && (
   <>
     <label>Standard Module Size</label>
     <select
