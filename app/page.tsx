@@ -850,6 +850,195 @@ const connectionCenter =
       top: { dx: 0, dy: -1 },
       bottom: { dx: 0, dy: 1 },
     };
+    const customShape = getCustomShapeName(m);
+
+if (customShape === "angled inside corner") {
+  const polygon = getPolygonGeometry(m);
+  const points = polygon?.points || [];
+
+  if (points.length >= 5) {
+    const side2Start = points[1];
+    const side2End = points[2];
+    const side4Start = points[3];
+    const side4End = points[4];
+
+    const lineIntersection = (
+      a1: any,
+      a2: any,
+      b1: any,
+      b2: any
+    ) => {
+      const denominator =
+        (a1.x - a2.x) * (b1.y - b2.y) -
+        (a1.y - a2.y) * (b1.x - b2.x);
+
+      if (Math.abs(denominator) < 0.0001) return null;
+
+      return {
+        x:
+          ((a1.x * a2.y - a1.y * a2.x) * (b1.x - b2.x) -
+            (a1.x - a2.x) * (b1.x * b2.y - b1.y * b2.x)) /
+          denominator,
+        y:
+          ((a1.x * a2.y - a1.y * a2.x) * (b1.y - b2.y) -
+            (a1.y - a2.y) * (b1.x * b2.y - b1.y * b2.x)) /
+          denominator,
+      };
+    };
+
+    const corner = lineIntersection(
+      side2Start,
+      side2End,
+      side4Start,
+      side4End
+    );
+
+    if (corner) {
+      const tangentPoint = (
+        start: any,
+        end: any,
+        radius: number
+      ) => {
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const length = Math.max(0.0001, Math.hypot(dx, dy));
+
+        const ux = dx / length;
+        const uy = dy / length;
+
+        const candidateA = {
+          x: corner.x + ux * radius,
+          y: corner.y + uy * radius,
+        };
+
+        const candidateB = {
+          x: corner.x - ux * radius,
+          y: corner.y - uy * radius,
+        };
+
+        const midpoint = {
+          x: (start.x + end.x) / 2,
+          y: (start.y + end.y) / 2,
+        };
+
+        return Math.hypot(
+          candidateA.x - midpoint.x,
+          candidateA.y - midpoint.y
+        ) <=
+          Math.hypot(
+            candidateB.x - midpoint.x,
+            candidateB.y - midpoint.y
+          )
+          ? candidateA
+          : candidateB;
+      };
+
+      const makeConnectionPoint = (
+        start: any,
+        end: any,
+        key: string
+      ) => {
+        const inner = tangentPoint(
+          start,
+          end,
+          innerRadius
+        );
+
+        const outer = tangentPoint(
+          start,
+          end,
+          outerRadius
+        );
+
+        const localPoint = {
+          x: (inner.x + outer.x) / 2,
+          y: (inner.y + outer.y) / 2,
+        };
+
+        const edgeDx = end.x - start.x;
+        const edgeDy = end.y - start.y;
+        const edgeLength = Math.max(
+          0.0001,
+          Math.hypot(edgeDx, edgeDy)
+        );
+
+        let normal = {
+          dx: -edgeDy / edgeLength,
+          dy: edgeDx / edgeLength,
+        };
+
+        const polygonCenter = {
+          x:
+            points.reduce(
+              (sum: number, p: any) => sum + p.x,
+              0
+            ) / points.length,
+          y:
+            points.reduce(
+              (sum: number, p: any) => sum + p.y,
+              0
+            ) / points.length,
+        };
+
+        const edgeMidpoint = {
+          x: (start.x + end.x) / 2,
+          y: (start.y + end.y) / 2,
+        };
+
+        const towardCenter = {
+          x: polygonCenter.x - edgeMidpoint.x,
+          y: polygonCenter.y - edgeMidpoint.y,
+        };
+
+        if (
+          normal.dx * towardCenter.x +
+            normal.dy * towardCenter.y >
+          0
+        ) {
+          normal = {
+            dx: -normal.dx,
+            dy: -normal.dy,
+          };
+        }
+
+        const rotated = rotatePoint(
+          localPoint.x,
+          localPoint.y,
+          rotation,
+          size
+        );
+
+        const rotatedDirection = rotateDirection(
+          normal.dx,
+          normal.dy,
+          rotation
+        );
+
+        return {
+          x: slot.x + rotated.x,
+          y: slot.y + rotated.y,
+          side: key,
+          key,
+          dx: rotatedDirection.dx,
+          dy: rotatedDirection.dy,
+        };
+      };
+
+      return [
+        makeConnectionPoint(
+          side2Start,
+          side2End,
+          "side2"
+        ),
+        makeConnectionPoint(
+          side4Start,
+          side4End,
+          "side4"
+        ),
+      ];
+    }
+  }
+}
 
     const localPoints =
       kind === "endCap"
