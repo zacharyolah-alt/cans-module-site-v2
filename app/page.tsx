@@ -854,22 +854,32 @@ const connectionCenter =
     const localPoints =
       kind === "endCap"
         ? [{ x: 0, y: connectionCenter, side: "left" }]
-        : isCornerKind(kind)
-          ? [
-              {
-                x: 0,
-                y:
-                  kind === "insideCorner"
-                    ? size.height - connectionCenter
-                    : connectionCenter,
-                side: "left",
-              },
-              {
-                x: size.width - connectionCenter,
-                y: kind === "insideCorner" ? 0 : size.height,
-                side: kind === "insideCorner" ? "top" : "bottom",
-              },
-            ]
+       : isCornerKind(kind)
+  ? kind === "outsideCorner"
+    ? [
+        {
+          x: 0,
+          y: connectionCenter,
+          side: "left",
+        },
+        {
+          x: connectionCenter,
+          y: 0,
+          side: "top",
+        },
+      ]
+    : [
+        {
+          x: size.width - connectionCenter,
+          y: size.height,
+          side: "bottom",
+        },
+        {
+          x: size.width,
+          y: size.height - connectionCenter,
+          side: "right",
+        },
+      ]
           : [
               { x: 0, y: connectionCenter, side: "left" },
               { x: size.width, y: connectionCenter, side: "right" },
