@@ -3108,10 +3108,15 @@ onChange={(e) => {
     const depth = Number(customDepthInches);
 
     const fits =
-      Number.isFinite(width) &&
-      Number.isFinite(depth) &&
-      width >= outerRadiusInches &&
-      depth >= outerRadiusInches;
+  Number.isFinite(width) &&
+  Number.isFinite(depth) &&
+  (
+    moduleType === "End Cap"
+      ? width >= outerRadiusInches * 2 &&
+        depth >= outerRadiusInches
+      : width >= outerRadiusInches &&
+        depth >= outerRadiusInches
+  );
 
     if (fits) return null;
 
@@ -4132,10 +4137,11 @@ const outerTrackRadius =
   </div>
 )}
 {(
- customShape === "Rectangle" &&
+  customShape === "Rectangle" &&
   (
     moduleType === "Inside Corner" ||
     moduleType === "Outside Corner" ||
+    moduleType === "End Cap" ||
     (dimensions && dimensions !== "Other / custom")
   )
 ) && (
