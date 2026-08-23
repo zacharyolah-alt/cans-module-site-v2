@@ -216,6 +216,21 @@ const completePolygonAngles = Object.fromEntries(
 const existingModule = editingId
   ? modules.find((m: any) => m.id === editingId)
   : null;
+  const ntJunctionDimensions: Record<string, string> = {
+  "Standard Corner":
+    '595 mm x 365 mm (23.43" x 14.37")',
+  "Medium Corner":
+    '727 mm x 431 mm (28.62" x 16.97")',
+  "Large Corner":
+    '925 mm x 530 mm (36.42" x 20.87")',
+  "Extra-Large Corner":
+    '993 mm x 564 mm (39.09" x 22.20")',
+};
+
+const savedDimensions =
+  moduleType === "NT Junction"
+    ? ntJunctionDimensions[cornerSize] || ""
+    : dimensions;
     const payload = {
       module_name: name,
       owner_name: ownerName || user.email,
@@ -226,7 +241,7 @@ const existingModule = editingId
       track_type: trackType,
       bridge_size: bridgeSize,
 corner_size: cornerSize,
-      dimensions,
+     dimensions: savedDimensions,
       custom_width_inches: customWidthInches,
 custom_depth_inches: customDepthInches,
       custom_shape: customShape,
@@ -637,8 +652,38 @@ const rearTrackCenterMm =
 
 } else if (moduleType === "NT Junction") {
 
-  width = mmToPreview(595);
-  height = mmToPreview(365);
+  const ntJunctionSizes: Record<
+    string,
+    { radius: number; width: number; depth: number }
+  > = {
+    "Standard Corner": {
+      radius: 282,
+      width: 595,
+      depth: 365,
+    },
+    "Medium Corner": {
+      radius: 348,
+      width: 727,
+      depth: 431,
+    },
+    "Large Corner": {
+      radius: 447,
+      width: 925,
+      depth: 530,
+    },
+    "Extra-Large Corner": {
+      radius: 481,
+      width: 993,
+      depth: 564,
+    },
+  };
+
+  const ntSize =
+    ntJunctionSizes[cornerSize] ||
+    ntJunctionSizes["Standard Corner"];
+
+  width = mmToPreview(ntSize.width);
+  height = mmToPreview(ntSize.depth);
 
 } else if (
   moduleType === "Inside Corner" ||
@@ -3128,7 +3173,8 @@ onChange={(e) => {
  {(
   moduleType === "Inside Corner" ||
   moduleType === "Outside Corner" ||
-  moduleType === "End Cap"
+  moduleType === "End Cap" ||
+  moduleType === "NT Junction"
 ) && (
   <>
     <label>Corner Size</label>
@@ -4292,7 +4338,16 @@ moduleType === "NT Junction" ||
       // r282 branch curves
       const redY = mm(50.6);
       const yellowY = mm(83.6);
-      const radius = mm(282);
+      const ntRadiusMm: Record<string, number> = {
+  "Standard Corner": 282,
+  "Medium Corner": 348,
+  "Large Corner": 447,
+  "Extra-Large Corner": 481,
+};
+
+const radius = mm(
+  ntRadiusMm[cornerSize] || 282
+);
 
       // The two bottom exits are 33 mm apart.
       const leftBottomX = radius;
