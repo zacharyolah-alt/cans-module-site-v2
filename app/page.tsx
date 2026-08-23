@@ -633,8 +633,14 @@ const rearTrackCenterMm =
       LAYOUT_SCALE;
   }
 
-  height = mmToPreview(bridgeDepthMm);
-  } else if (
+   height = mmToPreview(bridgeDepthMm);
+
+} else if (moduleType === "NT Junction") {
+
+  width = mmToPreview(595);
+  height = mmToPreview(365);
+
+} else if (
   moduleType === "Inside Corner" ||
   moduleType === "Outside Corner"
 ) {
@@ -3095,6 +3101,7 @@ onChange={(e) => {
 <option>Outside Corner</option>
 <option>End Cap</option>
 <option>Bridge</option>
+<option>NT Junction</option>
 </select>
 
 <select
@@ -4230,7 +4237,9 @@ const outerTrackRadius =
 moduleType === "Outside Corner" ||
 moduleType === "End Cap" ||
 moduleType === "Bridge" ||
+moduleType === "NT Junction" ||
 (dimensions && dimensions !== "Other / custom")
+
   )
 ) && (
   <div
@@ -4269,7 +4278,73 @@ moduleType === "Bridge" ||
               stroke="#3d6b2d"
               strokeWidth="2"
             />
-{previewSize.sweepDegrees === 180 &&
+            
+{moduleType === "NT Junction" ? (
+  <>
+    {(() => {
+      const mm = (value: number) =>
+        (value / 25.4) * LAYOUT_SCALE;
+
+      const frontCenter = mm(50.6);
+      const rearCenter = mm(83.6);
+
+      const r282 = mm(282);
+      const r315 = mm(315);
+
+      const straightFrontY =
+        previewSize.height - frontCenter;
+
+      const straightRearY =
+        previewSize.height - rearCenter;
+
+      return (
+        <>
+          <line
+            x1="0"
+            y1={straightFrontY}
+            x2={previewSize.width}
+            y2={straightFrontY}
+            stroke="red"
+            strokeWidth="2"
+          />
+
+          <line
+            x1="0"
+            y1={straightRearY}
+            x2={previewSize.width}
+            y2={straightRearY}
+            stroke="#d4a900"
+            strokeWidth="2"
+          />
+
+          <path
+            d={`
+              M 0 ${straightFrontY}
+              A ${r282} ${r282}
+                0 0 0
+                ${r282} ${previewSize.height}
+            `}
+            fill="none"
+            stroke="red"
+            strokeWidth="2"
+          />
+
+          <path
+            d={`
+              M 0 ${straightRearY}
+              A ${r315} ${r315}
+                0 0 0
+                ${r315} ${previewSize.height}
+            `}
+            fill="none"
+            stroke="#d4a900"
+            strokeWidth="2"
+          />
+        </>
+      );
+    })()}
+  </>
+) : previewSize.sweepDegrees === 180 &&
 previewSize.innerRadius &&
 previewSize.outerRadius ? (
   <>
