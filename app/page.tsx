@@ -894,44 +894,79 @@ if (customShape === "angled inside corner") {
     );
 
     if (corner) {
-      const tangentPoint = (
-        start: any,
-        end: any,
-        radius: number
-      ) => {
-        const dx = end.x - start.x;
-        const dy = end.y - start.y;
-        const length = Math.max(0.0001, Math.hypot(dx, dy));
+    const pointToSegmentDistance = (
+  point: any,
+  start: any,
+  end: any
+) => {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthSquared = dx * dx + dy * dy;
 
-        const ux = dx / length;
-        const uy = dy / length;
+  if (lengthSquared === 0) {
+    return Math.hypot(
+      point.x - start.x,
+      point.y - start.y
+    );
+  }
 
-        const candidateA = {
-          x: corner.x + ux * radius,
-          y: corner.y + uy * radius,
-        };
+  const t = Math.max(
+    0,
+    Math.min(
+      1,
+      ((point.x - start.x) * dx +
+        (point.y - start.y) * dy) /
+        lengthSquared
+    )
+  );
 
-        const candidateB = {
-          x: corner.x - ux * radius,
-          y: corner.y - uy * radius,
-        };
+  const closestX = start.x + t * dx;
+  const closestY = start.y + t * dy;
 
-        const midpoint = {
-          x: (start.x + end.x) / 2,
-          y: (start.y + end.y) / 2,
-        };
+  return Math.hypot(
+    point.x - closestX,
+    point.y - closestY
+  );
+};
 
-        return Math.hypot(
-          candidateA.x - midpoint.x,
-          candidateA.y - midpoint.y
-        ) <=
-          Math.hypot(
-            candidateB.x - midpoint.x,
-            candidateB.y - midpoint.y
-          )
-          ? candidateA
-          : candidateB;
-      };
+const tangentPoint = (
+  start: any,
+  end: any,
+  radius: number
+) => {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const length = Math.max(
+    0.0001,
+    Math.hypot(dx, dy)
+  );
+
+  const ux = dx / length;
+  const uy = dy / length;
+
+  const candidateA = {
+    x: corner.x + ux * radius,
+    y: corner.y + uy * radius,
+  };
+
+  const candidateB = {
+    x: corner.x - ux * radius,
+    y: corner.y - uy * radius,
+  };
+
+  return pointToSegmentDistance(
+    candidateA,
+    start,
+    end
+  ) <=
+    pointToSegmentDistance(
+      candidateB,
+      start,
+      end
+    )
+    ? candidateA
+    : candidateB;
+};
 
       const makeConnectionPoint = (
         start: any,
