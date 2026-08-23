@@ -4285,56 +4285,51 @@ moduleType === "NT Junction" ||
       const mm = (value: number) =>
         (value / 25.4) * LAYOUT_SCALE;
 
-      const frontCenter = mm(50.6);
-      const rearCenter = mm(83.6);
+      // NT Junction dimensions:
+      // body = 595 mm x 365 mm
+      // straight track = 597 mm
+      // r282 branch curves
+      const redY = mm(50.6);
+      const yellowY = mm(83.6);
+      const radius = mm(282);
 
-      const r282 = mm(282);
-      const r315 = mm(315);
-
-      const straightFrontY =
-        previewSize.height - frontCenter;
-
-      const straightRearY =
-        previewSize.height - rearCenter;
+      // The two bottom exits are 33 mm apart.
+      const leftBottomX = radius;
+      const rightBottomX =
+        previewSize.width - radius;
 
       return (
         <>
+          {/* Red track remains straight across the entire module */}
           <line
             x1="0"
-            y1={straightFrontY}
+            y1={redY}
             x2={previewSize.width}
-            y2={straightFrontY}
+            y2={redY}
             stroke="red"
             strokeWidth="2"
           />
 
-          <line
-            x1="0"
-            y1={straightRearY}
-            x2={previewSize.width}
-            y2={straightRearY}
+          {/* Yellow track entering from LEFT and turning downward */}
+          <path
+            d={`
+              M 0 ${yellowY}
+              A ${radius} ${radius}
+                0 0 1
+                ${leftBottomX} ${previewSize.height}
+            `}
+            fill="none"
             stroke="#d4a900"
             strokeWidth="2"
           />
 
+          {/* Yellow track entering from RIGHT and turning downward */}
           <path
             d={`
-              M 0 ${straightFrontY}
-              A ${r282} ${r282}
+              M ${previewSize.width} ${yellowY}
+              A ${radius} ${radius}
                 0 0 0
-                ${r282} ${previewSize.height}
-            `}
-            fill="none"
-            stroke="red"
-            strokeWidth="2"
-          />
-
-          <path
-            d={`
-              M 0 ${straightRearY}
-              A ${r315} ${r315}
-                0 0 0
-                ${r315} ${previewSize.height}
+                ${rightBottomX} ${previewSize.height}
             `}
             fill="none"
             stroke="#d4a900"
