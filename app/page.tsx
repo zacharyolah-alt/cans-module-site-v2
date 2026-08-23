@@ -772,7 +772,10 @@ if (kind === "endCap") {
         bridgeWidth = Math.max(1, Number(m.custom_width_inches || 24)) * LAYOUT_SCALE;
       }
 
-      return { width: bridgeWidth, height: 80 };
+      return {
+  width: bridgeWidth,
+  height: (120 / 25.4) * LAYOUT_SCALE,
+};
     }
 
     if (kind === "custom") {
@@ -917,6 +920,48 @@ const connectionCenter =
   top: { dx: 0, dy: -1 },
   bottom: { dx: 0, dy: 1 },
 };
+if (kind === "bridge") {
+  const bridgeCenterY = size.height / 2;
+
+  const bridgePoints = [
+    {
+      x: 0,
+      y: bridgeCenterY,
+      side: "left",
+    },
+    {
+      x: size.width,
+      y: bridgeCenterY,
+      side: "right",
+    },
+  ];
+
+  return bridgePoints.map((point) => {
+    const rotated = rotatePoint(
+      point.x,
+      point.y,
+      rotation,
+      size
+    );
+
+    const baseDirection = sideDirection[point.side];
+
+    const direction = rotateDirection(
+      baseDirection.dx,
+      baseDirection.dy,
+      rotation
+    );
+
+    return {
+      x: slot.x + rotated.x,
+      y: slot.y + rotated.y,
+      side: point.side,
+      key: point.side,
+      dx: direction.dx,
+      dy: direction.dy,
+    };
+  });
+}
     const customShape = getCustomShapeName(m);
 
 if (customShape === "angled inside corner") {

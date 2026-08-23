@@ -518,7 +518,42 @@ export default function ModuleGeometry({
     </>
   );
 }
+if (kind === "bridge") {
+  const trackSpacing =
+    (33 / 25.4) * layoutScale;
 
+  const centerY = size.height / 2;
+
+  const redTrackY =
+    centerY + trackSpacing / 2;
+
+  const yellowTrackY =
+    centerY - trackSpacing / 2;
+
+  return (
+    <>
+      <line
+        x1="0"
+        y1={redTrackY}
+        x2={size.width}
+        y2={redTrackY}
+        stroke={RED}
+        strokeWidth="2"
+        vectorEffect="non-scaling-stroke"
+      />
+
+      <line
+        x1="0"
+        y1={yellowTrackY}
+        x2={size.width}
+        y2={yellowTrackY}
+        stroke={YELLOW}
+        strokeWidth="2"
+        vectorEffect="non-scaling-stroke"
+      />
+    </>
+  );
+}
     // Same centerline positions used by the current designer preview:
     // 38.1 mm ballast setback + 12.5 mm half-roadbed = 50.6 mm centerline.
     const frontTrackCenter =
