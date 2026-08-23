@@ -826,7 +826,22 @@ rearTrackCenterOffset: mmToPreview(rearTrackCenterMm),
   }
 
   function getTrackEndpointsForModule(m: any, slot: any) {
-    const size = getLayoutSize(m);
+    const endpointShape = getCustomShapeName(m);
+
+const baseSize = getLayoutSize(m);
+
+const polygonForEndpoints =
+  endpointShape === "angled inside corner"
+    ? getPolygonGeometry(m)
+    : null;
+
+const size =
+  polygonForEndpoints?.width && polygonForEndpoints?.height
+    ? {
+        width: polygonForEndpoints.width,
+        height: polygonForEndpoints.height,
+      }
+    : baseSize;
     const kind = getLayoutKind(m);
     const rotation = slot.rotation || 0;
     const radiusPairs: Record<string, [number, number]> = {
