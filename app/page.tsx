@@ -617,6 +617,23 @@ const rearTrackCenterMm =
   } else if (dimensions === 'Quad - 1238 mm (48.74")') {
     width = mmToPreview(1238);
     height = mmToPreview(365.1);
+    } else if (moduleType === "Bridge") {
+
+  const bridgeDepthMm = 120;
+
+  if (bridgeSize === "Single Bridge") {
+    width = mmToPreview(308);
+  } else if (bridgeSize === "Double Bridge") {
+    width = mmToPreview(618);
+  } else if (bridgeSize === "Triple Bridge") {
+    width = mmToPreview(928);
+  } else if (bridgeSize === "Custom Bridge") {
+    width =
+      Math.max(1, Number(customWidthInches) || 24) *
+      LAYOUT_SCALE;
+  }
+
+  height = mmToPreview(bridgeDepthMm);
   } else if (
   moduleType === "Inside Corner" ||
   moduleType === "Outside Corner"
@@ -4162,10 +4179,11 @@ const outerTrackRadius =
 {(
   customShape === "Rectangle" &&
   (
-    moduleType === "Inside Corner" ||
-    moduleType === "Outside Corner" ||
-    moduleType === "End Cap" ||
-    (dimensions && dimensions !== "Other / custom")
+   moduleType === "Inside Corner" ||
+moduleType === "Outside Corner" ||
+moduleType === "End Cap" ||
+moduleType === "Bridge" ||
+(dimensions && dimensions !== "Other / custom")
   )
 ) && (
   <div
