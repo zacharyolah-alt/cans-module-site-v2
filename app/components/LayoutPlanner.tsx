@@ -76,6 +76,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
   if (shape === "rectangle") {
     if (moduleType === "inside corner") return "insideCorner";
     if (moduleType === "outside corner") return "outsideCorner";
+    if (moduleType === "end cap") return "endCap";
 
     return "custom";
   }
