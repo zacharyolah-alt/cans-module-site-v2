@@ -77,7 +77,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     if (moduleType === "inside corner") return "insideCorner";
     if (moduleType === "outside corner") return "outsideCorner";
     if (moduleType === "end cap") return "endCap";
-
+ if (moduleType === "nt junction") return "ntJunction";
     return "custom";
   }
 
