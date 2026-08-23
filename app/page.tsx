@@ -699,7 +699,12 @@ rearTrackCenterOffset: mmToPreview(rearTrackCenterMm),
   function getLayoutSize(m: any) {
     const kind = getLayoutKind(m);
 
-    if (kind === "insideCorner" || kind === "outsideCorner") return { width: 144, height: 144 };
+    if (kind === "insideCorner" || kind === "outsideCorner") {
+  return {
+    width: Math.max(1, Number(m.custom_width_inches || 14.38)) * LAYOUT_SCALE,
+    height: Math.max(1, Number(m.custom_depth_inches || 14.38)) * LAYOUT_SCALE,
+  };
+}
     if (kind === "endCap") return { width: 288, height: 144 };
     if (kind === "single") return { width: 121, height: 144 };
     if (kind === "double") return { width: 243, height: 144 };
@@ -824,14 +829,20 @@ rearTrackCenterOffset: mmToPreview(rearTrackCenterMm),
     const size = getLayoutSize(m);
     const kind = getLayoutKind(m);
     const rotation = slot.rotation || 0;
-    const trackCenters = getMainTrackCenters();
+    const radiusPairs: Record<string, [number, number]> = {
+  "Standard Corner": [282, 315],
+  "Medium Corner": [348, 381],
+  "Large Corner": [447, 480],
+  "Extra-Large Corner": [481, 481],
+};
 
-    // Each module end has one logical connection point centered between the
-    // two parallel main tracks. Snapping this point aligns the complete
-    // two-track interface instead of allowing either individual track to grab.
-    const connectionCenter =
-      trackCenters.reduce((sum, center) => sum + center, 0) /
-      trackCenters.length;
+const selectedPair = radiusPairs[m.corner_size] || [282, 315];
+
+const innerRadius = (selectedPair[0] / 25.4) * LAYOUT_SCALE;
+const outerRadius = (selectedPair[1] / 25.4) * LAYOUT_SCALE;
+
+const connectionCenter =
+  (innerRadius + outerRadius) / 2;
 
     const sideDirection: any = {
       left: { dx: -1, dy: 0 },
