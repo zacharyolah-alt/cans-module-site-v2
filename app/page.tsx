@@ -422,6 +422,7 @@ function exportToCSV() {
     if (customShape === "rectangle") {
   if (moduleType === "inside corner") return "insideCorner";
   if (moduleType === "outside corner") return "outsideCorner";
+  if (moduleType === "nt junction") return "ntJunction";
   if (moduleType === "end cap") return "endCap";
 }
 
@@ -828,6 +829,38 @@ if (kind === "endCap") {
   height: (120 / 25.4) * LAYOUT_SCALE,
 };
     }
+    if (kind === "ntJunction") {
+  const ntJunctionSizes: Record<
+    string,
+    { width: number; depth: number }
+  > = {
+    "Standard Corner": {
+      width: 595,
+      depth: 365,
+    },
+    "Medium Corner": {
+      width: 727,
+      depth: 431,
+    },
+    "Large Corner": {
+      width: 925,
+      depth: 530,
+    },
+    "Extra-Large Corner": {
+      width: 993,
+      depth: 564,
+    },
+  };
+
+  const ntSize =
+    ntJunctionSizes[m.corner_size] ||
+    ntJunctionSizes["Standard Corner"];
+
+  return {
+    width: (ntSize.width / 25.4) * LAYOUT_SCALE,
+    height: (ntSize.depth / 25.4) * LAYOUT_SCALE,
+  };
+}
 
     if (kind === "custom") {
       if (isPolygonModule(m)) {
@@ -996,6 +1029,79 @@ if (kind === "bridge") {
     );
 
     const baseDirection = sideDirection[point.side];
+
+    const direction = rotateDirection(
+      baseDirection.dx,
+      baseDirection.dy,
+      rotation
+    );
+
+    return {
+      x: slot.x + rotated.x,
+      y: slot.y + rotated.y,
+      side: point.side,
+      key: point.side,
+      dx: direction.dx,
+      dy: direction.dy,
+    };
+  });
+}
+if (kind === "ntJunction") {
+  const ntRadiusMm: Record<string, number> = {
+    "Standard Corner": 282,
+    "Medium Corner": 348,
+    "Large Corner": 447,
+    "Extra-Large Corner": 481,
+  };
+
+  const radius =
+    (ntRadiusMm[m.corner_size] || 282) /
+    25.4 *
+    LAYOUT_SCALE;
+
+  const redY =
+    (50.6 / 25.4) * LAYOUT_SCALE;
+
+  const yellowY =
+    (83.6 / 25.4) * LAYOUT_SCALE;
+
+  const sideConnectionY =
+    (redY + yellowY) / 2;
+
+  const bottomLeftX = radius;
+  const bottomRightX = size.width - radius;
+
+  const bottomConnectionX =
+    (bottomLeftX + bottomRightX) / 2;
+
+  const ntPoints = [
+    {
+      x: 0,
+      y: sideConnectionY,
+      side: "left",
+    },
+    {
+      x: size.width,
+      y: sideConnectionY,
+      side: "right",
+    },
+    {
+      x: bottomConnectionX,
+      y: size.height,
+      side: "bottom",
+    },
+  ];
+
+  return ntPoints.map((point) => {
+    const rotated = rotatePoint(
+      point.x,
+      point.y,
+      rotation,
+      size
+    );
+
+    const baseDirection =
+      sideDirection[point.side];
 
     const direction = rotateDirection(
       baseDirection.dx,

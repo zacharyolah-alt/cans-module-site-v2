@@ -482,6 +482,74 @@ export default function ModuleGeometry({
         </>
       );
     }
+    if (kind === "ntJunction") {
+  return (
+    <line
+      {...frontEdgeProps}
+      x1="0"
+      y1="2"
+      x2={size.width}
+      y2="2"
+    />
+  );
+}
+    if (kind === "ntJunction") {
+  const ntRadiusMm: Record<string, number> = {
+    "Standard Corner": 282,
+    "Medium Corner": 348,
+    "Large Corner": 447,
+    "Extra-Large Corner": 481,
+  };
+
+  const radius = mmToLayout(
+    ntRadiusMm[module.corner_size] || 282
+  );
+
+  const redY = mmToLayout(50.6);
+  const yellowY = mmToLayout(83.6);
+
+  const leftBottomX = radius;
+  const rightBottomX = size.width - radius;
+
+  return (
+    <>
+      {/* Red track stays straight across the module */}
+      <line
+        x1="0"
+        y1={redY}
+        x2={size.width}
+        y2={redY}
+        stroke={RED}
+        strokeWidth="2"
+        vectorEffect="non-scaling-stroke"
+      />
+
+      {/* Yellow track from left, curving to bottom */}
+      <path
+        d={`M 0 ${yellowY}
+            A ${radius} ${radius}
+            0 0 1
+            ${leftBottomX} ${size.height}`}
+        fill="none"
+        stroke={YELLOW}
+        strokeWidth="2"
+        vectorEffect="non-scaling-stroke"
+      />
+
+      {/* Yellow track from right, curving to bottom */}
+      <path
+        d={`M ${size.width} ${yellowY}
+            A ${radius} ${radius}
+            0 0 0
+            ${rightBottomX} ${size.height}`}
+        fill="none"
+        stroke={YELLOW}
+        strokeWidth="2"
+        vectorEffect="non-scaling-stroke"
+      />
+    </>
+  );
+}
 
    if (kind === "endCap") {
   const tracks = [
