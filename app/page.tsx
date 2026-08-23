@@ -893,11 +893,13 @@ const connectionCenter =
   (innerRadius + outerRadius) / 2;
 
     const sideDirection: any = {
-      left: { dx: -1, dy: 0 },
-      right: { dx: 1, dy: 0 },
-      top: { dx: 0, dy: -1 },
-      bottom: { dx: 0, dy: 1 },
-    };
+  left: { dx: -1, dy: 0 },
+  leftTop: { dx: -1, dy: 0 },
+  leftBottom: { dx: -1, dy: 0 },
+  right: { dx: 1, dy: 0 },
+  top: { dx: 0, dy: -1 },
+  bottom: { dx: 0, dy: 1 },
+};
     const customShape = getCustomShapeName(m);
 
 if (customShape === "angled inside corner") {
@@ -1187,9 +1189,20 @@ if (
     },
   ];
 }
-    const localPoints =
-      kind === "endCap"
-        ? [{ x: 0, y: connectionCenter, side: "left" }]
+  const localPoints =
+  kind === "endCap"
+    ? [
+        {
+          x: 0,
+          y: size.height / 2 - connectionCenter,
+          side: "leftTop",
+        },
+        {
+          x: 0,
+          y: size.height / 2 + connectionCenter,
+          side: "leftBottom",
+        },
+      ]
        : isCornerKind(kind)
   ? kind === "outsideCorner"
     ? [
