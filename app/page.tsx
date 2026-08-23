@@ -620,13 +620,36 @@ const rearTrackCenterMm =
   moduleType === "Inside Corner" ||
   moduleType === "Outside Corner"
 ) {
-  width = Math.max(1, Number(customWidthInches) || 14.38) * LAYOUT_SCALE;
-  height = Math.max(1, Number(customDepthInches) || 14.38) * LAYOUT_SCALE;
+
+  width =
+    Math.max(1, Number(customWidthInches) || 14.38) *
+    LAYOUT_SCALE;
+
+  height =
+    Math.max(1, Number(customDepthInches) || 14.38) *
+    LAYOUT_SCALE;
+
+} else if (moduleType === "End Cap") {
+
+  // For an End Cap, the long physical dimension is the
+  // connection-edge span. Display that vertically so both
+  // ends of the 180° return meet the same connection edge.
+  width =
+    Math.max(1, Number(customDepthInches) || 14.38) *
+    LAYOUT_SCALE;
+
+  height =
+    Math.max(1, Number(customWidthInches) || 28.81) *
+    LAYOUT_SCALE;
+
 } else if (
-    dimensions === 'End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")'
-  ) {
-    width = mmToPreview(731.8);
-    height = mmToPreview(365.1);
+  dimensions === 'End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")'
+) {
+
+  // Legacy End Cap records that do not yet have Module Type = End Cap
+  width = mmToPreview(365.1);
+
+  height = mmToPreview(731.8);
   } else if (
     dimensions === 'Interchange Double - 390 mm x 618 mm (15.35" x 24.33")'
   ) {
@@ -646,8 +669,8 @@ const rearTrackCenterMm =
     moduleType === "Outside Corner";
 
   const isEndCap =
-    dimensions === 'End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")' ||
-    cornerSize === 'End Cap - 365 mm x 732 mm (14.37" x 28.82")';
+  moduleType === "End Cap" ||
+  dimensions === 'End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")';
 
   const isCustom = dimensions === "Other / custom";
 
