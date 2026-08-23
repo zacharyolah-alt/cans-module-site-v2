@@ -144,17 +144,18 @@ export default function ModuleGeometry({
   };
 
   const renderBody = () => {
-    if (kind === "endCap") {
-      return (
-        <path
-          {...bodyProps}
-          d={`M 0 0 H ${size.width - size.height / 2}
-              A ${size.height / 2} ${size.height / 2} 0 0 1
-              ${size.width - size.height / 2} ${size.height}
-              H 0 Z`}
-        />
-      );
-    }
+   if (kind === "endCap") {
+  return (
+    <rect
+      {...bodyProps}
+      x="0"
+      y="0"
+      width={size.width}
+      height={size.height}
+      rx="1"
+    />
+  );
+}
 
     if (kind === "insideCorner" || kind === "outsideCorner") {
       return (
@@ -262,16 +263,37 @@ export default function ModuleGeometry({
     }
 
     if (kind === "endCap") {
-      return (
-        <line
-          {...frontEdgeProps}
-          x1="0"
-          y1="0"
-          x2="0"
-          y2={size.height}
-        />
-      );
-    }
+  return (
+    <>
+      {/* Top exposed edge */}
+      <line
+        {...frontEdgeProps}
+        x1="0"
+        y1="2"
+        x2={size.width}
+        y2="2"
+      />
+
+      {/* Right exposed edge */}
+      <line
+        {...frontEdgeProps}
+        x1={size.width - 2}
+        y1="0"
+        x2={size.width - 2}
+        y2={size.height}
+      />
+
+      {/* Bottom exposed edge */}
+      <line
+        {...frontEdgeProps}
+        x1="0"
+        y1={size.height - 2}
+        x2={size.width}
+        y2={size.height - 2}
+      />
+    </>
+  );
+}
 
     if (isPolygonModule(module)) {
       const points: Point[] = getPolygonGeometry(module)?.points || [];
@@ -461,36 +483,41 @@ export default function ModuleGeometry({
       );
     }
 
-    if (kind === "endCap") {
-      // Keep the legacy end-cap path for now; Goal 5 is about preserving the
-      // already-proven designer geometry for the newly-created shapes.
-      const front = 20;
-      const rear = 33;
+   if (kind === "endCap") {
+  const tracks = [
+    {
+      radius: mmToLayout(pair[0]),
+      color: YELLOW,
+    },
+    {
+      radius: mmToLayout(pair[1]),
+      color: RED,
+    },
+  ];
 
-      return (
-        <>
-          {[front, rear].map((offset, index) => {
-            const radius = Math.max(1, size.height / 2 - offset);
-            return (
-              <path
-                key={`end-cap-track-${index}`}
-                d={`M 0 ${offset}
-                    H ${size.width - size.height / 2}
-                    A ${radius} ${radius}
-                    0 0 1
-                    ${size.width - size.height / 2}
-                    ${size.height - offset}
-                    H 0`}
-                fill="none"
-                stroke={index === 0 ? RED : YELLOW}
-                strokeWidth="2"
-                vectorEffect="non-scaling-stroke"
-              />
-            );
-          })}
-        </>
-      );
-    }
+  const centerX = 0;
+  const centerY = size.height / 2;
+
+  return (
+    <>
+      {tracks.map((track, index) => (
+        <path
+          key={`end-cap-track-${index}`}
+          d={`
+            M ${centerX} ${centerY - track.radius}
+            A ${track.radius} ${track.radius}
+              0 0 1
+              ${centerX} ${centerY + track.radius}
+          `}
+          fill="none"
+          stroke={track.color}
+          strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
+        />
+      ))}
+    </>
+  );
+}
 
     // Same centerline positions used by the current designer preview:
     // 38.1 mm ballast setback + 12.5 mm half-roadbed = 50.6 mm centerline.

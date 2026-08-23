@@ -407,6 +407,7 @@ function exportToCSV() {
     if (customShape === "rectangle") {
   if (moduleType === "inside corner") return "insideCorner";
   if (moduleType === "outside corner") return "outsideCorner";
+  if (moduleType === "end cap") return "endCap";
 }
 
     // Module type describes the module's purpose. The physical outline comes
