@@ -3148,8 +3148,14 @@ button {
   </div>
 
   {/* CLEAR */}
-  <button
+ <button
   className="blackBtn clearBtn"
+  style={{
+    width: "fit-content",
+    justifySelf: "start",
+    padding: "8px 14px",
+    marginTop: "4px",
+  }}
   onClick={() => {
     setStandardFilter("All");
     setStatusFilter("All");
