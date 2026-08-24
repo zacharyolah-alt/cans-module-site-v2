@@ -2373,12 +2373,12 @@ dragHistoryStartedRef.current = true;
   font-weight: 700;
   border: none;
 }
-
 .clearBtn {
-  width: auto;
-  align-self: flex-start;
-  padding: 10px 16px;
-  margin-top: 10px;
+  width: fit-content;
+  justify-self: start;
+  align-self: start;
+  padding: 8px 14px;
+  margin-top: 4px;
 }
 .viewToggle {
   display: flex;
