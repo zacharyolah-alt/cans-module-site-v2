@@ -482,17 +482,7 @@ export default function ModuleGeometry({
         </>
       );
     }
-    if (kind === "ntJunction") {
-  return (
-    <line
-      {...frontEdgeProps}
-      x1="0"
-      y1="2"
-      x2={size.width}
-      y2="2"
-    />
-  );
-}
+   
     if (kind === "ntJunction") {
   const ntRadiusMm: Record<string, number> = {
     "Standard Corner": 282,
