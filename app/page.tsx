@@ -2370,19 +2370,21 @@ dragHistoryStartedRef.current = true;
   flex-wrap: wrap;
 }
  .compactField {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 4px;
-  min-width: 0;
+  display: grid !important;
+  grid-template-columns: 115px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
   width: 100%;
+  min-width: 0;
   box-sizing: border-box;
 }
 
 .compactField label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
   margin: 0;
+  white-space: nowrap;
 }
 
 .compactField select,
