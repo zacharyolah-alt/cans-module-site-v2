@@ -169,6 +169,17 @@ export default function ModuleGeometry({
         />
       );
     }
+    if (kind === "ntJunction") {
+  return (
+    <line
+      {...frontEdgeProps}
+      x1="0"
+      y1="2"
+      x2={size.width}
+      y2="2"
+    />
+  );
+}
 
     if (shape === "pie shaped outside corner") {
       const radius = Math.min(size.width, size.height);
