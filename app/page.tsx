@@ -2278,7 +2278,19 @@ dragHistoryStartedRef.current = true;
 }
 
 .uploadBox {
-         padding: 14px; border-radius: 15px; border: 2px dashed #999; background: #fafafa; font-weight: 900; text-align: center; cursor: pointer; }
+  height: 44px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  border: 2px dashed #999;
+  background: #fafafa;
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
         .preview { margin-top: 15px; width: 200px; max-width: 100%; border-radius: 16px; border: 1px solid #ddd; }
         .sectionHeader { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
         .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
