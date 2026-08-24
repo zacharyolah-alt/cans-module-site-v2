@@ -2224,8 +2224,7 @@ dragHistoryStartedRef.current = true;
 }
 
 .filtersTitle {
-  margin-top: 0;
-  margin-bottom: 18px;
+  margin: 0 0 10px 0;
   font-size: 28px;
 }
        input, select { padding: 14px; border-radius: 15px; border: 1px solid #ccc; font-size: 16px; background: white; }
@@ -2236,8 +2235,7 @@ dragHistoryStartedRef.current = true;
         .formCard { background: white; padding: 22px; border-radius: 24px; border-top: 8px solid #ffd21f; box-shadow: 0 10px 26px rgba(0,0,0,.08); margin-bottom: 26px; }
         
 .filtersTitle {
-  margin-top: 0;
-  margin-bottom: 18px;
+  margin: 0 0 10px 0;
   font-size: 28px;
 }
         .filters {
@@ -2439,9 +2437,15 @@ button {
 }
           .actions { flex-direction: column; }
         }
-        .filterGroup p {
+   .filterGroup p {
   font-size: 14px;
-  margin-bottom: 4px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+}
+  .filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .buttonRow {
