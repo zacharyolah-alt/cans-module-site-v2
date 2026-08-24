@@ -3162,22 +3162,7 @@ button {
   onChange={(e) => setOwnerName(e.target.value)}
 />
 
-              <label className="uploadBox">
-                {uploading
-                  ? "Uploading..."
-                  : photo
-                  ? "Change Module Photo"
-                  : "Choose Module Photo"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) uploadPhoto(file);
-                  }}
-                />
-              </label>
+             
            <div className="compactField">
   <label>Module Standard</label>
   <select
@@ -4774,7 +4759,22 @@ previewSize.outerRadius ? (
     </div>
   </div>
 )}
-
+ <label className="uploadBox">
+                {uploading
+                  ? "Uploading..."
+                  : photo
+                  ? "Change Module Photo"
+                  : "Choose Module Photo"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadPhoto(file);
+                  }}
+                />
+              </label>
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option>Planning</option>
                 <option>Under Construction</option>
