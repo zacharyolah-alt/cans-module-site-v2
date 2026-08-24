@@ -2368,6 +2368,36 @@ dragHistoryStartedRef.current = true;
   margin: 18px 0;
   flex-wrap: wrap;
 }
+  .compactField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.compactField label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+}
+
+.compactField select,
+.compactField input {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  padding: 6px 10px;
+  box-sizing: border-box;
+  border-radius: 8px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+  align-items: start;
+}
         @media (max-width: 700px) {
           .page { padding: 12px; }
           .hero { flex-direction: column; text-align: center; padding: 22px; }
@@ -3143,169 +3173,216 @@ button {
                   }}
                 />
               </label>
-              <label>Module Standard</label>
-<select
-  value={standard}
-  onChange={(e) => setStandard(e.target.value)}
->
-  <option>T-Trak</option>
-  <option>N-Trak</option>
-  <option>Free-moN</option>
-  <option>Other</option>
-</select>
- <div>
-  <label>Module Shape</label>
+           <div className="compactField">
+  <label>Module Standard</label>
   <select
-  
-    value={customShape}
-  onChange={(e) => {
-  const value = e.target.value;
-  setCustomShape(value);
-
-  if (value === "Angled Inside Corner") {
-    setPolygonSides("5");
-
-    setPolygonSideLengths({
-      1: "14",
-      2: "14",
-      3: "10",
-      4: "14",
-      5: "10",
-    });
-
-    setPolygonAngles({
-      1: "90",
-      2: "135",
-      3: "135",
-      4: "90",
-    });
-
-    setTrackEntryEdge("2");
-    setTrackExitEdge("4");
-  }
-
-  if (value === "Pie-Shaped Outside Corner") {
-    setPolygonSides("3");
-
-    setPolygonSideLengths({
-      1: "14",
-      2: "14",
-      3: "20",
-    });
-
-    setPolygonAngles({
-      1: "90",
-      2: "45",
-    });
-
-    setTrackEntryEdge("1");
-    setTrackExitEdge("2");
-  }
-}}
+    value={standard}
+    onChange={(e) => setStandard(e.target.value)}
   >
-  <option value="Rectangle">Square / Rectangle</option>
-<option>Angled Inside Corner</option>
-<option>Pie-Shaped Outside Corner</option>
-<option value="Polygon" disabled>
-  Polygon (Legacy - not layout compatible)
-</option>
+    <option>T-Trak</option>
+    <option>N-Trak</option>
+    <option>Free-moN</option>
+    <option>Other</option>
   </select>
 </div>
-{moduleType !== "Inside Corner" &&
- moduleType !== "Outside Corner" &&
- moduleType !== "Bridge" &&
- moduleType !== "NT Junction" && (
-  <>
-    <label>Standard Module Size</label>
-    <select
-      value={dimensions}
-      onChange={(e) => setDimensions(e.target.value)}
-    >
-      <option value="">Select module size</option>
-      <option>Single - 308 mm (12.13")</option>
-      <option>Double - 618 mm (24.33")</option>
-      <option>Triple - 928 mm (36.54")</option>
-      <option>Quad - 1238 mm (48.74")</option>
-      <option>Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")</option>
-      <option>End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")</option>
-      <option>Interchange Double - 390 mm x 618 mm (15.35" x 24.33")</option>
-      <option>Interchange Triple - 474 mm x 928 mm (18.66" x 36.54")</option>
-      <option>Other / custom</option>
-    </select>
-  </>
-)}
-<label>Module Type</label>
-<select
-  value={moduleType}
-onChange={(e) => {
-  const value = e.target.value;
 
-  setModuleType(value);
-  setCornerSize("");
-
-  if (value === "Inside Corner" || value === "Outside Corner") {
-    setDimensions("");
-  }
-}}
->
-  <option>Straight</option>
-<option>Inside Corner</option>
-<option>Outside Corner</option>
-<option>End Cap</option>
-<option>Bridge</option>
-<option>NT Junction</option>
-</select>
-
-<select
-  value={trackType}
-  onChange={(e) => setTrackType(e.target.value)}
->
-  <option>Straight</option>
-  <option>Inside Curve</option>
-  <option>Outside Curve</option>
-</select>
-              {moduleType === "Bridge" && (
+<div className="compactField">
+  <label>Module Shape</label>
   <select
-   value={bridgeSize}
-    onChange={(e) => setBridgeSize(e.target.value)}
+    value={customShape}
+    onChange={(e) => {
+      const value = e.target.value;
+      setCustomShape(value);
+
+      if (value === "Angled Inside Corner") {
+        setPolygonSides("5");
+
+        setPolygonSideLengths({
+          1: "14",
+          2: "14",
+          3: "10",
+          4: "14",
+          5: "10",
+        });
+
+        setPolygonAngles({
+          1: "90",
+          2: "135",
+          3: "135",
+          4: "90",
+        });
+
+        setTrackEntryEdge("2");
+        setTrackExitEdge("4");
+      }
+
+      if (value === "Pie-Shaped Outside Corner") {
+        setPolygonSides("3");
+
+        setPolygonSideLengths({
+          1: "14",
+          2: "14",
+          3: "20",
+        });
+
+        setPolygonAngles({
+          1: "90",
+          2: "45",
+        });
+
+        setTrackEntryEdge("1");
+        setTrackExitEdge("2");
+      }
+    }}
   >
-    <option value="">Select bridge size</option>
-    <option>Single Bridge</option>
-    <option>Double Bridge</option>
-    <option>Triple Bridge</option>
-    <option>Custom Bridge</option>
+    <option value="Rectangle">
+      Square / Rectangle
+    </option>
+    <option>Angled Inside Corner</option>
+    <option>Pie-Shaped Outside Corner</option>
+    <option value="Polygon" disabled>
+      Polygon (Legacy - not layout compatible)
+    </option>
   </select>
+</div>
+
+{moduleType !== "Inside Corner" &&
+  moduleType !== "Outside Corner" &&
+  moduleType !== "Bridge" &&
+  moduleType !== "NT Junction" && (
+    <div className="compactField">
+      <label>Standard Module Size</label>
+      <select
+        value={dimensions}
+        onChange={(e) => setDimensions(e.target.value)}
+      >
+        <option value="">Select module size</option>
+        <option>
+          Single - 308 mm (12.13")
+        </option>
+        <option>
+          Double - 618 mm (24.33")
+        </option>
+        <option>
+          Triple - 928 mm (36.54")
+        </option>
+        <option>
+          Quad - 1238 mm (48.74")
+        </option>
+        <option>
+          Corner - 365.1 mm x 365.1 mm (14.38" x 14.38")
+        </option>
+        <option>
+          End Cap - 731.8 mm x 365.1 mm (28.81" x 14.38")
+        </option>
+        <option>
+          Interchange Double - 390 mm x 618 mm (15.35" x 24.33")
+        </option>
+        <option>
+          Interchange Triple - 474 mm x 928 mm (18.66" x 36.54")
+        </option>
+        <option>Other / custom</option>
+      </select>
+    </div>
+  )}
+
+<div className="compactField">
+  <label>Module Type</label>
+  <select
+    value={moduleType}
+    onChange={(e) => {
+      const value = e.target.value;
+
+      setModuleType(value);
+      setCornerSize("");
+
+      if (
+        value === "Inside Corner" ||
+        value === "Outside Corner"
+      ) {
+        setDimensions("");
+      }
+    }}
+  >
+    <option>Straight</option>
+    <option>Inside Corner</option>
+    <option>Outside Corner</option>
+    <option>End Cap</option>
+    <option>Bridge</option>
+    <option>NT Junction</option>
+  </select>
+</div>
+
+<div className="compactField">
+  <label>Track Type</label>
+  <select
+    value={trackType}
+    onChange={(e) =>
+      setTrackType(e.target.value)
+    }
+  >
+    <option>Straight</option>
+    <option>Inside Curve</option>
+    <option>Outside Curve</option>
+  </select>
+</div>
+
+{moduleType === "Bridge" && (
+  <div className="compactField">
+    <label>Bridge Size</label>
+    <select
+      value={bridgeSize}
+      onChange={(e) =>
+        setBridgeSize(e.target.value)
+      }
+    >
+      <option value="">
+        Select bridge size
+      </option>
+      <option>Single Bridge</option>
+      <option>Double Bridge</option>
+      <option>Triple Bridge</option>
+      <option>Custom Bridge</option>
+    </select>
+  </div>
 )}
- {(
+
+{(
   moduleType === "Inside Corner" ||
   moduleType === "Outside Corner" ||
   moduleType === "End Cap" ||
   moduleType === "NT Junction"
 ) && (
-  <>
-    <label>Corner Size</label>
+  <div className="compactField">
+    <label>Corner / Radius Size</label>
     <select
       value={cornerSize}
-  onChange={(e) => {
-  setCornerSize(e.target.value);
-}}
-  >
-    <option value="">Select corner size</option>
-<option value="Standard Corner">
-  Standard Corner - 282 / 315 mm - 365 mm square
-</option>
-<option value="Medium Corner">
-  Medium Corner - 348 / 381 mm - 431 mm square
-</option>
-<option value="Large Corner">
-  Large Corner - 447 / 480 mm - 530 mm square
-</option>
-<option value="Extra-Large Corner">
-  Extra-Large Corner - 481 mm + extensions - 564 mm square
-</option>
-      </select>
-  </>
-)}
+      onChange={(e) =>
+        setCornerSize(e.target.value)
+      }
+    >
+      <option value="">
+        Select radius size
+      </option>
+
+      <option value="Standard Corner">
+        Standard - 282 / 315 mm
+      </option>
+
+      <option value="Medium Corner">
+        Medium - 348 / 381 mm
+      </option>
+
+      <option value="Large Corner">
+        Large - 447 / 480 mm
+      </option>
+
+      <option value="Extra-Large Corner">
+        Extra-Large - 481 mm + extensions
+      </option>
+    </select>
+  </div>
+)}  
 
 {(
   moduleType === "Inside Corner" ||
