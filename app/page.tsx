@@ -2368,11 +2368,13 @@ dragHistoryStartedRef.current = true;
   margin: 18px 0;
   flex-wrap: wrap;
 }
-  .compactField {
+ .compactField {
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .compactField label {
