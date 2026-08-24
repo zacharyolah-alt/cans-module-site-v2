@@ -2228,8 +2228,7 @@ dragHistoryStartedRef.current = true;
   margin-bottom: 18px;
   font-size: 28px;
 }
-        .filters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-        input, select { padding: 14px; border-radius: 15px; border: 1px solid #ccc; font-size: 16px; background: white; }
+       input, select { padding: 14px; border-radius: 15px; border: 1px solid #ccc; font-size: 16px; background: white; }
         button { border: 0; border-radius: 15px; padding: 14px 18px; font-weight: 900; cursor: pointer; }
         .blackBtn { background: #050505; color: #ffd21f; }
         .yellowBtn { background: #ffd21f; color: black; margin-top: 14px; margin-right: 10px; }
@@ -2241,7 +2240,13 @@ dragHistoryStartedRef.current = true;
   margin-bottom: 18px;
   font-size: 28px;
 }
-        .filters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin-bottom: 14px;
+  align-items: start;
+}
        input, select {
   padding: 10px 12px;
   border-radius: 10px;
