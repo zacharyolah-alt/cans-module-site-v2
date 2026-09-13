@@ -3327,6 +3327,8 @@ button {
     <option>End Cap</option>
     <option>Bridge</option>
     <option>NT Junction</option>
+<option>Yard</option>
+<option>Yard Lead</option>
   </select>
 </div>
 
@@ -3404,7 +3406,9 @@ button {
 {(
   moduleType === "Inside Corner" ||
   moduleType === "Outside Corner" ||
-  moduleType === "End Cap"
+  moduleType === "End Cap" ||
+  moduleType === "Yard" ||
+  moduleType === "Yard Lead"
 ) && (
   <div>
   <label>Actual Module Width (inches)</label>
