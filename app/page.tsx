@@ -3840,45 +3840,79 @@ button {
           </label>
 
           <label>
-            Points from Left
             <input
-              type="number"
-              step="0.25"
-              value={track.x ?? 8}
-              onChange={(e) =>
-                setTrackLayout((current) =>
-                  current.map((item, itemIndex) =>
-                    itemIndex === index
-                      ? {
-                          ...item,
-                          x: Number(e.target.value),
-                        }
-                      : item
-                  )
-                )
-              }
-            />
+  type="text"
+  inputMode="decimal"
+  value={track.x ?? ""}
+  onChange={(e) => {
+    const value = e.target.value;
+
+    setTrackLayout((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              x: value,
+            }
+          : item
+      )
+    );
+  }}
+  onBlur={(e) => {
+    const value = Number(e.target.value);
+
+    setTrackLayout((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              x: Number.isFinite(value)
+                ? value
+                : 0,
+            }
+          : item
+      )
+    );
+  }}
+/>
           </label>
 
           <label>
-            Points from Front
             <input
-              type="number"
-              step="0.25"
-              value={track.y ?? 2}
-              onChange={(e) =>
-                setTrackLayout((current) =>
-                  current.map((item, itemIndex) =>
-                    itemIndex === index
-                      ? {
-                          ...item,
-                          y: Number(e.target.value),
-                        }
-                      : item
-                  )
-                )
-              }
-            />
+  type="text"
+  inputMode="decimal"
+  value={track.y ?? ""}
+  onChange={(e) => {
+    const value = e.target.value;
+
+    setTrackLayout((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              y: value,
+            }
+          : item
+      )
+    );
+  }}
+  onBlur={(e) => {
+    const value = Number(e.target.value);
+
+    setTrackLayout((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              y: Number.isFinite(value)
+                ? value
+                : 0,
+            }
+          : item
+      )
+    );
+  }}
+/>
           </label>
         </div>
 
