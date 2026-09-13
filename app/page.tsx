@@ -3535,6 +3535,30 @@ button {
         >
           + Yellow Track
         </button>
+        <button
+  type="button"
+  className="grayBtn"
+  onClick={() => {
+    const width = Number(customWidthInches) || 24;
+    const depth = Number(customDepthInches) || 14;
+
+    setTrackLayout((current) => [
+      ...current,
+      {
+        id: `${Date.now()}-turnout`,
+        type: "turnout",
+        turnoutModel: "kato-6",
+        color: "red",
+        direction: "forward",
+        hand: "left",
+        x: Math.min(width, 8),
+        y: Math.min(depth, 2),
+      },
+    ]);
+  }}
+>
+  + Kato #6 Turnout
+</button>
       </div>
     </div>
 
@@ -3557,129 +3581,309 @@ button {
           gap: "10px",
         }}
       >
-        {trackLayout.map((track, index) => (
-          <div
-            key={track.id || index}
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "minmax(90px, 120px) repeat(3, minmax(90px, 1fr)) auto",
-              gap: "8px",
-              alignItems: "end",
-              padding: "10px",
-              border: "1px solid #ddd",
-              borderRadius: "9px",
-              background: "white",
-            }}
+       {trackLayout.map((track, index) => (
+  <div
+    key={track.id || index}
+    style={{
+      padding: "10px",
+      border: "1px solid #ddd",
+      borderRadius: "9px",
+      background: "white",
+    }}
+  >
+    {track.type === "turnout" ? (
+      <>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "10px",
+            marginBottom: "10px",
+          }}
+        >
+          <strong>Kato #6 Turnout</strong>
+
+          <button
+            type="button"
+            className="grayBtn"
+            onClick={() =>
+              setTrackLayout((current) =>
+                current.filter(
+                  (_item, itemIndex) =>
+                    itemIndex !== index
+                )
+              )
+            }
           >
-            <label>
-              Color
-              <select
-                value={track.color || "red"}
-                onChange={(e) =>
-                  setTrackLayout((current) =>
-                    current.map((item, itemIndex) =>
-                      itemIndex === index
-                        ? {
-                            ...item,
-                            color: e.target.value,
-                          }
-                        : item
-                    )
-                  )
-                }
-              >
-                <option value="red">Red</option>
-                <option value="yellow">Yellow</option>
-              </select>
-            </label>
+            Remove
+          </button>
+        </div>
 
-            <label>
-              Start from Left
-              <input
-                type="number"
-                step="0.25"
-                value={track.startX ?? 0}
-                onChange={(e) =>
-                  setTrackLayout((current) =>
-                    current.map((item, itemIndex) =>
-                      itemIndex === index
-                        ? {
-                            ...item,
-                            startX: Number(e.target.value),
-                          }
-                        : item
-                    )
-                  )
-                }
-              />
-            </label>
-
-            <label>
-              End from Left
-              <input
-                type="number"
-                step="0.25"
-                value={
-  track.endX ??
-  (Number(customWidthInches) || 24)
-}
-                onChange={(e) =>
-                  setTrackLayout((current) =>
-                    current.map((item, itemIndex) =>
-                      itemIndex === index
-                        ? {
-                            ...item,
-                            endX: Number(e.target.value),
-                          }
-                        : item
-                    )
-                  )
-                }
-              />
-            </label>
-
-            <label>
-              From Front Edge
-              <input
-                type="number"
-                step="0.25"
-                value={track.y ?? 2}
-                onChange={(e) =>
-                  setTrackLayout((current) =>
-                    current.map((item, itemIndex) =>
-                      itemIndex === index
-                        ? {
-                            ...item,
-                            y: Number(e.target.value),
-                          }
-                        : item
-                    )
-                  )
-                }
-              />
-            </label>
-
-            <button
-              type="button"
-              className="grayBtn"
-              onClick={() =>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(130px, 1fr))",
+            gap: "8px",
+            alignItems: "end",
+          }}
+        >
+          <label>
+            Track Color
+            <select
+              value={track.color || "red"}
+              onChange={(e) =>
                 setTrackLayout((current) =>
-                  current.filter(
-                    (_item, itemIndex) =>
-                      itemIndex !== index
+                  current.map((item, itemIndex) =>
+                    itemIndex === index
+                      ? {
+                          ...item,
+                          color: e.target.value,
+                        }
+                      : item
                   )
                 )
               }
-              style={{
-                height: "38px",
-                whiteSpace: "nowrap",
-              }}
             >
-              Remove
-            </button>
-          </div>
-        ))}
+              <option value="red">Red</option>
+              <option value="yellow">Yellow</option>
+            </select>
+          </label>
+
+          <label>
+            Direction
+            <select
+              value={track.direction || "forward"}
+              onChange={(e) =>
+                setTrackLayout((current) =>
+                  current.map((item, itemIndex) =>
+                    itemIndex === index
+                      ? {
+                          ...item,
+                          direction: e.target.value,
+                        }
+                      : item
+                  )
+                )
+              }
+            >
+              <option value="forward">
+                Forward
+              </option>
+              <option value="reverse">
+                Reverse
+              </option>
+            </select>
+          </label>
+
+          <label>
+            Turnout Hand
+            <select
+              value={track.hand || "left"}
+              onChange={(e) =>
+                setTrackLayout((current) =>
+                  current.map((item, itemIndex) =>
+                    itemIndex === index
+                      ? {
+                          ...item,
+                          hand: e.target.value,
+                        }
+                      : item
+                  )
+                )
+              }
+            >
+              <option value="left">
+                Left
+              </option>
+              <option value="right">
+                Right
+              </option>
+            </select>
+          </label>
+
+          <label>
+            Points from Left
+            <input
+              type="number"
+              step="0.25"
+              value={track.x ?? 8}
+              onChange={(e) =>
+                setTrackLayout((current) =>
+                  current.map((item, itemIndex) =>
+                    itemIndex === index
+                      ? {
+                          ...item,
+                          x: Number(e.target.value),
+                        }
+                      : item
+                  )
+                )
+              }
+            />
+          </label>
+
+          <label>
+            Points from Front
+            <input
+              type="number"
+              step="0.25"
+              value={track.y ?? 2}
+              onChange={(e) =>
+                setTrackLayout((current) =>
+                  current.map((item, itemIndex) =>
+                    itemIndex === index
+                      ? {
+                          ...item,
+                          y: Number(e.target.value),
+                        }
+                      : item
+                  )
+                )
+              }
+            />
+          </label>
+        </div>
+
+        <div
+          style={{
+            marginTop: "8px",
+            fontSize: "12px",
+            color: "#666",
+          }}
+        >
+          Kato #6 · 186 mm length · R718 mm · 15° diverging route
+        </div>
+      </>
+    ) : (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "minmax(90px, 120px) repeat(3, minmax(90px, 1fr)) auto",
+          gap: "8px",
+          alignItems: "end",
+        }}
+      >
+        <label>
+          Color
+          <select
+            value={track.color || "red"}
+            onChange={(e) =>
+              setTrackLayout((current) =>
+                current.map((item, itemIndex) =>
+                  itemIndex === index
+                    ? {
+                        ...item,
+                        color: e.target.value,
+                      }
+                    : item
+                )
+              )
+            }
+          >
+            <option value="red">Red</option>
+            <option value="yellow">
+              Yellow
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Start from Left
+          <input
+            type="number"
+            step="0.25"
+            value={track.startX ?? 0}
+            onChange={(e) =>
+              setTrackLayout((current) =>
+                current.map((item, itemIndex) =>
+                  itemIndex === index
+                    ? {
+                        ...item,
+                        startX: Number(
+                          e.target.value
+                        ),
+                      }
+                    : item
+                )
+              )
+            }
+          />
+        </label>
+
+        <label>
+          End from Left
+          <input
+            type="number"
+            step="0.25"
+            value={
+              track.endX ??
+              (Number(customWidthInches) || 24)
+            }
+            onChange={(e) =>
+              setTrackLayout((current) =>
+                current.map((item, itemIndex) =>
+                  itemIndex === index
+                    ? {
+                        ...item,
+                        endX: Number(
+                          e.target.value
+                        ),
+                      }
+                    : item
+                )
+              )
+            }
+          />
+        </label>
+
+        <label>
+          From Front Edge
+          <input
+            type="number"
+            step="0.25"
+            value={track.y ?? 2}
+            onChange={(e) =>
+              setTrackLayout((current) =>
+                current.map((item, itemIndex) =>
+                  itemIndex === index
+                    ? {
+                        ...item,
+                        y: Number(
+                          e.target.value
+                        ),
+                      }
+                    : item
+                )
+              )
+            }
+          />
+        </label>
+
+        <button
+          type="button"
+          className="grayBtn"
+          onClick={() =>
+            setTrackLayout((current) =>
+              current.filter(
+                (_item, itemIndex) =>
+                  itemIndex !== index
+              )
+            )
+          }
+          style={{
+            height: "38px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Remove
+        </button>
+      </div>
+    )}
+  </div>
+))}
       </div>
     )}
   </div>
@@ -4790,11 +4994,208 @@ moduleType === "Yard Lead" ||
   <>
     {trackLayout.map((track, index) => {
       const moduleWidth =
-        Math.max(1, Number(customWidthInches) || 24);
+        Math.max(
+          1,
+          Number(customWidthInches) || 24
+        );
 
       const moduleDepth =
-        Math.max(1, Number(customDepthInches) || 14);
+        Math.max(
+          1,
+          Number(customDepthInches) || 14
+        );
 
+      const trackColor =
+        track.color === "yellow"
+          ? "#d4a900"
+          : "red";
+
+      /*
+       * Kato #6 turnout
+       *
+       * Nominal straight length: 186 mm
+       * Diverging radius: 718 mm
+       * Diverging angle: 15 degrees
+       *
+       * The turnout's X/Y position is the POINTS
+       * end of the turnout.
+       */
+      if (track.type === "turnout") {
+        const mmToInches = (mm: number) =>
+          mm / 25.4;
+
+        const turnoutLength =
+          mmToInches(186);
+
+        const turnoutRadius =
+          mmToInches(718);
+
+        const turnoutAngle =
+          (15 * Math.PI) / 180;
+
+        /*
+         * Longitudinal and lateral displacement
+         * of the diverging endpoint.
+         */
+        const divergeForward =
+          turnoutRadius *
+          Math.sin(turnoutAngle);
+
+        const divergeSide =
+          turnoutRadius *
+          (1 - Math.cos(turnoutAngle));
+
+        const anchorX = Math.max(
+          0,
+          Math.min(
+            moduleWidth,
+            Number(track.x) || 0
+          )
+        );
+
+        const anchorFromFront = Math.max(
+          0,
+          Math.min(
+            moduleDepth,
+            Number(track.y) || 0
+          )
+        );
+
+        /*
+         * Club running convention:
+         *
+         * Red Forward    = left -> right
+         * Yellow Forward = right -> left
+         *
+         * Reverse flips that direction.
+         */
+        let directionSign =
+          track.color === "yellow"
+            ? -1
+            : 1;
+
+        if (track.direction === "reverse") {
+          directionSign *= -1;
+        }
+
+        /*
+         * Left/right hand is relative to the
+         * direction the turnout faces.
+         */
+        const handSign =
+          track.hand === "right"
+            ? -1
+            : 1;
+
+        const straightEndX =
+          anchorX +
+          directionSign * turnoutLength;
+
+        const straightEndFromFront =
+          anchorFromFront;
+
+        const divergeEndX =
+          anchorX +
+          directionSign * divergeForward;
+
+        const divergeEndFromFront =
+          anchorFromFront +
+          directionSign *
+            handSign *
+            divergeSide;
+
+        const toPreviewX = (inches: number) =>
+          inches * LAYOUT_SCALE;
+
+        const toPreviewY = (
+          fromFront: number
+        ) =>
+          previewSize.height -
+          fromFront * LAYOUT_SCALE;
+
+        const anchorPreviewX =
+          toPreviewX(anchorX);
+
+        const anchorPreviewY =
+          toPreviewY(anchorFromFront);
+
+        const straightPreviewX =
+          toPreviewX(straightEndX);
+
+        const straightPreviewY =
+          toPreviewY(
+            straightEndFromFront
+          );
+
+        const divergePreviewX =
+          toPreviewX(divergeEndX);
+
+        const divergePreviewY =
+          toPreviewY(
+            divergeEndFromFront
+          );
+
+        const radiusPreview =
+          turnoutRadius *
+          LAYOUT_SCALE;
+
+        /*
+         * SVG sweep direction.
+         * Left and right hand determine which
+         * side of the straight route the curve
+         * occupies.
+         */
+        const sweep =
+          track.hand === "right"
+            ? 1
+            : 0;
+
+        return (
+          <g key={track.id || index}>
+            {/* Straight route */}
+            <line
+              x1={anchorPreviewX}
+              y1={anchorPreviewY}
+              x2={straightPreviewX}
+              y2={straightPreviewY}
+              stroke={trackColor}
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+
+            {/* R718 / 15-degree diverging route */}
+            <path
+              d={`
+                M ${anchorPreviewX}
+                  ${anchorPreviewY}
+                A ${radiusPreview}
+                  ${radiusPreview}
+                  0 0 ${sweep}
+                  ${divergePreviewX}
+                  ${divergePreviewY}
+              `}
+              fill="none"
+              stroke={trackColor}
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+
+            {/* Points anchor */}
+            <circle
+              cx={anchorPreviewX}
+              cy={anchorPreviewY}
+              r="3"
+              fill="white"
+              stroke={trackColor}
+              strokeWidth="2"
+            />
+          </g>
+        );
+      }
+
+      /*
+       * Existing straight-track rendering
+       */
       const startX = Math.max(
         0,
         Math.min(
@@ -4807,7 +5208,8 @@ moduleType === "Yard Lead" ||
         0,
         Math.min(
           moduleWidth,
-          Number(track.endX) || moduleWidth
+          Number(track.endX) ||
+            moduleWidth
         )
       );
 
@@ -4830,11 +5232,7 @@ moduleType === "Yard Lead" ||
           y1={previewY}
           x2={endX * LAYOUT_SCALE}
           y2={previewY}
-          stroke={
-            track.color === "yellow"
-              ? "#d4a900"
-              : "red"
-          }
+          stroke={trackColor}
           strokeWidth="2"
         />
       );
