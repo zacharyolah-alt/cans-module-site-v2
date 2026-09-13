@@ -365,6 +365,142 @@ function exportToCSV() {
   const TRACK_SNAP_DISTANCE_TOUCH = 56;
   const TRACK_SNAP_LATERAL_MOUSE = 16;
   const TRACK_SNAP_LATERAL_TOUCH = 26;
+  function getYardTurnoutGeometry(track: any) {
+  const radiusInches = 718 / 25.4;
+  const lengthInches = 186 / 25.4;
+  const angleRadians = (15 * Math.PI) / 180;
+
+  const anchorX = Number(track.x) || 0;
+  const anchorY = Number(track.y) || 0;
+
+  /*
+   * Club running convention:
+   *
+   * Red Forward    = left -> right
+   * Yellow Forward = right -> left
+   */
+  let directionSign =
+    track.color === "yellow" ? -1 : 1;
+
+  if (track.direction === "reverse") {
+    directionSign *= -1;
+  }
+
+  const travelHeading =
+    directionSign > 0
+      ? 0
+      : Math.PI;
+
+  /*
+   * Left/right is relative to the direction
+   * the turnout is facing.
+   */
+  const divergingTurn =
+    track.hand === "right"
+      ? -angleRadians
+      : angleRadians;
+
+  const divergingHeading =
+    travelHeading + divergingTurn;
+
+  const straightExit = {
+    x:
+      anchorX +
+      directionSign * lengthInches,
+    y: anchorY,
+  };
+
+  const divergingExit = {
+    x:
+      anchorX +
+      directionSign *
+        radiusInches *
+        Math.sin(angleRadians),
+
+    y:
+      anchorY +
+      directionSign *
+        (track.hand === "right" ? -1 : 1) *
+        radiusInches *
+        (1 - Math.cos(angleRadians)),
+  };
+
+  return {
+    points: {
+      x: anchorX,
+      y: anchorY,
+      heading: travelHeading + Math.PI,
+    },
+
+    straightExit: {
+      ...straightExit,
+      heading: travelHeading,
+    },
+
+    divergingExit: {
+      ...divergingExit,
+      heading: divergingHeading,
+    },
+  };
+}
+
+function addStraightFromTurnout(
+  turnoutIndex: number,
+  endpoint:
+    | "points"
+    | "straightExit"
+    | "divergingExit"
+) {
+  const turnout = trackLayout[turnoutIndex];
+
+  if (!turnout || turnout.type !== "turnout") {
+    return;
+  }
+
+  const geometry =
+    getYardTurnoutGeometry(turnout);
+
+  const connection =
+    geometry[endpoint];
+
+  /*
+   * Default continuation length.
+   *
+   * The user can edit the end coordinates afterward.
+   */
+  const defaultLength = 6;
+
+  const endX =
+    connection.x +
+    Math.cos(connection.heading) *
+      defaultLength;
+
+  const endY =
+    connection.y +
+    Math.sin(connection.heading) *
+      defaultLength;
+
+  setTrackLayout((current) => [
+    ...current,
+    {
+      id: `${Date.now()}-straight`,
+      type: "straight",
+      mode: "free",
+      color: turnout.color || "red",
+
+      startX: connection.x,
+      startY: connection.y,
+
+      endX,
+      endY,
+
+      connectedTo: {
+        trackId: turnout.id,
+        endpoint,
+      },
+    },
+  ]);
+}
 
   const moduleNumberMap = useMemo(() => {
     const sortedModules = [...modules].sort((a, b) => {
@@ -3755,8 +3891,250 @@ button {
         >
           Kato #6 · 186 mm length · R718 mm · 15° diverging route
         </div>
+        <div
+  style={{
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "8px",
+    marginTop: "10px",
+  }}
+>
+  <button
+    type="button"
+    className="grayBtn"
+    onClick={() =>
+      addStraightFromTurnout(
+        index,
+        "points"
+      )
+    }
+  >
+    + Track from Points
+  </button>
+
+  <button
+    type="button"
+    className="grayBtn"
+    onClick={() =>
+      addStraightFromTurnout(
+        index,
+        "straightExit"
+      )
+    }
+  >
+    + Track from Straight Exit
+  </button>
+
+  <button
+    type="button"
+    className="grayBtn"
+    onClick={() =>
+      addStraightFromTurnout(
+        index,
+        "divergingExit"
+      )
+    }
+  >
+    + Track from Diverging Exit
+  </button>
+</div>
       </>
-    ) : (
+   ) : track.mode === "free" ? (
+  <>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "10px",
+        marginBottom: "10px",
+      }}
+    >
+      <strong>Connected Straight Track</strong>
+
+      <button
+        type="button"
+        className="grayBtn"
+        onClick={() =>
+          setTrackLayout((current) =>
+            current.filter(
+              (_item, itemIndex) =>
+                itemIndex !== index
+            )
+          )
+        }
+      >
+        Remove
+      </button>
+    </div>
+
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns:
+          "repeat(auto-fit, minmax(125px, 1fr))",
+        gap: "8px",
+        alignItems: "end",
+      }}
+    >
+      <label>
+        Color
+        <select
+          value={track.color || "red"}
+          onChange={(e) =>
+            setTrackLayout((current) =>
+              current.map(
+                (item, itemIndex) =>
+                  itemIndex === index
+                    ? {
+                        ...item,
+                        color:
+                          e.target.value,
+                      }
+                    : item
+              )
+            )
+          }
+        >
+          <option value="red">
+            Red
+          </option>
+
+          <option value="yellow">
+            Yellow
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Start X
+        <input
+          type="number"
+          step="0.01"
+          value={
+            Number(track.startX ?? 0).toFixed(
+              2
+            )
+          }
+          onChange={(e) =>
+            setTrackLayout((current) =>
+              current.map(
+                (item, itemIndex) =>
+                  itemIndex === index
+                    ? {
+                        ...item,
+                        startX:
+                          Number(
+                            e.target.value
+                          ),
+                      }
+                    : item
+              )
+            )
+          }
+        />
+      </label>
+
+      <label>
+        Start from Front
+        <input
+          type="number"
+          step="0.01"
+          value={
+            Number(track.startY ?? 0).toFixed(
+              2
+            )
+          }
+          onChange={(e) =>
+            setTrackLayout((current) =>
+              current.map(
+                (item, itemIndex) =>
+                  itemIndex === index
+                    ? {
+                        ...item,
+                        startY:
+                          Number(
+                            e.target.value
+                          ),
+                      }
+                    : item
+              )
+            )
+          }
+        />
+      </label>
+
+      <label>
+        End X
+        <input
+          type="number"
+          step="0.01"
+          value={
+            Number(track.endX ?? 0).toFixed(
+              2
+            )
+          }
+          onChange={(e) =>
+            setTrackLayout((current) =>
+              current.map(
+                (item, itemIndex) =>
+                  itemIndex === index
+                    ? {
+                        ...item,
+                        endX:
+                          Number(
+                            e.target.value
+                          ),
+                      }
+                    : item
+              )
+            )
+          }
+        />
+      </label>
+
+      <label>
+        End from Front
+        <input
+          type="number"
+          step="0.01"
+          value={
+            Number(track.endY ?? 0).toFixed(
+              2
+            )
+          }
+          onChange={(e) =>
+            setTrackLayout((current) =>
+              current.map(
+                (item, itemIndex) =>
+                  itemIndex === index
+                    ? {
+                        ...item,
+                        endY:
+                          Number(
+                            e.target.value
+                          ),
+                      }
+                    : item
+              )
+            )
+          }
+        />
+      </label>
+    </div>
+
+    <div
+      style={{
+        fontSize: "12px",
+        color: "#666",
+        marginTop: "7px",
+      }}
+    >
+      This track was attached to a turnout endpoint.
+      Its coordinates can still be adjusted manually.
+    </div>
+  </>
+) : (
       <div
         style={{
           display: "grid",
@@ -5189,6 +5567,25 @@ moduleType === "Yard Lead" ||
               stroke={trackColor}
               strokeWidth="2"
             />
+            {/* Straight-exit connection point */}
+<circle
+  cx={straightPreviewX}
+  cy={straightPreviewY}
+  r="3"
+  fill="white"
+  stroke={trackColor}
+  strokeWidth="2"
+/>
+
+{/* Diverging-exit connection point */}
+<circle
+  cx={divergePreviewX}
+  cy={divergePreviewY}
+  r="3"
+  fill="white"
+  stroke={trackColor}
+  strokeWidth="2"
+/>
           </g>
         );
       }
@@ -5196,6 +5593,38 @@ moduleType === "Yard Lead" ||
       /*
        * Existing straight-track rendering
        */
+      if (track.mode === "free") {
+  const startX =
+    Number(track.startX) || 0;
+
+  const startY =
+    Number(track.startY) || 0;
+
+  const endX =
+    Number(track.endX) || 0;
+
+  const endY =
+    Number(track.endY) || 0;
+
+  return (
+    <line
+      key={track.id || index}
+      x1={startX * LAYOUT_SCALE}
+      y1={
+        previewSize.height -
+        startY * LAYOUT_SCALE
+      }
+      x2={endX * LAYOUT_SCALE}
+      y2={
+        previewSize.height -
+        endY * LAYOUT_SCALE
+      }
+      stroke={trackColor}
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  );
+}
       const startX = Math.max(
         0,
         Math.min(
