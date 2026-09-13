@@ -3123,7 +3123,17 @@ button {
   <div className="filterGroup">
     <p>Type</p>
     <div className="buttonRow">
-      {["All", "Straight", "Inside Corner", "Outside Corner", "Bridge"].map((t) => (
+{[
+  "All",
+  "Straight",
+  "Inside Corner",
+  "Outside Corner",
+  "End Cap",
+  "Bridge",
+  "NT Junction",
+  "Yard",
+  "Yard Lead",
+].map((t) => (
         <button
           key={t}
           className={typeFilter === t ? "activeBtn" : "grayBtn"}
