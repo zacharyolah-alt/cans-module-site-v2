@@ -37,6 +37,7 @@ const [moduleType, setModuleType] = useState("Straight");
 const [trackType, setTrackType] = useState("Straight");
   const [bridgeSize, setBridgeSize] = useState("");
 const [cornerSize, setCornerSize] = useState("");
+const [trackLayout, setTrackLayout] = useState<any[]>([]);
   const [typeFilter, setTypeFilter] = useState("All");
   const [selectedImage, setSelectedImage] = useState(null);
 const [dimensionFilter, setDimensionFilter] = useState("All");
@@ -147,6 +148,7 @@ setModuleType("Straight");
 setTrackType("Straight");
 setCornerSize("");
 setBridgeSize("");
+setTrackLayout([]);
 setCustomWidthInches("24");
 setCustomDepthInches("14");
     setCustomShape("Rectangle");
@@ -171,6 +173,9 @@ setStatus(m.status || "Active");
     setTrackType(m.track_type || "Straight");
 setCornerSize(m.corner_size || "");
 setBridgeSize(m.bridge_size || "");
+setTrackLayout(
+  Array.isArray(m.track_layout) ? m.track_layout : []
+);
 
 setCustomWidthInches(m.custom_width_inches || "24");
 setCustomDepthInches(m.custom_depth_inches || "14");
@@ -230,6 +235,8 @@ const existingModule = editingId
 const savedDimensions =
   moduleType === "NT Junction"
     ? ntJunctionDimensions[cornerSize] || ""
+    : moduleType === "Yard" || moduleType === "Yard Lead"
+    ? `${customWidthInches}" x ${customDepthInches}"`
     : dimensions;
     const payload = {
       module_name: name,
@@ -239,6 +246,7 @@ const savedDimensions =
       standard,
       module_type: moduleType,
       track_type: trackType,
+      track_layout: trackLayout,
       bridge_size: bridgeSize,
 corner_size: cornerSize,
      dimensions: savedDimensions,
@@ -3440,6 +3448,242 @@ button {
 />
    </div>
 )}
+{(moduleType === "Yard" || moduleType === "Yard Lead") && (
+  <div
+    style={{
+      gridColumn: "1 / -1",
+      marginTop: "8px",
+      padding: "14px",
+      border: "1px solid #ccc",
+      borderRadius: "12px",
+      background: "#fafafa",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "10px",
+        flexWrap: "wrap",
+        marginBottom: "12px",
+      }}
+    >
+      <div>
+        <strong>Custom Track Layout</strong>
+        <div
+          style={{
+            fontSize: "13px",
+            color: "#555",
+            marginTop: "3px",
+          }}
+        >
+          Add as many straight tracks as needed. Positions are measured in
+          inches.
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          flexWrap: "wrap",
+        }}
+      >
+        <button
+          type="button"
+          className="grayBtn"
+          onClick={() =>
+            setTrackLayout((current) => [
+              ...current,
+              {
+                id: `${Date.now()}-red`,
+                type: "straight",
+                color: "red",
+                startX: 0,
+                endX: Number(customWidthInches) || 24,
+                y: Math.min(
+                  Number(customDepthInches) || 14,
+                  2 + current.length * 1.25
+                ),
+              },
+            ])
+          }
+        >
+          + Red Track
+        </button>
+
+        <button
+          type="button"
+          className="grayBtn"
+          onClick={() =>
+            setTrackLayout((current) => [
+              ...current,
+              {
+                id: `${Date.now()}-yellow`,
+                type: "straight",
+                color: "yellow",
+                startX: 0,
+                endX: Number(customWidthInches) || 24,
+                y: Math.min(
+                  Number(customDepthInches) || 14,
+                  2 + current.length * 1.25
+                ),
+              },
+            ])
+          }
+        >
+          + Yellow Track
+        </button>
+      </div>
+    </div>
+
+    {trackLayout.length === 0 ? (
+      <div
+        style={{
+          padding: "12px",
+          border: "1px dashed #aaa",
+          borderRadius: "8px",
+          color: "#666",
+          textAlign: "center",
+        }}
+      >
+        No custom tracks yet.
+      </div>
+    ) : (
+      <div
+        style={{
+          display: "grid",
+          gap: "10px",
+        }}
+      >
+        {trackLayout.map((track, index) => (
+          <div
+            key={track.id || index}
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "minmax(90px, 120px) repeat(3, minmax(90px, 1fr)) auto",
+              gap: "8px",
+              alignItems: "end",
+              padding: "10px",
+              border: "1px solid #ddd",
+              borderRadius: "9px",
+              background: "white",
+            }}
+          >
+            <label>
+              Color
+              <select
+                value={track.color || "red"}
+                onChange={(e) =>
+                  setTrackLayout((current) =>
+                    current.map((item, itemIndex) =>
+                      itemIndex === index
+                        ? {
+                            ...item,
+                            color: e.target.value,
+                          }
+                        : item
+                    )
+                  )
+                }
+              >
+                <option value="red">Red</option>
+                <option value="yellow">Yellow</option>
+              </select>
+            </label>
+
+            <label>
+              Start from Left
+              <input
+                type="number"
+                step="0.25"
+                value={track.startX ?? 0}
+                onChange={(e) =>
+                  setTrackLayout((current) =>
+                    current.map((item, itemIndex) =>
+                      itemIndex === index
+                        ? {
+                            ...item,
+                            startX: Number(e.target.value),
+                          }
+                        : item
+                    )
+                  )
+                }
+              />
+            </label>
+
+            <label>
+              End from Left
+              <input
+                type="number"
+                step="0.25"
+                value={
+  track.endX ??
+  (Number(customWidthInches) || 24)
+}
+                onChange={(e) =>
+                  setTrackLayout((current) =>
+                    current.map((item, itemIndex) =>
+                      itemIndex === index
+                        ? {
+                            ...item,
+                            endX: Number(e.target.value),
+                          }
+                        : item
+                    )
+                  )
+                }
+              />
+            </label>
+
+            <label>
+              From Front Edge
+              <input
+                type="number"
+                step="0.25"
+                value={track.y ?? 2}
+                onChange={(e) =>
+                  setTrackLayout((current) =>
+                    current.map((item, itemIndex) =>
+                      itemIndex === index
+                        ? {
+                            ...item,
+                            y: Number(e.target.value),
+                          }
+                        : item
+                    )
+                  )
+                }
+              />
+            </label>
+
+            <button
+              type="button"
+              className="grayBtn"
+              onClick={() =>
+                setTrackLayout((current) =>
+                  current.filter(
+                    (_item, itemIndex) =>
+                      itemIndex !== index
+                  )
+                )
+              }
+              style={{
+                height: "38px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
 {(
   moduleType === "Inside Corner" ||
   moduleType === "Outside Corner" ||
@@ -4494,11 +4738,13 @@ const outerTrackRadius =
 {(
   customShape === "Rectangle" &&
   (
-   moduleType === "Inside Corner" ||
+ moduleType === "Inside Corner" ||
 moduleType === "Outside Corner" ||
 moduleType === "End Cap" ||
 moduleType === "Bridge" ||
 moduleType === "NT Junction" ||
+moduleType === "Yard" ||
+moduleType === "Yard Lead" ||
 (dimensions && dimensions !== "Other / custom")
 
   )
@@ -4540,7 +4786,61 @@ moduleType === "NT Junction" ||
               strokeWidth="2"
             />
             
-{moduleType === "NT Junction" ? (
+{moduleType === "Yard" || moduleType === "Yard Lead" ? (
+  <>
+    {trackLayout.map((track, index) => {
+      const moduleWidth =
+        Math.max(1, Number(customWidthInches) || 24);
+
+      const moduleDepth =
+        Math.max(1, Number(customDepthInches) || 14);
+
+      const startX = Math.max(
+        0,
+        Math.min(
+          moduleWidth,
+          Number(track.startX) || 0
+        )
+      );
+
+      const endX = Math.max(
+        0,
+        Math.min(
+          moduleWidth,
+          Number(track.endX) || moduleWidth
+        )
+      );
+
+      const fromFront = Math.max(
+        0,
+        Math.min(
+          moduleDepth,
+          Number(track.y) || 0
+        )
+      );
+
+      const previewY =
+        previewSize.height -
+        fromFront * LAYOUT_SCALE;
+
+      return (
+        <line
+          key={track.id || index}
+          x1={startX * LAYOUT_SCALE}
+          y1={previewY}
+          x2={endX * LAYOUT_SCALE}
+          y2={previewY}
+          stroke={
+            track.color === "yellow"
+              ? "#d4a900"
+              : "red"
+          }
+          strokeWidth="2"
+        />
+      );
+    })}
+  </>
+) : moduleType === "NT Junction" ? (
   <>
     {(() => {
       const mm = (value: number) =>
