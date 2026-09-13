@@ -3840,6 +3840,7 @@ button {
           </label>
 
           <label>
+            Points from Left
             <input
   type="text"
   inputMode="decimal"
@@ -3878,6 +3879,7 @@ button {
           </label>
 
           <label>
+            Points from Front
             <input
   type="text"
   inputMode="decimal"
