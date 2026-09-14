@@ -108,22 +108,8 @@ const svgPlannerRef = useRef<SVGSVGElement | null>(null);
         return track;
       }
 
-      const parentRotation =
-        Number(
-          parentTurnout.rotationDeg
-        ) || 0;
-
-      const branchRotation =
-        parentTurnout.hand === "right"
-          ? -15
-          : 15;
-
       const rotationDeg =
-        track.connectedTo.endpoint ===
-        "divergingExit"
-          ? parentRotation +
-            branchRotation
-          : parentRotation;
+  Number(parentTurnout.rotationDeg) || 0;
 
       const samePosition =
         Math.abs(
