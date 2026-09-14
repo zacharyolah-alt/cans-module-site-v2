@@ -70,15 +70,12 @@ const svgPlannerRef = useRef<SVGSVGElement | null>(null);
       listener.subscription.unsubscribe();
     };
   }, []);
-  useEffect(() => {
+ useEffect(() => {
   setTrackLayout((current) => {
     let changed = false;
 
     const updated = current.map((track) => {
-      if (
-        track.type !== "turnout" ||
-        !track.connectedTo?.trackId
-      ) {
+      if (!track.connectedTo?.trackId) {
         return track;
       }
 
@@ -108,41 +105,93 @@ const svgPlannerRef = useRef<SVGSVGElement | null>(null);
         return track;
       }
 
-      const rotationDeg =
-  Number(parentTurnout.rotationDeg) || 0;
+      /*
+       * CONNECTED TURNOUT
+       */
+      if (track.type === "turnout") {
+        const rotationDeg =
+          Number(parentTurnout.rotationDeg) || 0;
 
-      const samePosition =
-        Math.abs(
-          Number(track.x) -
-            connection.x
-        ) < 0.0001 &&
-        Math.abs(
-          Number(track.y) -
-            connection.y
-        ) < 0.0001;
+        const samePosition =
+          Math.abs(
+            Number(track.x) -
+              connection.x
+          ) < 0.0001 &&
+          Math.abs(
+            Number(track.y) -
+              connection.y
+          ) < 0.0001;
 
-      const sameRotation =
-        Math.abs(
-          Number(
-            track.rotationDeg || 0
-          ) - rotationDeg
-        ) < 0.0001;
+        const sameRotation =
+          Math.abs(
+            Number(
+              track.rotationDeg || 0
+            ) - rotationDeg
+          ) < 0.0001;
 
-      if (
-        samePosition &&
-        sameRotation
-      ) {
-        return track;
+        if (
+          samePosition &&
+          sameRotation
+        ) {
+          return track;
+        }
+
+        changed = true;
+
+        return {
+          ...track,
+          x: connection.x,
+          y: connection.y,
+          rotationDeg,
+        };
       }
 
-      changed = true;
+      /*
+       * CONNECTED STRAIGHT TRACK
+       */
+      if (track.type === "straight") {
+        const oldStartX =
+          Number(track.startX) || 0;
 
-      return {
-        ...track,
-        x: connection.x,
-        y: connection.y,
-        rotationDeg,
-      };
+        const oldStartY =
+          Number(track.startY) || 0;
+
+        const oldEndX =
+          Number(track.endX) || 0;
+
+        const oldEndY =
+          Number(track.endY) || 0;
+
+        const deltaX =
+          connection.x - oldStartX;
+
+        const deltaY =
+          connection.y - oldStartY;
+
+        if (
+          Math.abs(deltaX) < 0.0001 &&
+          Math.abs(deltaY) < 0.0001
+        ) {
+          return track;
+        }
+
+        changed = true;
+
+        return {
+          ...track,
+
+          startX: connection.x,
+          startY: connection.y,
+
+          endX:
+            oldEndX + deltaX,
+
+          endY:
+            oldEndY + deltaY,
+        };
+      }
+
+      return track;
     });
 
     return changed
@@ -150,7 +199,6 @@ const svgPlannerRef = useRef<SVGSVGElement | null>(null);
       : current;
   });
 }, [trackLayout]);
-
   async function loadModules() {
     const { data, error } = await supabase
       .from("modules")
