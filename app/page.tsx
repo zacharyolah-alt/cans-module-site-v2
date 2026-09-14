@@ -554,18 +554,8 @@ function addTurnoutFromTurnout(
     getYardTurnoutGeometry(parentTurnout);
 
   const connection = geometry[endpoint];
-  const parentRotation =
+  const rotationDeg =
   Number(parentTurnout.rotationDeg) || 0;
-
-const branchRotation =
-  parentTurnout.hand === "right"
-    ? -15
-    : 15;
-
-const rotationDeg =
-  endpoint === "divergingExit"
-    ? parentRotation + branchRotation
-    : parentRotation;
 
   if (!connection) {
     return;
