@@ -3769,6 +3769,7 @@ button {
       background: "#fafafa",
     }}
   >
+    {/* Header */}
     <div
       style={{
         display: "flex",
@@ -3781,6 +3782,7 @@ button {
     >
       <div>
         <strong>Custom Track Layout</strong>
+
         <div
           style={{
             fontSize: "13px",
@@ -3788,8 +3790,7 @@ button {
             marginTop: "3px",
           }}
         >
-          Add as many straight tracks as needed. Positions are measured in
-          inches.
+          Add tracks and Kato #6 turnouts. Positions are measured in inches.
         </div>
       </div>
 
@@ -3845,636 +3846,838 @@ button {
         >
           + Yellow Track
         </button>
-        <button
-  type="button"
-  className="grayBtn"
-  onClick={() => {
-    const width = Number(customWidthInches) || 24;
-    const depth = Number(customDepthInches) || 14;
-
-    setTrackLayout((current) => [
-      ...current,
-      {
-        id: `${Date.now()}-turnout`,
-        type: "turnout",
-        turnoutModel: "kato-6",
-        color: "red",
-        direction: "forward",
-        hand: "left",
-        x: Math.min(width, 8),
-        y: Math.min(depth, 2),
-      },
-    ]);
-  }}
->
-  + Kato #6 Turnout
-</button>
-      </div>
-    </div>
-
-    {trackLayout.length === 0 ? (
-      <div
-        style={{
-          padding: "12px",
-          border: "1px dashed #aaa",
-          borderRadius: "8px",
-          color: "#666",
-          textAlign: "center",
-        }}
-      >
-        No custom tracks yet.
-      </div>
-    ) : (
-      <div
-        style={{
-          display: "grid",
-          gap: "10px",
-        }}
-      >
-       {trackLayout.map((track, index) => (
-  <div
-    key={track.id || index}
-    style={{
-      padding: "10px",
-      border: "1px solid #ddd",
-      borderRadius: "9px",
-      background: "white",
-    }}
-  >
-    {track.type === "turnout" ? (
-      <>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "10px",
-            marginBottom: "10px",
-          }}
-        >
-          <strong>Kato #6 Turnout</strong>
-
-          <button
-            type="button"
-            className="grayBtn"
-            onClick={() =>
-              setTrackLayout((current) =>
-                current.filter(
-                  (_item, itemIndex) =>
-                    itemIndex !== index
-                )
-              )
-            }
-          >
-            Remove
-          </button>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(130px, 1fr))",
-            gap: "8px",
-            alignItems: "end",
-          }}
-        >
-          <label>
-            Track Color
-            <select
-              value={track.color || "red"}
-              onChange={(e) =>
-                setTrackLayout((current) =>
-                  current.map((item, itemIndex) =>
-                    itemIndex === index
-                      ? {
-                          ...item,
-                          color: e.target.value,
-                        }
-                      : item
-                  )
-                )
-              }
-            >
-              <option value="red">Red</option>
-              <option value="yellow">Yellow</option>
-            </select>
-          </label>
-
-          <label>
-            Direction
-            <select
-              value={track.direction || "forward"}
-              onChange={(e) =>
-                setTrackLayout((current) =>
-                  current.map((item, itemIndex) =>
-                    itemIndex === index
-                      ? {
-                          ...item,
-                          direction: e.target.value,
-                        }
-                      : item
-                  )
-                )
-              }
-            >
-              <option value="forward">
-                Forward
-              </option>
-              <option value="reverse">
-                Reverse
-              </option>
-            </select>
-          </label>
-
-          <label>
-            Turnout Hand
-            <select
-              value={track.hand || "left"}
-              onChange={(e) =>
-                setTrackLayout((current) =>
-                  current.map((item, itemIndex) =>
-                    itemIndex === index
-                      ? {
-                          ...item,
-                          hand: e.target.value,
-                        }
-                      : item
-                  )
-                )
-              }
-            >
-              <option value="left">
-                Left
-              </option>
-              <option value="right">
-                Right
-              </option>
-            </select>
-          </label>
-
-          <label>
-            Points from Left
-            <input
-  type="text"
-  inputMode="decimal"
-  value={track.x ?? ""}
-  onChange={(e) => {
-    const value = e.target.value;
-
-    setTrackLayout((current) =>
-      current.map((item, itemIndex) =>
-        itemIndex === index
-          ? {
-              ...item,
-              x: value,
-            }
-          : item
-      )
-    );
-  }}
-  onBlur={(e) => {
-    const value = Number(e.target.value);
-
-    setTrackLayout((current) =>
-      current.map((item, itemIndex) =>
-        itemIndex === index
-          ? {
-              ...item,
-              x: Number.isFinite(value)
-                ? value
-                : 0,
-            }
-          : item
-      )
-    );
-  }}
-/>
-          </label>
-
-          <label>
-            Points from Front
-            <input
-  type="text"
-  inputMode="decimal"
-  value={track.y ?? ""}
-  onChange={(e) => {
-    const value = e.target.value;
-
-    setTrackLayout((current) =>
-      current.map((item, itemIndex) =>
-        itemIndex === index
-          ? {
-              ...item,
-              y: value,
-            }
-          : item
-      )
-    );
-  }}
-  onBlur={(e) => {
-    const value = Number(e.target.value);
-
-    setTrackLayout((current) =>
-      current.map((item, itemIndex) =>
-        itemIndex === index
-          ? {
-              ...item,
-              y: Number.isFinite(value)
-                ? value
-                : 0,
-            }
-          : item
-      )
-    );
-  }}
-/>
-          </label>
-        </div>
-
-        <div
-          style={{
-            marginTop: "8px",
-            fontSize: "12px",
-            color: "#666",
-          }}
-        >
-          Kato #6 · 186 mm length · R718 mm · 15° diverging route
-        </div>
-        <div
-  style={{
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "8px",
-    marginTop: "10px",
-  }}
->
-  <button
-    type="button"
-    className="grayBtn"
-    onClick={() =>
-      addStraightFromTurnout(
-        index,
-        "points"
-      )
-    }
-  >
-    + Track from Points
-  </button>
-
-  <button
-    type="button"
-    className="grayBtn"
-    onClick={() =>
-      addStraightFromTurnout(
-        index,
-        "straightExit"
-      )
-    }
-  >
-    + Track from Straight Exit
-  </button>
-
-  <button
-    type="button"
-    className="grayBtn"
-    onClick={() =>
-      addStraightFromTurnout(
-        index,
-        "divergingExit"
-      )
-    }
-  >
-    + Track from Diverging Exit
-  </button>
-  <button
-  type="button"
-  className="grayBtn"
-  onClick={() =>
-    addTurnoutFromTurnout(
-      index,
-      "straightExit"
-    )
-  }
->
-  + Turnout from Straight Exit
-</button>
-
-<button
-  type="button"
-  className="grayBtn"
-  onClick={() =>
-    addTurnoutFromTurnout(
-      index,
-      "divergingExit"
-    )
-  }
->
-  + Turnout from Diverging Exit
-</button>
-</div>
-      </>
-   ) : track.mode === "free" ? (
-  <>
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: "10px",
-        marginBottom: "10px",
-      }}
-    >
-      <strong>Connected Straight Track</strong>
-
-      <button
-        type="button"
-        className="grayBtn"
-        onClick={() =>
-          setTrackLayout((current) =>
-            current.filter(
-              (_item, itemIndex) =>
-                itemIndex !== index
-            )
-          )
-        }
-      >
-        Remove
-      </button>
-    </div>
-
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns:
-          "repeat(auto-fit, minmax(125px, 1fr))",
-        gap: "8px",
-        alignItems: "end",
-      }}
-    >
-      <label>
-        Color
-        <select
-          value={track.color || "red"}
-          onChange={(e) =>
-            setTrackLayout((current) =>
-              current.map(
-                (item, itemIndex) =>
-                  itemIndex === index
-                    ? {
-                        ...item,
-                        color:
-                          e.target.value,
-                      }
-                    : item
-              )
-            )
-          }
-        >
-          <option value="red">
-            Red
-          </option>
-
-          <option value="yellow">
-            Yellow
-          </option>
-        </select>
-      </label>
-
-      <label>
-  Start X
-  <input
-    type="text"
-    inputMode="decimal"
-    value={track.startX ?? ""}
-    onChange={(e) => {
-      const value = e.target.value;
-
-      setTrackLayout((current) =>
-        current.map((item, itemIndex) =>
-          itemIndex === index
-            ? {
-                ...item,
-                startX: value,
-              }
-            : item
-        )
-      );
-    }}
-  />
-</label>
-
-<label>
-  Start from Front
-  <input
-    type="text"
-    inputMode="decimal"
-    value={track.startY ?? ""}
-    onChange={(e) => {
-      const value = e.target.value;
-
-      setTrackLayout((current) =>
-        current.map((item, itemIndex) =>
-          itemIndex === index
-            ? {
-                ...item,
-                startY: value,
-              }
-            : item
-        )
-      );
-    }}
-  />
-</label>
-
-<label>
-  End X
-  <input
-    type="text"
-    inputMode="decimal"
-    value={track.endX ?? ""}
-    onChange={(e) => {
-      const value = e.target.value;
-
-      setTrackLayout((current) =>
-        current.map((item, itemIndex) =>
-          itemIndex === index
-            ? {
-                ...item,
-                endX: value,
-              }
-            : item
-        )
-      );
-    }}
-  />
-</label>
-
-<label>
-  End from Front
-  <input
-    type="text"
-    inputMode="decimal"
-    value={track.endY ?? ""}
-    onChange={(e) => {
-      const value = e.target.value;
-
-      setTrackLayout((current) =>
-        current.map((item, itemIndex) =>
-          itemIndex === index
-            ? {
-                ...item,
-                endY: value,
-              }
-            : item
-        )
-      );
-    }}
-  />
-</label>
-    </div>
-
-    <div
-      style={{
-        fontSize: "12px",
-        color: "#666",
-        marginTop: "7px",
-      }}
-    >
-      This track was attached to a turnout endpoint.
-      Its coordinates can still be adjusted manually.
-    </div>
-  </>
-) : (
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "minmax(90px, 120px) repeat(3, minmax(90px, 1fr)) auto",
-          gap: "8px",
-          alignItems: "end",
-        }}
-      >
-        <label>
-          Color
-          <select
-            value={track.color || "red"}
-            onChange={(e) =>
-              setTrackLayout((current) =>
-                current.map((item, itemIndex) =>
-                  itemIndex === index
-                    ? {
-                        ...item,
-                        color: e.target.value,
-                      }
-                    : item
-                )
-              )
-            }
-          >
-            <option value="red">Red</option>
-            <option value="yellow">
-              Yellow
-            </option>
-          </select>
-        </label>
-
-        <label>
-          Start from Left
-          <input
-            type="number"
-            step="0.25"
-            value={track.startX ?? 0}
-            onChange={(e) =>
-              setTrackLayout((current) =>
-                current.map((item, itemIndex) =>
-                  itemIndex === index
-                    ? {
-                        ...item,
-                        startX: Number(
-                          e.target.value
-                        ),
-                      }
-                    : item
-                )
-              )
-            }
-          />
-        </label>
-
-        <label>
-          End from Left
-          <input
-            type="number"
-            step="0.25"
-            value={
-              track.endX ??
-              (Number(customWidthInches) || 24)
-            }
-            onChange={(e) =>
-              setTrackLayout((current) =>
-                current.map((item, itemIndex) =>
-                  itemIndex === index
-                    ? {
-                        ...item,
-                        endX: Number(
-                          e.target.value
-                        ),
-                      }
-                    : item
-                )
-              )
-            }
-          />
-        </label>
-
-        <label>
-          From Front Edge
-          <input
-            type="number"
-            step="0.25"
-            value={track.y ?? 2}
-            onChange={(e) =>
-              setTrackLayout((current) =>
-                current.map((item, itemIndex) =>
-                  itemIndex === index
-                    ? {
-                        ...item,
-                        y: Number(
-                          e.target.value
-                        ),
-                      }
-                    : item
-                )
-              )
-            }
-          />
-        </label>
 
         <button
           type="button"
           className="grayBtn"
-          onClick={() =>
-            setTrackLayout((current) =>
-              current.filter(
-                (_item, itemIndex) =>
-                  itemIndex !== index
-              )
-            )
-          }
-          style={{
-            height: "38px",
-            whiteSpace: "nowrap",
+          onClick={() => {
+            const width = Number(customWidthInches) || 24;
+            const depth = Number(customDepthInches) || 14;
+
+            setTrackLayout((current) => [
+              ...current,
+              {
+                id: `${Date.now()}-turnout`,
+                type: "turnout",
+                turnoutModel: "kato-6",
+                color: "red",
+                direction: "forward",
+                hand: "left",
+                x: Math.min(width, 8),
+                y: Math.min(depth, 2),
+              },
+            ]);
           }}
         >
-          Remove
+          + Kato #6 Turnout
         </button>
       </div>
-    )}
-  </div>
-))}
+    </div>
+
+    {/* Editor + Preview workspace */}
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns:
+          "repeat(auto-fit, minmax(min(100%, 340px), 1fr))",
+        gap: "14px",
+        alignItems: "start",
+      }}
+    >
+      {/* LEFT: compact editor */}
+      <div
+        style={{
+          minWidth: 0,
+          maxHeight: "620px",
+          overflowY: "auto",
+          paddingRight: "4px",
+        }}
+      >
+        {trackLayout.length === 0 ? (
+          <div
+            style={{
+              padding: "12px",
+              border: "1px dashed #aaa",
+              borderRadius: "8px",
+              color: "#666",
+              textAlign: "center",
+              background: "white",
+            }}
+          >
+            No custom tracks yet.
+          </div>
+        ) : (
+          <div
+            style={{
+              display: "grid",
+              gap: "6px",
+            }}
+          >
+            {trackLayout.map((track, index) => (
+              <div
+                key={track.id || index}
+                style={{
+                  padding: "7px 8px",
+                  border: "1px solid #ddd",
+                  borderRadius: "8px",
+                  background: "white",
+                }}
+              >
+                {track.type === "turnout" ? (
+                  <>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "8px",
+                        marginBottom: "7px",
+                      }}
+                    >
+                      <strong style={{ fontSize: "13px" }}>
+                        Kato #6 Turnout
+                      </strong>
+
+                      <button
+                        type="button"
+                        className="grayBtn"
+                        onClick={() =>
+                          setTrackLayout((current) =>
+                            current.filter(
+                              (_item, itemIndex) => itemIndex !== index
+                            )
+                          )
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(105px, 1fr))",
+                        gap: "6px",
+                        alignItems: "end",
+                      }}
+                    >
+                      <label>
+                        Track Color
+                        <select
+                          value={track.color || "red"}
+                          onChange={(e) =>
+                            setTrackLayout((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? {
+                                      ...item,
+                                      color: e.target.value,
+                                    }
+                                  : item
+                              )
+                            )
+                          }
+                        >
+                          <option value="red">Red</option>
+                          <option value="yellow">Yellow</option>
+                        </select>
+                      </label>
+
+                      <label>
+                        Direction
+                        <select
+                          value={track.direction || "forward"}
+                          onChange={(e) =>
+                            setTrackLayout((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? {
+                                      ...item,
+                                      direction: e.target.value,
+                                    }
+                                  : item
+                              )
+                            )
+                          }
+                        >
+                          <option value="forward">Forward</option>
+                          <option value="reverse">Reverse</option>
+                        </select>
+                      </label>
+
+                      <label>
+                        Turnout Hand
+                        <select
+                          value={track.hand || "left"}
+                          onChange={(e) =>
+                            setTrackLayout((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? {
+                                      ...item,
+                                      hand: e.target.value,
+                                    }
+                                  : item
+                              )
+                            )
+                          }
+                        >
+                          <option value="left">Left</option>
+                          <option value="right">Right</option>
+                        </select>
+                      </label>
+
+                      <label>
+                        Points from Left
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={track.x ?? ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+
+                            setTrackLayout((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? {
+                                      ...item,
+                                      x: value,
+                                    }
+                                  : item
+                              )
+                            );
+                          }}
+                          onBlur={(e) => {
+                            const value = Number(e.target.value);
+
+                            setTrackLayout((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? {
+                                      ...item,
+                                      x: Number.isFinite(value) ? value : 0,
+                                    }
+                                  : item
+                              )
+                            );
+                          }}
+                        />
+                      </label>
+
+                      <label>
+                        Points from Front
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={track.y ?? ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+
+                            setTrackLayout((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? {
+                                      ...item,
+                                      y: value,
+                                    }
+                                  : item
+                              )
+                            );
+                          }}
+                          onBlur={(e) => {
+                            const value = Number(e.target.value);
+
+                            setTrackLayout((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? {
+                                      ...item,
+                                      y: Number.isFinite(value) ? value : 0,
+                                    }
+                                  : item
+                              )
+                            );
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: "6px",
+                        fontSize: "11px",
+                        color: "#666",
+                      }}
+                    >
+                      Kato #6 · 186 mm · R718 mm · 15°
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "5px",
+                        marginTop: "7px",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        className="grayBtn"
+                        onClick={() =>
+                          addStraightFromTurnout(index, "points")
+                        }
+                      >
+                        + Track from Points
+                      </button>
+
+                      <button
+                        type="button"
+                        className="grayBtn"
+                        onClick={() =>
+                          addStraightFromTurnout(index, "straightExit")
+                        }
+                      >
+                        + Track from Straight
+                      </button>
+
+                      <button
+                        type="button"
+                        className="grayBtn"
+                        onClick={() =>
+                          addStraightFromTurnout(index, "divergingExit")
+                        }
+                      >
+                        + Track from Diverging
+                      </button>
+
+                      <button
+                        type="button"
+                        className="grayBtn"
+                        onClick={() =>
+                          addTurnoutFromTurnout(index, "straightExit")
+                        }
+                      >
+                        + Turnout from Straight
+                      </button>
+
+                      <button
+                        type="button"
+                        className="grayBtn"
+                        onClick={() =>
+                          addTurnoutFromTurnout(index, "divergingExit")
+                        }
+                      >
+                        + Turnout from Diverging
+                      </button>
+                    </div>
+                  </>
+                ) : track.mode === "free" ? (
+                  <>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "8px",
+                        marginBottom: "7px",
+                      }}
+                    >
+                      <strong style={{ fontSize: "13px" }}>
+                        Connected Straight Track
+                      </strong>
+
+                      <button
+                        type="button"
+                        className="grayBtn"
+                        onClick={() =>
+                          setTrackLayout((current) =>
+                            current.filter(
+                              (_item, itemIndex) => itemIndex !== index
+                            )
+                          )
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(105px, 1fr))",
+                        gap: "6px",
+                        alignItems: "end",
+                      }}
+                    >
+                      <label>
+                        Color
+                        <select
+                          value={track.color || "red"}
+                          onChange={(e) =>
+                            setTrackLayout((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? {
+                                      ...item,
+                                      color: e.target.value,
+                                    }
+                                  : item
+                              )
+                            )
+                          }
+                        >
+                          <option value="red">Red</option>
+                          <option value="yellow">Yellow</option>
+                        </select>
+                      </label>
+
+                      <label>
+                        Start X
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={track.startX ?? ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+
+                            setTrackLayout((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? {
+                                      ...item,
+                                      startX: value,
+                                    }
+                                  : item
+                              )
+                            );
+                          }}
+                        />
+                      </label>
+
+                      <label>
+                        Start from Front
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={track.startY ?? ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+
+                            setTrackLayout((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? {
+                                      ...item,
+                                      startY: value,
+                                    }
+                                  : item
+                              )
+                            );
+                          }}
+                        />
+                      </label>
+
+                      <label>
+                        End X
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={track.endX ?? ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+
+                            setTrackLayout((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? {
+                                      ...item,
+                                      endX: value,
+                                    }
+                                  : item
+                              )
+                            );
+                          }}
+                        />
+                      </label>
+
+                      <label>
+                        End from Front
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={track.endY ?? ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+
+                            setTrackLayout((current) =>
+                              current.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? {
+                                      ...item,
+                                      endY: value,
+                                    }
+                                  : item
+                              )
+                            );
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </>
+                ) : (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(95px, 1fr))",
+                      gap: "6px",
+                      alignItems: "end",
+                    }}
+                  >
+                    <label>
+                      Color
+                      <select
+                        value={track.color || "red"}
+                        onChange={(e) =>
+                          setTrackLayout((current) =>
+                            current.map((item, itemIndex) =>
+                              itemIndex === index
+                                ? {
+                                    ...item,
+                                    color: e.target.value,
+                                  }
+                                : item
+                            )
+                          )
+                        }
+                      >
+                        <option value="red">Red</option>
+                        <option value="yellow">Yellow</option>
+                      </select>
+                    </label>
+
+                    <label>
+                      Start from Left
+                      <input
+                        type="number"
+                        step="0.25"
+                        value={track.startX ?? 0}
+                        onChange={(e) =>
+                          setTrackLayout((current) =>
+                            current.map((item, itemIndex) =>
+                              itemIndex === index
+                                ? {
+                                    ...item,
+                                    startX: Number(e.target.value),
+                                  }
+                                : item
+                            )
+                          )
+                        }
+                      />
+                    </label>
+
+                    <label>
+                      End from Left
+                      <input
+                        type="number"
+                        step="0.25"
+                        value={
+                          track.endX ??
+                          (Number(customWidthInches) || 24)
+                        }
+                        onChange={(e) =>
+                          setTrackLayout((current) =>
+                            current.map((item, itemIndex) =>
+                              itemIndex === index
+                                ? {
+                                    ...item,
+                                    endX: Number(e.target.value),
+                                  }
+                                : item
+                            )
+                          )
+                        }
+                      />
+                    </label>
+
+                    <label>
+                      From Front Edge
+                      <input
+                        type="number"
+                        step="0.25"
+                        value={track.y ?? 2}
+                        onChange={(e) =>
+                          setTrackLayout((current) =>
+                            current.map((item, itemIndex) =>
+                              itemIndex === index
+                                ? {
+                                    ...item,
+                                    y: Number(e.target.value),
+                                  }
+                                : item
+                            )
+                          )
+                        }
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      className="grayBtn"
+                      onClick={() =>
+                        setTrackLayout((current) =>
+                          current.filter(
+                            (_item, itemIndex) => itemIndex !== index
+                          )
+                        )
+                      }
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-    )}
+
+      {/* RIGHT: sticky live preview */}
+      <div
+        style={{
+          position: "sticky",
+          top: "12px",
+          minWidth: 0,
+          padding: "10px",
+          border: "1px solid #ccc",
+          borderRadius: "10px",
+          background: "white",
+        }}
+      >
+        <strong>Live Module Preview</strong>
+
+        <div
+          style={{
+            marginTop: "8px",
+            overflow: "auto",
+          }}
+        >
+          {(() => {
+            const previewSize = getPreviewDimensions();
+
+            return (
+              <svg
+                width="100%"
+                height="300"
+                viewBox={`0 0 ${previewSize.width} ${previewSize.height}`}
+                style={{
+                  background: "white",
+                  border: "1px solid #ddd",
+                  borderRadius: "8px",
+                  display: "block",
+                }}
+              >
+                <rect
+                  x="0"
+                  y="0"
+                  width={previewSize.width}
+                  height={previewSize.height}
+                  fill="rgba(198, 226, 178, .55)"
+                  stroke="#3d6b2d"
+                  strokeWidth="2"
+                />
+
+                {trackLayout.map((track, index) => {
+                  const moduleWidth = Math.max(
+                    1,
+                    Number(customWidthInches) || 24
+                  );
+
+                  const moduleDepth = Math.max(
+                    1,
+                    Number(customDepthInches) || 14
+                  );
+
+                  const trackColor =
+                    track.color === "yellow" ? "#d4a900" : "red";
+
+                  if (track.type === "turnout") {
+                    const geometry = getYardTurnoutGeometry(track);
+
+                    const radiusPreview =
+                      (718 / 25.4) * LAYOUT_SCALE;
+
+                    const anchorPreviewX =
+                      geometry.points.x * LAYOUT_SCALE;
+
+                    const anchorPreviewY =
+                      previewSize.height -
+                      geometry.points.y * LAYOUT_SCALE;
+
+                    const straightPreviewX =
+                      geometry.straightExit.x * LAYOUT_SCALE;
+
+                    const straightPreviewY =
+                      previewSize.height -
+                      geometry.straightExit.y * LAYOUT_SCALE;
+
+                    const divergePreviewX =
+                      geometry.divergingExit.x * LAYOUT_SCALE;
+
+                    const divergePreviewY =
+                      previewSize.height -
+                      geometry.divergingExit.y * LAYOUT_SCALE;
+
+                    const sweep =
+                      track.hand === "right" ? 1 : 0;
+
+                    return (
+                      <g
+                        key={track.id || index}
+                        transform={`rotate(${
+                          -(Number(track.rotationDeg) || 0)
+                        } ${anchorPreviewX} ${anchorPreviewY})`}
+                      >
+                        <line
+                          x1={anchorPreviewX}
+                          y1={anchorPreviewY}
+                          x2={straightPreviewX}
+                          y2={straightPreviewY}
+                          stroke={trackColor}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        />
+
+                        <path
+                          d={`
+                            M ${anchorPreviewX} ${anchorPreviewY}
+                            A ${radiusPreview} ${radiusPreview}
+                            0 0 ${sweep}
+                            ${divergePreviewX} ${divergePreviewY}
+                          `}
+                          fill="none"
+                          stroke={trackColor}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        />
+
+                        <circle
+                          cx={anchorPreviewX}
+                          cy={anchorPreviewY}
+                          r="3"
+                          fill="white"
+                          stroke={trackColor}
+                          strokeWidth="2"
+                        />
+
+                        <circle
+                          cx={straightPreviewX}
+                          cy={straightPreviewY}
+                          r="3"
+                          fill="white"
+                          stroke={trackColor}
+                          strokeWidth="2"
+                        />
+
+                        <circle
+                          cx={divergePreviewX}
+                          cy={divergePreviewY}
+                          r="3"
+                          fill="white"
+                          stroke={trackColor}
+                          strokeWidth="2"
+                        />
+                      </g>
+                    );
+                  }
+
+                  if (track.mode === "free") {
+                    const startX = Number(track.startX) || 0;
+                    const startY = Number(track.startY) || 0;
+                    const endX = Number(track.endX) || 0;
+                    const endY = Number(track.endY) || 0;
+
+                    return (
+                      <line
+                        key={track.id || index}
+                        x1={startX * LAYOUT_SCALE}
+                        y1={
+                          previewSize.height -
+                          startY * LAYOUT_SCALE
+                        }
+                        x2={endX * LAYOUT_SCALE}
+                        y2={
+                          previewSize.height -
+                          endY * LAYOUT_SCALE
+                        }
+                        stroke={trackColor}
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    );
+                  }
+
+                  const startX = Math.max(
+                    0,
+                    Math.min(
+                      moduleWidth,
+                      Number(track.startX) || 0
+                    )
+                  );
+
+                  const endX = Math.max(
+                    0,
+                    Math.min(
+                      moduleWidth,
+                      Number(track.endX) || moduleWidth
+                    )
+                  );
+
+                  const fromFront = Math.max(
+                    0,
+                    Math.min(
+                      moduleDepth,
+                      Number(track.y) || 0
+                    )
+                  );
+
+                  const previewY =
+                    previewSize.height -
+                    fromFront * LAYOUT_SCALE;
+
+                  return (
+                    <line
+                      key={track.id || index}
+                      x1={startX * LAYOUT_SCALE}
+                      y1={previewY}
+                      x2={endX * LAYOUT_SCALE}
+                      y2={previewY}
+                      stroke={trackColor}
+                      strokeWidth="2"
+                    />
+                  );
+                })}
+              </svg>
+            );
+          })()}
+        </div>
+
+        <div
+          style={{
+            marginTop: "7px",
+            fontSize: "12px",
+            color: "#666",
+          }}
+        >
+          {customWidthInches}" × {customDepthInches}" ·{" "}
+          {trackLayout.length} track piece
+          {trackLayout.length === 1 ? "" : "s"}
+        </div>
+      </div>
+    </div>
   </div>
 )}
 {(
@@ -5536,8 +5739,6 @@ moduleType === "Outside Corner" ||
 moduleType === "End Cap" ||
 moduleType === "Bridge" ||
 moduleType === "NT Junction" ||
-moduleType === "Yard" ||
-moduleType === "Yard Lead" ||
 (dimensions && dimensions !== "Other / custom")
 
   )
@@ -5552,6 +5753,7 @@ moduleType === "Yard Lead" ||
       background: "#fafafa",
     }}
   >
+    
     <strong>Live Module Preview</strong>
 
     <div style={{ marginTop: "10px" }}>
