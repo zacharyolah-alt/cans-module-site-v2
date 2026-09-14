@@ -1346,7 +1346,8 @@ if (
   const addEndpointIfOnEdge = (
     xInches: number,
     yFromFrontInches: number,
-    key: string
+    key: string,
+    color: string
   ) => {
     let side: string | null = null;
 
@@ -1395,6 +1396,10 @@ if (
       y: localY,
       side,
       key,
+      color:
+        String(color || "red")
+          .trim()
+          .toLowerCase(),
     });
   };
 
@@ -1423,13 +1428,15 @@ if (
         addEndpointIfOnEdge(
           startX,
           startY,
-          `yard-${trackIndex}-start`
+          `yard-${trackIndex}-start`,
+          track.color || "red"
         );
 
         addEndpointIfOnEdge(
           endX,
           endY,
-          `yard-${trackIndex}-end`
+          `yard-${trackIndex}-end`,
+          track.color || "red"
         );
 
         return;
@@ -1514,7 +1521,8 @@ if (
             addEndpointIfOnEdge(
               rotated.x,
               rotated.y,
-              `yard-${trackIndex}-${name}`
+              `yard-${trackIndex}-${name}`,
+              track.color || "red"
             );
           }
         );
@@ -1523,10 +1531,10 @@ if (
   );
 
   /*
-   * Remove duplicate dots where two saved
-   * pieces terminate at the same edge point.
+   * First remove duplicate endpoints where
+   * multiple saved pieces meet the same edge point.
    */
-  const uniqueEndpoints =
+  const dedupedEndpoints =
     rawEndpoints.filter(
       (point, index, array) =>
         array.findIndex(
@@ -1541,6 +1549,138 @@ if (
             ) < 0.5
         ) === index
     );
+
+  /*
+   * Standard T-TRAK red/yellow tracks are
+   * 33 mm apart.
+   *
+   * Existing standard modules use one blue
+   * connection point centered between that pair.
+   *
+   * When a Yard has a red/yellow pair at that
+   * spacing on the same edge, combine them into
+   * one matching planner connection point.
+   *
+   * Tracks that do not form a standard pair keep
+   * their own individual connection point.
+   */
+  const STANDARD_PAIR_SPACING =
+    (33 / 25.4) * LAYOUT_SCALE;
+
+  const PAIR_TOLERANCE =
+    0.15 * LAYOUT_SCALE;
+
+  const usedEndpointIndexes =
+    new Set<number>();
+
+  const uniqueEndpoints: any[] = [];
+
+  dedupedEndpoints.forEach(
+    (point, index) => {
+      if (
+        usedEndpointIndexes.has(index)
+      ) {
+        return;
+      }
+
+      let bestMatchIndex = -1;
+      let bestDifference = Infinity;
+
+      dedupedEndpoints.forEach(
+        (
+          candidate,
+          candidateIndex
+        ) => {
+          if (
+            candidateIndex === index ||
+            usedEndpointIndexes.has(
+              candidateIndex
+            ) ||
+            candidate.side !==
+              point.side ||
+            candidate.color ===
+              point.color
+          ) {
+            return;
+          }
+
+          const spacing =
+            point.side === "left" ||
+            point.side === "right"
+              ? Math.abs(
+                  candidate.y -
+                    point.y
+                )
+              : Math.abs(
+                  candidate.x -
+                    point.x
+                );
+
+          const difference =
+            Math.abs(
+              spacing -
+                STANDARD_PAIR_SPACING
+            );
+
+          if (
+            difference <=
+              PAIR_TOLERANCE &&
+            difference <
+              bestDifference
+          ) {
+            bestDifference =
+              difference;
+
+            bestMatchIndex =
+              candidateIndex;
+          }
+        }
+      );
+
+      /*
+       * Found a standard red/yellow pair.
+       * Use one midpoint connection just like
+       * our normal Straight modules.
+       */
+      if (bestMatchIndex >= 0) {
+        const partner =
+          dedupedEndpoints[
+            bestMatchIndex
+          ];
+
+        usedEndpointIndexes.add(index);
+        usedEndpointIndexes.add(
+          bestMatchIndex
+        );
+
+        uniqueEndpoints.push({
+          x:
+            (point.x + partner.x) /
+            2,
+          y:
+            (point.y + partner.y) /
+            2,
+          side: point.side,
+          key: `${point.key}-${partner.key}`,
+        });
+
+        return;
+      }
+
+      /*
+       * No matching red/yellow partner.
+       * Keep this track as its own connection.
+       */
+      usedEndpointIndexes.add(index);
+
+      uniqueEndpoints.push({
+        x: point.x,
+        y: point.y,
+        side: point.side,
+        key: point.key,
+      });
+    }
+  );
 
   return uniqueEndpoints.map(
     (point) => {
