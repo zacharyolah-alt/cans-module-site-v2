@@ -3733,8 +3733,7 @@ button {
   moduleType === "Inside Corner" ||
   moduleType === "Outside Corner" ||
   moduleType === "End Cap" ||
-  moduleType === "Yard" ||
-  moduleType === "Yard Lead"
+  moduleType === "Yard" 
 ) && (
   <div>
   <label>Actual Module Width (inches)</label>
