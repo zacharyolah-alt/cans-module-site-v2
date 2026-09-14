@@ -4043,120 +4043,96 @@ button {
       </label>
 
       <label>
-        Start X
-        <input
-          type="number"
-          step="0.01"
-          value={
-            Number(track.startX ?? 0).toFixed(
-              2
-            )
-          }
-          onChange={(e) =>
-            setTrackLayout((current) =>
-              current.map(
-                (item, itemIndex) =>
-                  itemIndex === index
-                    ? {
-                        ...item,
-                        startX:
-                          Number(
-                            e.target.value
-                          ),
-                      }
-                    : item
-              )
-            )
-          }
-        />
-      </label>
+  Start X
+  <input
+    type="text"
+    inputMode="decimal"
+    value={track.startX ?? ""}
+    onChange={(e) => {
+      const value = e.target.value;
 
-      <label>
-        Start from Front
-        <input
-          type="number"
-          step="0.01"
-          value={
-            Number(track.startY ?? 0).toFixed(
-              2
-            )
-          }
-          onChange={(e) =>
-            setTrackLayout((current) =>
-              current.map(
-                (item, itemIndex) =>
-                  itemIndex === index
-                    ? {
-                        ...item,
-                        startY:
-                          Number(
-                            e.target.value
-                          ),
-                      }
-                    : item
-              )
-            )
-          }
-        />
-      </label>
+      setTrackLayout((current) =>
+        current.map((item, itemIndex) =>
+          itemIndex === index
+            ? {
+                ...item,
+                startX: value,
+              }
+            : item
+        )
+      );
+    }}
+  />
+</label>
 
-      <label>
-        End X
-        <input
-          type="number"
-          step="0.01"
-          value={
-            Number(track.endX ?? 0).toFixed(
-              2
-            )
-          }
-          onChange={(e) =>
-            setTrackLayout((current) =>
-              current.map(
-                (item, itemIndex) =>
-                  itemIndex === index
-                    ? {
-                        ...item,
-                        endX:
-                          Number(
-                            e.target.value
-                          ),
-                      }
-                    : item
-              )
-            )
-          }
-        />
-      </label>
+<label>
+  Start from Front
+  <input
+    type="text"
+    inputMode="decimal"
+    value={track.startY ?? ""}
+    onChange={(e) => {
+      const value = e.target.value;
 
-      <label>
-        End from Front
-        <input
-          type="number"
-          step="0.01"
-          value={
-            Number(track.endY ?? 0).toFixed(
-              2
-            )
-          }
-          onChange={(e) =>
-            setTrackLayout((current) =>
-              current.map(
-                (item, itemIndex) =>
-                  itemIndex === index
-                    ? {
-                        ...item,
-                        endY:
-                          Number(
-                            e.target.value
-                          ),
-                      }
-                    : item
-              )
-            )
-          }
-        />
-      </label>
+      setTrackLayout((current) =>
+        current.map((item, itemIndex) =>
+          itemIndex === index
+            ? {
+                ...item,
+                startY: value,
+              }
+            : item
+        )
+      );
+    }}
+  />
+</label>
+
+<label>
+  End X
+  <input
+    type="text"
+    inputMode="decimal"
+    value={track.endX ?? ""}
+    onChange={(e) => {
+      const value = e.target.value;
+
+      setTrackLayout((current) =>
+        current.map((item, itemIndex) =>
+          itemIndex === index
+            ? {
+                ...item,
+                endX: value,
+              }
+            : item
+        )
+      );
+    }}
+  />
+</label>
+
+<label>
+  End from Front
+  <input
+    type="text"
+    inputMode="decimal"
+    value={track.endY ?? ""}
+    onChange={(e) => {
+      const value = e.target.value;
+
+      setTrackLayout((current) =>
+        current.map((item, itemIndex) =>
+          itemIndex === index
+            ? {
+                ...item,
+                endY: value,
+              }
+            : item
+        )
+      );
+    }}
+  />
+</label>
     </div>
 
     <div
