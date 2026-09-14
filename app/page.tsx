@@ -4200,128 +4200,110 @@ button {
                     </div>
 
                     <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fit, minmax(105px, 1fr))",
-                        gap: "6px",
-                        alignItems: "end",
-                      }}
-                    >
-                      <label>
-                        Color
-                        <select
-                          value={track.color || "red"}
-                          onChange={(e) =>
-                            setTrackLayout((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? {
-                                      ...item,
-                                      color: e.target.value,
-                                    }
-                                  : item
-                              )
-                            )
-                          }
-                        >
-                          <option value="red">Red</option>
-                          <option value="yellow">Yellow</option>
-                        </select>
-                      </label>
+  style={{
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(105px, 1fr))",
+    gap: "6px",
+    alignItems: "end",
+  }}
+>
+  <label>
+    Color
+    <select
+      value={track.color || "red"}
+      onChange={(e) =>
+        setTrackLayout((current) =>
+          current.map((item, itemIndex) =>
+            itemIndex === index
+              ? {
+                  ...item,
+                  color: e.target.value,
+                }
+              : item
+          )
+        )
+      }
+    >
+      <option value="red">Red</option>
+      <option value="yellow">Yellow</option>
+    </select>
+  </label>
 
-                      <label>
-                        Start X
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={track.startX ?? ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
+  <label>
+    Start X — Connected
+    <input
+      type="text"
+      value={
+        Number.isFinite(Number(track.startX))
+          ? Number(track.startX).toFixed(3)
+          : ""
+      }
+      readOnly
+      title="Locked to connected turnout"
+    />
+  </label>
 
-                            setTrackLayout((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? {
-                                      ...item,
-                                      startX: value,
-                                    }
-                                  : item
-                              )
-                            );
-                          }}
-                        />
-                      </label>
+  <label>
+    Start from Front — Connected
+    <input
+      type="text"
+      value={
+        Number.isFinite(Number(track.startY))
+          ? Number(track.startY).toFixed(3)
+          : ""
+      }
+      readOnly
+      title="Locked to connected turnout"
+    />
+  </label>
 
-                      <label>
-                        Start from Front
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={track.startY ?? ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
+  <label>
+    End X
+    <input
+      type="text"
+      inputMode="decimal"
+      value={track.endX ?? ""}
+      onChange={(e) => {
+        const value = e.target.value;
 
-                            setTrackLayout((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? {
-                                      ...item,
-                                      startY: value,
-                                    }
-                                  : item
-                              )
-                            );
-                          }}
-                        />
-                      </label>
+        setTrackLayout((current) =>
+          current.map((item, itemIndex) =>
+            itemIndex === index
+              ? {
+                  ...item,
+                  endX: value,
+                }
+              : item
+          )
+        );
+      }}
+    />
+  </label>
 
-                      <label>
-                        End X
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={track.endX ?? ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
+  <label>
+    End from Front
+    <input
+      type="text"
+      inputMode="decimal"
+      value={track.endY ?? ""}
+      onChange={(e) => {
+        const value = e.target.value;
 
-                            setTrackLayout((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? {
-                                      ...item,
-                                      endX: value,
-                                    }
-                                  : item
-                              )
-                            );
-                          }}
-                        />
-                      </label>
-
-                      <label>
-                        End from Front
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={track.endY ?? ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
-
-                            setTrackLayout((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? {
-                                      ...item,
-                                      endY: value,
-                                    }
-                                  : item
-                              )
-                            );
-                          }}
-                        />
-                      </label>
-                    </div>
+        setTrackLayout((current) =>
+          current.map((item, itemIndex) =>
+            itemIndex === index
+              ? {
+                  ...item,
+                  endY: value,
+                }
+              : item
+          )
+        );
+      }}
+    />
+  </label>
+</div>
                   </>
                 ) : (
                   <div
