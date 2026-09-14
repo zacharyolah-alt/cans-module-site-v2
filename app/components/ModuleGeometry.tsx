@@ -623,6 +623,13 @@ if (kind === "bridge") {
     </>
   );
 }
+if (
+  String(module?.module_type || "")
+    .trim()
+    .toLowerCase() === "yard"
+) {
+  return null;
+}
     // Same centerline positions used by the current designer preview:
     // 38.1 mm ballast setback + 12.5 mm half-roadbed = 50.6 mm centerline.
     const frontTrackCenter =
