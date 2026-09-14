@@ -70,6 +70,100 @@ const svgPlannerRef = useRef<SVGSVGElement | null>(null);
       listener.subscription.unsubscribe();
     };
   }, []);
+  useEffect(() => {
+  setTrackLayout((current) => {
+    let changed = false;
+
+    const updated = current.map((track) => {
+      if (
+        track.type !== "turnout" ||
+        !track.connectedTo?.trackId
+      ) {
+        return track;
+      }
+
+      const parentTurnout = current.find(
+        (item) =>
+          item.id === track.connectedTo.trackId
+      );
+
+      if (
+        !parentTurnout ||
+        parentTurnout.type !== "turnout"
+      ) {
+        return track;
+      }
+
+      const geometry =
+        getYardTurnoutGeometry(
+          parentTurnout
+        );
+
+      const connection =
+        geometry[
+          track.connectedTo.endpoint
+        ];
+
+      if (!connection) {
+        return track;
+      }
+
+      const parentRotation =
+        Number(
+          parentTurnout.rotationDeg
+        ) || 0;
+
+      const branchRotation =
+        parentTurnout.hand === "right"
+          ? -15
+          : 15;
+
+      const rotationDeg =
+        track.connectedTo.endpoint ===
+        "divergingExit"
+          ? parentRotation +
+            branchRotation
+          : parentRotation;
+
+      const samePosition =
+        Math.abs(
+          Number(track.x) -
+            connection.x
+        ) < 0.0001 &&
+        Math.abs(
+          Number(track.y) -
+            connection.y
+        ) < 0.0001;
+
+      const sameRotation =
+        Math.abs(
+          Number(
+            track.rotationDeg || 0
+          ) - rotationDeg
+        ) < 0.0001;
+
+      if (
+        samePosition &&
+        sameRotation
+      ) {
+        return track;
+      }
+
+      changed = true;
+
+      return {
+        ...track,
+        x: connection.x,
+        y: connection.y,
+        rotationDeg,
+      };
+    });
+
+    return changed
+      ? updated
+      : current;
+  });
+}, [trackLayout]);
 
   async function loadModules() {
     const { data, error } = await supabase
@@ -443,7 +537,63 @@ function exportToCSV() {
     },
   };
 }
+function addTurnoutFromTurnout(
+  turnoutIndex: number,
+  endpoint: "straightExit" | "divergingExit"
+) {
+  const parentTurnout = trackLayout[turnoutIndex];
 
+  if (
+    !parentTurnout ||
+    parentTurnout.type !== "turnout"
+  ) {
+    return;
+  }
+
+  const geometry =
+    getYardTurnoutGeometry(parentTurnout);
+
+  const connection = geometry[endpoint];
+  const parentRotation =
+  Number(parentTurnout.rotationDeg) || 0;
+
+const branchRotation =
+  parentTurnout.hand === "right"
+    ? -15
+    : 15;
+
+const rotationDeg =
+  endpoint === "divergingExit"
+    ? parentRotation + branchRotation
+    : parentRotation;
+
+  if (!connection) {
+    return;
+  }
+
+  setTrackLayout((current) => [
+    ...current,
+    {
+      id: `${Date.now()}-turnout`,
+      type: "turnout",
+      turnoutModel: "kato-6",
+
+      color: parentTurnout.color || "red",
+      direction:
+        parentTurnout.direction || "forward",
+      hand: "left",
+
+      x: connection.x,
+y: connection.y,
+rotationDeg,
+
+      connectedTo: {
+        trackId: parentTurnout.id,
+        endpoint,
+      },
+    },
+  ]);
+}
 function addStraightFromTurnout(
   turnoutIndex: number,
   endpoint:
@@ -3973,6 +4123,31 @@ button {
   >
     + Track from Diverging Exit
   </button>
+  <button
+  type="button"
+  className="grayBtn"
+  onClick={() =>
+    addTurnoutFromTurnout(
+      index,
+      "straightExit"
+    )
+  }
+>
+  + Turnout from Straight Exit
+</button>
+
+<button
+  type="button"
+  className="grayBtn"
+  onClick={() =>
+    addTurnoutFromTurnout(
+      index,
+      "divergingExit"
+    )
+  }
+>
+  + Turnout from Diverging Exit
+</button>
 </div>
       </>
    ) : track.mode === "free" ? (
@@ -5541,7 +5716,12 @@ moduleType === "Yard Lead" ||
             : 0;
 
         return (
-          <g key={track.id || index}>
+          <g
+  key={track.id || index}
+  transform={`rotate(${
+    -(Number(track.rotationDeg) || 0)
+  } ${anchorPreviewX} ${anchorPreviewY})`}
+>
             {/* Straight route */}
             <line
               x1={anchorPreviewX}
