@@ -1322,6 +1322,256 @@ const connectionCenter =
   top: { dx: 0, dy: -1 },
   bottom: { dx: 0, dy: 1 },
 };
+if (
+  String(m.module_type || "")
+    .trim()
+    .toLowerCase() === "yard"
+) {
+  const yardTracks = Array.isArray(m.track_layout)
+    ? m.track_layout
+    : [];
+
+  const widthInches =
+    size.width / LAYOUT_SCALE;
+
+  const depthInches =
+    size.height / LAYOUT_SCALE;
+
+  // Allows for tiny decimal differences without
+  // treating clearly internal track ends as connections.
+  const EDGE_TOLERANCE = 0.15;
+
+  const rawEndpoints: any[] = [];
+
+  const addEndpointIfOnEdge = (
+    xInches: number,
+    yFromFrontInches: number,
+    key: string
+  ) => {
+    let side: string | null = null;
+
+    let localX =
+      xInches * LAYOUT_SCALE;
+
+    let localY =
+      size.height -
+      yFromFrontInches * LAYOUT_SCALE;
+
+    if (
+      Math.abs(xInches) <=
+      EDGE_TOLERANCE
+    ) {
+      side = "left";
+      localX = 0;
+    } else if (
+      Math.abs(
+        xInches - widthInches
+      ) <= EDGE_TOLERANCE
+    ) {
+      side = "right";
+      localX = size.width;
+    } else if (
+      Math.abs(yFromFrontInches) <=
+      EDGE_TOLERANCE
+    ) {
+      side = "bottom";
+      localY = size.height;
+    } else if (
+      Math.abs(
+        yFromFrontInches -
+          depthInches
+      ) <= EDGE_TOLERANCE
+    ) {
+      side = "top";
+      localY = 0;
+    }
+
+    if (!side) {
+      return;
+    }
+
+    rawEndpoints.push({
+      x: localX,
+      y: localY,
+      side,
+      key,
+    });
+  };
+
+  yardTracks.forEach(
+    (track: any, trackIndex: number) => {
+      /*
+       * STRAIGHT TRACK
+       */
+      if (track.type === "straight") {
+        const startX =
+          Number(track.startX) || 0;
+
+        const endX =
+          Number(track.endX) || 0;
+
+        const startY =
+          Number(
+            track.startY ?? track.y
+          ) || 0;
+
+        const endY =
+          Number(
+            track.endY ?? track.y
+          ) || startY;
+
+        addEndpointIfOnEdge(
+          startX,
+          startY,
+          `yard-${trackIndex}-start`
+        );
+
+        addEndpointIfOnEdge(
+          endX,
+          endY,
+          `yard-${trackIndex}-end`
+        );
+
+        return;
+      }
+
+      /*
+       * KATO #6 TURNOUT
+       */
+      if (
+        track.type === "turnout" &&
+        track.turnoutModel === "kato-6"
+      ) {
+        const geometry =
+          getYardTurnoutGeometry(track);
+
+        const anchorX =
+          Number(track.x) || 0;
+
+        const anchorY =
+          Number(track.y) || 0;
+
+        const rotationDeg =
+          Number(track.rotationDeg) || 0;
+
+        const rotateTrackPoint = (
+          point: any
+        ) => {
+          if (!rotationDeg) {
+            return {
+              x: point.x,
+              y: point.y,
+            };
+          }
+
+          const radians =
+            (rotationDeg * Math.PI) /
+            180;
+
+          const dx =
+            point.x - anchorX;
+
+          const dy =
+            point.y - anchorY;
+
+          return {
+            x:
+              anchorX +
+              dx * Math.cos(radians) -
+              dy * Math.sin(radians),
+
+            y:
+              anchorY +
+              dx * Math.sin(radians) +
+              dy * Math.cos(radians),
+          };
+        };
+
+        const turnoutPoints = [
+          {
+            name: "points",
+            point: geometry.points,
+          },
+          {
+            name: "straight",
+            point:
+              geometry.straightExit,
+          },
+          {
+            name: "diverging",
+            point:
+              geometry.divergingExit,
+          },
+        ];
+
+        turnoutPoints.forEach(
+          ({ name, point }) => {
+            if (!point) return;
+
+            const rotated =
+              rotateTrackPoint(point);
+
+            addEndpointIfOnEdge(
+              rotated.x,
+              rotated.y,
+              `yard-${trackIndex}-${name}`
+            );
+          }
+        );
+      }
+    }
+  );
+
+  /*
+   * Remove duplicate dots where two saved
+   * pieces terminate at the same edge point.
+   */
+  const uniqueEndpoints =
+    rawEndpoints.filter(
+      (point, index, array) =>
+        array.findIndex(
+          (other) =>
+            other.side ===
+              point.side &&
+            Math.abs(
+              other.x - point.x
+            ) < 0.5 &&
+            Math.abs(
+              other.y - point.y
+            ) < 0.5
+        ) === index
+    );
+
+  return uniqueEndpoints.map(
+    (point) => {
+      const rotated = rotatePoint(
+        point.x,
+        point.y,
+        rotation,
+        size
+      );
+
+      const baseDirection =
+        sideDirection[point.side];
+
+      const direction =
+        rotateDirection(
+          baseDirection.dx,
+          baseDirection.dy,
+          rotation
+        );
+
+      return {
+        x: slot.x + rotated.x,
+        y: slot.y + rotated.y,
+        side: point.side,
+        key: point.key,
+        dx: direction.dx,
+        dy: direction.dy,
+      };
+    }
+  );
+}
 if (kind === "bridge") {
   const bridgeCenterY = size.height / 2;
 
