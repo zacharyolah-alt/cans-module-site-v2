@@ -6409,9 +6409,277 @@ previewSize.outerRadius ? (
   }}
 />
                   
-              ) : (
-                <div className="noImage">No Photo</div>
-              )}
+          ) : (
+  <div
+    className="noImage"
+    style={{
+      padding: "8px",
+      background: "#f7f7f7",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+  >
+    {(() => {
+      const previewSize = getLayoutSize(m);
+
+      const width = Math.max(1, previewSize.width);
+      const height = Math.max(1, previewSize.height);
+
+      const isYard = m.module_type === "Yard";
+
+      return (
+        <svg
+          width="100%"
+          height="180"
+          viewBox={`0 0 ${width} ${height}`}
+          preserveAspectRatio="xMidYMid meet"
+          style={{
+            display: "block",
+            background: "white",
+            borderRadius: "6px",
+          }}
+        >
+          <rect
+            x="0"
+            y="0"
+            width={width}
+            height={height}
+            fill="rgba(198, 226, 178, .55)"
+            stroke="#3d6b2d"
+            strokeWidth="2"
+          />
+
+          {isYard ? (
+            <>
+              {(Array.isArray(m.track_layout)
+                ? m.track_layout
+                : []
+              ).map((track: any, index: number) => {
+                const color =
+                  track.color === "yellow"
+                    ? "#d4a900"
+                    : "red";
+
+                const moduleDepth =
+                  Math.max(
+                    1,
+                    Number(m.custom_depth_inches) || 14
+                  );
+
+                const toX = (inches: number) =>
+                  inches * LAYOUT_SCALE;
+
+                const toY = (fromFront: number) =>
+                  height -
+                  fromFront * LAYOUT_SCALE;
+
+                if (track.type === "turnout") {
+                  const radius =
+                    (718 / 25.4) *
+                    LAYOUT_SCALE;
+
+                  const length =
+                    (186 / 25.4) *
+                    LAYOUT_SCALE;
+
+                  const angle =
+                    (15 * Math.PI) / 180;
+
+                  const anchorX =
+                    (Number(track.x) || 0) *
+                    LAYOUT_SCALE;
+
+                  const anchorY =
+                    toY(
+                      Math.max(
+                        0,
+                        Math.min(
+                          moduleDepth,
+                          Number(track.y) || 0
+                        )
+                      )
+                    );
+
+                  let directionSign =
+                    track.color === "yellow"
+                      ? -1
+                      : 1;
+
+                  if (
+                    track.direction === "reverse"
+                  ) {
+                    directionSign *= -1;
+                  }
+
+                  const handSign =
+                    track.hand === "right"
+                      ? -1
+                      : 1;
+
+                  const straightX =
+                    anchorX +
+                    directionSign * length;
+
+                  const divergeForward =
+                    radius * Math.sin(angle);
+
+                  const divergeSide =
+                    radius *
+                    (1 - Math.cos(angle));
+
+                  const divergeX =
+                    anchorX +
+                    directionSign *
+                      divergeForward;
+
+                  const divergeFromFront =
+                    (Number(track.y) || 0) +
+                    directionSign *
+                      handSign *
+                      (718 /
+                        25.4) *
+                      (1 - Math.cos(angle));
+
+                  const divergeY =
+                    toY(divergeFromFront);
+
+                  const sweep =
+                    track.hand === "right"
+                      ? 1
+                      : 0;
+
+                  return (
+                    <g
+                      key={track.id || index}
+                      transform={`rotate(${
+                        -(
+                          Number(
+                            track.rotationDeg
+                          ) || 0
+                        )
+                      } ${anchorX} ${anchorY})`}
+                    >
+                      <line
+                        x1={anchorX}
+                        y1={anchorY}
+                        x2={straightX}
+                        y2={anchorY}
+                        stroke={color}
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+
+                      <path
+                        d={`
+                          M ${anchorX} ${anchorY}
+                          A ${radius} ${radius}
+                          0 0 ${sweep}
+                          ${divergeX} ${divergeY}
+                        `}
+                        fill="none"
+                        stroke={color}
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </g>
+                  );
+                }
+
+                if (track.mode === "free") {
+                  return (
+                    <line
+                      key={track.id || index}
+                      x1={toX(
+                        Number(track.startX) || 0
+                      )}
+                      y1={toY(
+                        Number(track.startY) || 0
+                      )}
+                      x2={toX(
+                        Number(track.endX) || 0
+                      )}
+                      y2={toY(
+                        Number(track.endY) || 0
+                      )}
+                      stroke={color}
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  );
+                }
+
+                return (
+                  <line
+                    key={track.id || index}
+                    x1={
+                      (Number(track.startX) || 0) *
+                      LAYOUT_SCALE
+                    }
+                    y1={toY(
+                      Number(track.y) || 0
+                    )}
+                    x2={
+                      (Number(track.endX) ||
+                        Number(
+                          m.custom_width_inches
+                        ) ||
+                        24) *
+                      LAYOUT_SCALE
+                    }
+                    y2={toY(
+                      Number(track.y) || 0
+                    )}
+                    stroke={color}
+                    strokeWidth="2"
+                  />
+                );
+              })}
+            </>
+          ) : (
+            <>
+              <line
+                x1="0"
+                y1={
+                  height -
+                  FRONT_TRACK_FRONT_EDGE -
+                  TRACK_WIDTH / 2
+                }
+                x2={width}
+                y2={
+                  height -
+                  FRONT_TRACK_FRONT_EDGE -
+                  TRACK_WIDTH / 2
+                }
+                stroke="red"
+                strokeWidth="2"
+              />
+
+              <line
+                x1="0"
+                y1={
+                  height -
+                  FRONT_TRACK_FRONT_EDGE -
+                  TRACK_CENTER_SPACING -
+                  TRACK_WIDTH / 2
+                }
+                x2={width}
+                y2={
+                  height -
+                  FRONT_TRACK_FRONT_EDGE -
+                  TRACK_CENTER_SPACING -
+                  TRACK_WIDTH / 2
+                }
+                stroke="#d4a900"
+                strokeWidth="2"
+              />
+            </>
+          )}
+        </svg>
+      );
+    })()}
+  </div>
+)}
 
               <div className="cardBody">
                 <div className="badgeRow">
