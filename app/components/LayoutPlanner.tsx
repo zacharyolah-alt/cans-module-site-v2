@@ -595,6 +595,196 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                       isPolygonModule
                     }
                   />
+                  {String(m.module_type || "").trim() === "Yard" &&
+  Array.isArray(m.track_layout) &&
+  m.track_layout.map(
+    (track: any, trackIndex: number) => {
+      const SCALE = 10;
+
+      /*
+       * STRAIGHT TRACK
+       */
+      if (track.type === "straight") {
+        const startX =
+          Number(track.startX) || 0;
+
+        const endX =
+          Number(track.endX) || 0;
+
+        const startFromFront =
+          Number(
+            track.startY ?? track.y
+          ) || 0;
+
+        const endFromFront =
+          Number(
+            track.endY ?? track.y
+          ) || startFromFront;
+
+        const x1 = startX * SCALE;
+        const x2 = endX * SCALE;
+
+        const y1 =
+          size.height -
+          startFromFront * SCALE;
+
+        const y2 =
+          size.height -
+          endFromFront * SCALE;
+
+        return (
+          <line
+            key={
+              track.id ||
+              `yard-track-${trackIndex}`
+            }
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke={
+              track.color === "yellow"
+                ? "#eab308"
+                : "#dc2626"
+            }
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+        );
+      }
+
+      /*
+       * KATO #6 TURNOUT
+       */
+      if (
+        track.type === "turnout" &&
+        track.turnoutModel === "kato-6"
+      ) {
+        const radiusInches =
+          718 / 25.4;
+
+        const lengthInches =
+          186 / 25.4;
+
+        const angleDegrees = 15;
+
+        const angleRadians =
+          (angleDegrees * Math.PI) / 180;
+
+        const anchorX =
+          (Number(track.x) || 0) *
+          SCALE;
+
+        const anchorY =
+          size.height -
+          (Number(track.y) || 0) *
+            SCALE;
+
+        let directionSign =
+          track.color === "yellow"
+            ? -1
+            : 1;
+
+        if (
+          track.direction === "reverse"
+        ) {
+          directionSign *= -1;
+        }
+
+        const straightEndX =
+          anchorX +
+          directionSign *
+            lengthInches *
+            SCALE;
+
+        const straightEndY =
+          anchorY;
+
+        const storedYDirection =
+          directionSign *
+          (track.hand === "right"
+            ? -1
+            : 1);
+
+        const branchDx =
+          radiusInches *
+          Math.sin(angleRadians) *
+          SCALE;
+
+        const branchDy =
+          radiusInches *
+          (1 -
+            Math.cos(angleRadians)) *
+          SCALE;
+
+        const branchEndX =
+          anchorX +
+          directionSign * branchDx;
+
+        const branchEndY =
+          anchorY -
+          storedYDirection *
+            branchDy;
+
+        const radius =
+          radiusInches * SCALE;
+
+        const sweep =
+          storedYDirection > 0
+            ? directionSign > 0
+              ? 0
+              : 1
+            : directionSign > 0
+            ? 1
+            : 0;
+
+        const trackColor =
+          track.color === "yellow"
+            ? "#eab308"
+            : "#dc2626";
+
+        const rotationDeg =
+          -(Number(
+            track.rotationDeg
+          ) || 0);
+
+        return (
+          <g
+            key={
+              track.id ||
+              `yard-turnout-${trackIndex}`
+            }
+            transform={`rotate(${rotationDeg} ${anchorX} ${anchorY})`}
+          >
+            <line
+              x1={anchorX}
+              y1={anchorY}
+              x2={straightEndX}
+              y2={straightEndY}
+              stroke={trackColor}
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+
+            <path
+              d={`
+                M ${anchorX} ${anchorY}
+                A ${radius} ${radius}
+                0 0 ${sweep}
+                ${branchEndX} ${branchEndY}
+              `}
+              fill="none"
+              stroke={trackColor}
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+          </g>
+        );
+      }
+
+      return null;
+    }
+  )}
                 </g>
 
                 {getTrackEndpointsForModule(
