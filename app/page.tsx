@@ -4027,76 +4027,74 @@ button {
 
                       <label>
                         Points from Left
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={track.x ?? ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
+                        {track.connectedTo ? (
+  <input
+    type="text"
+    value={
+      Number.isFinite(Number(track.x))
+        ? Number(track.x).toFixed(3)
+        : ""
+    }
+    readOnly
+    title="Locked to connected turnout"
+  />
+) : (
+  <input
+    type="text"
+    inputMode="decimal"
+    value={track.x ?? ""}
+    onChange={(e) => {
+      const value = e.target.value;
 
-                            setTrackLayout((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? {
-                                      ...item,
-                                      x: value,
-                                    }
-                                  : item
-                              )
-                            );
-                          }}
-                          onBlur={(e) => {
-                            const value = Number(e.target.value);
-
-                            setTrackLayout((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? {
-                                      ...item,
-                                      x: Number.isFinite(value) ? value : 0,
-                                    }
-                                  : item
-                              )
-                            );
-                          }}
-                        />
+      setTrackLayout((current) =>
+        current.map((item, itemIndex) =>
+          itemIndex === index
+            ? {
+                ...item,
+                x: value,
+              }
+            : item
+        )
+      );
+    }}
+  />
+)}
                       </label>
 
                       <label>
                         Points from Front
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={track.y ?? ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
+                        {track.connectedTo ? (
+  <input
+    type="text"
+    value={
+      Number.isFinite(Number(track.y))
+        ? Number(track.y).toFixed(3)
+        : ""
+    }
+    readOnly
+    title="Locked to connected turnout"
+  />
+) : (
+  <input
+    type="text"
+    inputMode="decimal"
+    value={track.y ?? ""}
+    onChange={(e) => {
+      const value = e.target.value;
 
-                            setTrackLayout((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? {
-                                      ...item,
-                                      y: value,
-                                    }
-                                  : item
-                              )
-                            );
-                          }}
-                          onBlur={(e) => {
-                            const value = Number(e.target.value);
-
-                            setTrackLayout((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? {
-                                      ...item,
-                                      y: Number.isFinite(value) ? value : 0,
-                                    }
-                                  : item
-                              )
-                            );
-                          }}
-                        />
+      setTrackLayout((current) =>
+        current.map((item, itemIndex) =>
+          itemIndex === index
+            ? {
+                ...item,
+                y: value,
+              }
+            : item
+        )
+      );
+    }}
+  />
+)}
                       </label>
                     </div>
 
