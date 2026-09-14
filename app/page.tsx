@@ -6636,8 +6636,221 @@ previewSize.outerRadius ? (
                 );
               })}
             </>
+                   ) : m.module_type === "NT Junction" ? (
+            <>
+              {(() => {
+                const mm = (value: number) =>
+                  (value / 25.4) * LAYOUT_SCALE;
+
+                const ntRadiusMm: Record<
+                  string,
+                  number
+                > = {
+                  "Standard Corner": 282,
+                  "Medium Corner": 348,
+                  "Large Corner": 447,
+                  "Extra-Large Corner": 481,
+                };
+
+                const radius = mm(
+                  ntRadiusMm[m.corner_size] || 282
+                );
+
+                const redY = mm(50.6);
+                const yellowY = mm(83.6);
+
+                const leftBottomX = radius;
+
+                const rightBottomX =
+                  width - radius;
+
+                return (
+                  <>
+                    {/* Red track stays straight */}
+                    <line
+                      x1="0"
+                      y1={redY}
+                      x2={width}
+                      y2={redY}
+                      stroke="red"
+                      strokeWidth="2"
+                    />
+
+                    {/* Yellow track from left */}
+                    <path
+                      d={`
+                        M 0 ${yellowY}
+                        A ${radius} ${radius}
+                        0 0 1
+                        ${leftBottomX} ${height}
+                      `}
+                      fill="none"
+                      stroke="#d4a900"
+                      strokeWidth="2"
+                    />
+
+                    {/* Yellow track from right */}
+                    <path
+                      d={`
+                        M ${width} ${yellowY}
+                        A ${radius} ${radius}
+                        0 0 0
+                        ${rightBottomX} ${height}
+                      `}
+                      fill="none"
+                      stroke="#d4a900"
+                      strokeWidth="2"
+                    />
+                  </>
+                );
+              })()}
+            </>
+          ) : m.module_type === "End Cap" ? (
+            <>
+              {(() => {
+                const radiusPairs: Record<
+                  string,
+                  [number, number]
+                > = {
+                  "Standard Corner": [282, 315],
+                  "Medium Corner": [348, 381],
+                  "Large Corner": [447, 480],
+                  "Extra-Large Corner": [481, 481],
+                };
+
+                const selectedPair =
+                  radiusPairs[m.corner_size] ||
+                  radiusPairs["Standard Corner"];
+
+                const innerRadius =
+                  (selectedPair[0] / 25.4) *
+                  LAYOUT_SCALE;
+
+                const outerRadius =
+                  (selectedPair[1] / 25.4) *
+                  LAYOUT_SCALE;
+
+                const centerX = 0;
+                const centerY = height / 2;
+
+                return (
+                  <>
+                    {[
+                      {
+                        radius: innerRadius,
+                        color: "#d4a900",
+                      },
+                      {
+                        radius: outerRadius,
+                        color: "red",
+                      },
+                    ].map((track, index) => (
+                      <path
+                        key={`card-endcap-${index}`}
+                        d={`
+                          M ${centerX}
+                            ${centerY - track.radius}
+
+                          A ${track.radius}
+                            ${track.radius}
+                            0 0 1
+                            ${centerX}
+                            ${centerY + track.radius}
+                        `}
+                        fill="none"
+                        stroke={track.color}
+                        strokeWidth="2"
+                      />
+                    ))}
+                  </>
+                );
+              })()}
+            </>
+          ) : m.module_type === "Inside Corner" ||
+              m.module_type === "Outside Corner" ? (
+            <>
+              {(() => {
+                const radiusPairs: Record<
+                  string,
+                  [number, number]
+                > = {
+                  "Standard Corner": [282, 315],
+                  "Medium Corner": [348, 381],
+                  "Large Corner": [447, 480],
+                  "Extra-Large Corner": [481, 481],
+                };
+
+                const selectedPair =
+                  radiusPairs[m.corner_size] ||
+                  radiusPairs["Standard Corner"];
+
+                const innerRadius =
+                  (selectedPair[0] / 25.4) *
+                  LAYOUT_SCALE;
+
+                const outerRadius =
+                  (selectedPair[1] / 25.4) *
+                  LAYOUT_SCALE;
+
+                return (
+                  <>
+                    {[
+                      {
+                        radius: innerRadius,
+                        color:
+                          m.module_type ===
+                          "Inside Corner"
+                            ? "red"
+                            : "#d4a900",
+                      },
+                      {
+                        radius: outerRadius,
+                        color:
+                          m.module_type ===
+                          "Inside Corner"
+                            ? "#d4a900"
+                            : "red",
+                      },
+                    ].map((track, index) => (
+                      <path
+                        key={`card-corner-${index}`}
+                        d={
+                          m.module_type ===
+                          "Outside Corner"
+                            ? `
+                              M 0 ${track.radius}
+                              A ${track.radius}
+                                ${track.radius}
+                                0 0 0
+                                ${track.radius} 0
+                            `
+                            : `
+                              M ${
+                                width -
+                                track.radius
+                              } ${height}
+                              A ${track.radius}
+                                ${track.radius}
+                                0 0 1
+                                ${width}
+                                ${
+                                  height -
+                                  track.radius
+                                }
+                            `
+                        }
+                        fill="none"
+                        stroke={track.color}
+                        strokeWidth="2"
+                      />
+                    ))}
+                  </>
+                );
+              })()}
+            </>
           ) : (
             <>
+              {/* Normal Straight / Bridge fallback */}
               <line
                 x1="0"
                 y1={
