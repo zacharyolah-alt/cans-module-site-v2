@@ -363,7 +363,7 @@ const existingModule = editingId
 const savedDimensions =
   moduleType === "NT Junction"
     ? ntJunctionDimensions[cornerSize] || ""
-    : moduleType === "Yard" || moduleType === "Yard Lead"
+    : moduleType === "Yard"
     ? `${customWidthInches}" x ${customDepthInches}"`
     : dimensions;
     const payload = {
@@ -3450,7 +3450,6 @@ button {
   "Bridge",
   "NT Junction",
   "Yard",
-  "Yard Lead",
 ].map((t) => (
         <button
           key={t}
@@ -3656,7 +3655,6 @@ button {
     <option>Bridge</option>
     <option>NT Junction</option>
 <option>Yard</option>
-<option>Yard Lead</option>
   </select>
 </div>
 
@@ -3758,7 +3756,7 @@ button {
 />
    </div>
 )}
-{(moduleType === "Yard" || moduleType === "Yard Lead") && (
+{moduleType === "Yard"&& (
   <div
     style={{
       gridColumn: "1 / -1",
@@ -5781,7 +5779,7 @@ moduleType === "NT Junction" ||
               strokeWidth="2"
             />
             
-{moduleType === "Yard" || moduleType === "Yard Lead" ? (
+{moduleType === "Yard"? (
   <>
     {trackLayout.map((track, index) => {
       const moduleWidth =
