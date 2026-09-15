@@ -1099,7 +1099,18 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
     background: "#fff",
   }}
 >
-  {(() => {
+  {m.photo_url ? (
+  <img
+    src={m.photo_url}
+    alt={m.module_name || "Module"}
+    style={{
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
+      display: "block",
+    }}
+  />
+) : (() => {
     const previewSize = getPlannerSize(m);
     const previewKind = getPlannerKind(m);
 
@@ -1307,7 +1318,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
           )}
       </svg>
     );
-  })()}
+    })()}
 </div>
 
                 <div className="legendText">
