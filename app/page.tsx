@@ -1682,55 +1682,35 @@ if (
     }
   );
 
- return uniqueEndpoints.map((point) => {
-  let worldX = 0;
-  let worldY = 0;
+  return uniqueEndpoints.map(
+    (point) => {
+      const rotated = rotatePoint(
+        point.x,
+        point.y,
+        rotation,
+        size
+      );
 
-  /*
-   * Use the exact same transformation as the SVG
-   * moduleTransform used to draw the Yard rails.
-   */
-  if (rotation === 90) {
-    worldX =
-      slot.x + size.height - point.y;
-    worldY =
-      slot.y + point.x;
-  } else if (rotation === 180) {
-    worldX =
-      slot.x + size.width - point.x;
-    worldY =
-      slot.y + size.height - point.y;
-  } else if (rotation === 270) {
-    worldX =
-      slot.x + point.y;
-    worldY =
-      slot.y + size.width - point.x;
-  } else {
-    worldX =
-      slot.x + point.x;
-    worldY =
-      slot.y + point.y;
-  }
+      const baseDirection =
+        sideDirection[point.side];
 
-  const baseDirection =
-    sideDirection[point.side];
+      const direction =
+        rotateDirection(
+          baseDirection.dx,
+          baseDirection.dy,
+          rotation
+        );
 
-  const direction =
-    rotateDirection(
-      baseDirection.dx,
-      baseDirection.dy,
-      rotation
-    );
-
-  return {
-    x: worldX,
-    y: worldY,
-    side: point.side,
-    key: point.key,
-    dx: direction.dx,
-    dy: direction.dy,
-  };
-});
+      return {
+        x: slot.x + rotated.x,
+        y: slot.y + rotated.y,
+        side: point.side,
+        key: point.key,
+        dx: direction.dx,
+        dy: direction.dy,
+      };
+    }
+  );
 }
 if (kind === "bridge") {
   const bridgeCenterY = size.height / 2;

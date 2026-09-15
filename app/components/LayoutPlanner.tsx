@@ -631,25 +631,37 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
         const y2 =
           size.height -
           endFromFront * SCALE;
+          const isRightEdge =
+  Math.abs(endX - size.width / SCALE) < 0.15;
 
-        return (
-          <line
-            key={
-              track.id ||
-              `yard-track-${trackIndex}`
-            }
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-            stroke={
-              track.color === "yellow"
-                ? "#eab308"
-                : "#dc2626"
-            }
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
+       return (
+  <g key={`yard-straight-${trackIndex}`}>
+    <line
+      x1={x1}
+      y1={y1}
+      x2={x2}
+      y2={y2}
+      stroke={
+        track.color === "yellow"
+          ? "#eab308"
+          : "#dc2626"
+      }
+      strokeWidth="2"
+      vectorEffect="non-scaling-stroke"
+    />
+
+    {isRightEdge && (
+      <circle
+        cx={x2}
+        cy={y2}
+        r="4"
+        fill="magenta"
+        stroke="black"
+        strokeWidth="1"
+        vectorEffect="non-scaling-stroke"
+      />
+    )}
+  </g>
         );
       }
 
