@@ -2638,210 +2638,217 @@ function redoLayoutChange() {
   const connectedIds = getConnectedModuleIds(m.id);
 
   const groupModules = connectedIds
-    .map((id) =>
-      layoutModules.find(
-        (module: any) => module.id === id
-      )
-    )
+    .map((id) => layoutModules.find((module) => module.id === id))
     .filter(Boolean);
 
-  if (
-    groupModules.some(
-      (module: any) =>
-        layoutLocks[module.id]
-    )
-  ) {
+  if (groupModules.some((module: any) => layoutLocks[module.id])) {
     return;
   }
 
   pushLayoutHistory();
 
-  /*
-   * Capture every module in its current
-   * rotated bounding box.
-   */
-  const currentItems = groupModules.map(
-    (module: any) => {
-      const permanentIndex = Math.max(
-        0,
-        (moduleNumberMap[module.id] || 1) - 1
-      );
+  const currentItems = groupModules.map((module: any) => {
+    const permanentIndex = Math.max(
+      0,
+      (moduleNumberMap[module.id] || 1) - 1
+    );
 
-      const slot = getPlacedSlot(
-        module,
-        permanentIndex
-      );
+    const slot = getPlacedSlot(module, permanentIndex);
+    const size = getLayoutSize(module);
+    const bounds = getRotatedBounds(slot, size);
 
-      const size = getLayoutSize(module);
-
-      const bounds = getRotatedBounds(
-        slot,
-        size
-      );
-
-      return {
-        module,
-        slot,
-        size,
-        bounds,
-        center: {
-          x:
-            slot.x +
-            bounds.width / 2,
-          y:
-            slot.y +
-            bounds.height / 2,
-        },
-      };
-    }
-  );
-
-  /*
-   * Use the actual bounding box of the whole
-   * connected group as the rotation center.
-   *
-   * This keeps the physical relationship
-   * between differently sized connected
-   * modules intact through every 90° turn.
-   */
-  const currentMinX = Math.min(
-    ...currentItems.map(
-      (item) => item.slot.x
-    )
-  );
-
-  const currentMinY = Math.min(
-    ...currentItems.map(
-      (item) => item.slot.y
-    )
-  );
-
-  const currentMaxX = Math.max(
-    ...currentItems.map(
-      (item) =>
-        item.slot.x +
-        item.bounds.width
-    )
-  );
-
-  const currentMaxY = Math.max(
-    ...currentItems.map(
-      (item) =>
-        item.slot.y +
-        item.bounds.height
-    )
-  );
+    return {
+      module,
+      slot,
+      size,
+      center: {
+        x: slot.x + bounds.width / 2,
+        y: slot.y + bounds.height / 2,
+      },
+    };
+  });
 
   const groupCenter = {
     x:
-      (currentMinX +
-        currentMaxX) /
-      2,
+      currentItems.reduce(
+        (sum: number, item: any) => sum + item.center.x,
+        0
+      ) / currentItems.length,
 
     y:
-      (currentMinY +
-        currentMaxY) /
-      2,
+      currentItems.reduce(
+        (sum: number, item: any) => sum + item.center.y,
+        0
+      ) / currentItems.length,
   };
 
+  const nextItems = currentItems.map((item: any) => {
+    const relativeX = item.center.x - groupCenter.x;
+    const relativeY = item.center.y - groupCenter.y;
+
+    const nextCenter = {
+      x: groupCenter.x - relativeY,
+      y: groupCenter.y + relativeX,
+    };
+
+    const nextRotation =
+      ((item.slot.rotation || 0) + 90) % 360;
+
+    const nextBounds =
+      nextRotation === 90 || nextRotation === 270
+        ? {
+            width: item.size.height,
+            height: item.size.width,
+          }
+        : {
+            width: item.size.width,
+            height: item.size.height,
+          };
+
+    return {
+      id: item.module.id,
+      module: item.module,
+      size: item.size,
+      slot: {
+        ...item.slot,
+        x: nextCenter.x - nextBounds.width / 2,
+        y: nextCenter.y - nextBounds.height / 2,
+        rotation: nextRotation,
+      },
+      bounds: nextBounds,
+    };
+  });
+
   /*
-   * Rotate every module center exactly 90°
-   * around the common group center.
+   * Re-anchor connected modules after rotation.
+   *
+   * The first module stays where the rigid group rotation
+   * placed it. Every directly connected module is then
+   * translated so the exact saved connection endpoints
+   * coincide again.
    */
-  const nextItems = currentItems.map(
-    (item) => {
-      const relativeX =
-        item.center.x -
-        groupCenter.x;
-
-      const relativeY =
-        item.center.y -
-        groupCenter.y;
-
-      const nextCenter = {
-        x:
-          groupCenter.x -
-          relativeY,
-
-        y:
-          groupCenter.y +
-          relativeX,
-      };
-
-      const nextRotation =
-        ((item.slot.rotation || 0) +
-          90) %
-        360;
-
-      const nextBounds =
-        nextRotation === 90 ||
-        nextRotation === 270
-          ? {
-              width:
-                item.size.height,
-              height:
-                item.size.width,
-            }
-          : {
-              width:
-                item.size.width,
-              height:
-                item.size.height,
-            };
-
-      return {
-        id: item.module.id,
-
-        slot: {
-          ...item.slot,
-
-          x:
-            nextCenter.x -
-            nextBounds.width / 2,
-
-          y:
-            nextCenter.y -
-            nextBounds.height / 2,
-
-          rotation:
-            nextRotation,
-        },
-
-        bounds: nextBounds,
-      };
-    }
+  const nextById = new Map(
+    nextItems.map((item: any) => [item.id, item])
   );
 
+  const anchored = new Set<string>();
+  const queue: string[] = [];
+
+  if (nextItems.length > 0) {
+    anchored.add(nextItems[0].id);
+    queue.push(nextItems[0].id);
+  }
+
+  while (queue.length > 0) {
+    const anchoredId = queue.shift()!;
+
+    layoutConnections.forEach((connection: any) => {
+      let otherId: string | null = null;
+      let anchoredEndpointKey: string | null = null;
+      let otherEndpointKey: string | null = null;
+
+      if (
+        connection.a === anchoredId &&
+        nextById.has(connection.b)
+      ) {
+        otherId = connection.b;
+        anchoredEndpointKey = connection.aEndpointKey;
+        otherEndpointKey = connection.bEndpointKey;
+      } else if (
+        connection.b === anchoredId &&
+        nextById.has(connection.a)
+      ) {
+        otherId = connection.a;
+        anchoredEndpointKey = connection.bEndpointKey;
+        otherEndpointKey = connection.aEndpointKey;
+      }
+
+      if (
+        !otherId ||
+        !anchoredEndpointKey ||
+        !otherEndpointKey ||
+        anchored.has(otherId)
+      ) {
+        return;
+      }
+
+      const anchoredItem: any = nextById.get(anchoredId);
+      const otherItem: any = nextById.get(otherId);
+
+      if (!anchoredItem || !otherItem) {
+        return;
+      }
+
+      const anchoredEndpoints =
+        getTrackEndpointsForModule(
+          anchoredItem.module,
+          anchoredItem.slot
+        );
+
+      const otherEndpoints =
+        getTrackEndpointsForModule(
+          otherItem.module,
+          otherItem.slot
+        );
+
+      const anchoredPoint = anchoredEndpoints.find(
+        (endpoint: any) =>
+          normalizeEndpointKey(endpoint.key) ===
+          normalizeEndpointKey(anchoredEndpointKey)
+      );
+
+      const otherPoint = otherEndpoints.find(
+        (endpoint: any) =>
+          normalizeEndpointKey(endpoint.key) ===
+          normalizeEndpointKey(otherEndpointKey)
+      );
+
+      if (!anchoredPoint || !otherPoint) {
+        return;
+      }
+
+      const correctionX =
+        anchoredPoint.x - otherPoint.x;
+
+      const correctionY =
+        anchoredPoint.y - otherPoint.y;
+
+      otherItem.slot = {
+        ...otherItem.slot,
+        x: otherItem.slot.x + correctionX,
+        y: otherItem.slot.y + correctionY,
+      };
+
+      nextById.set(otherId, otherItem);
+
+      anchored.add(otherId);
+      queue.push(otherId);
+    });
+  }
+
   /*
-   * Keep the entire connected group inside
-   * the planner grid without changing the
-   * relationship between its modules.
+   * Keep the completed connected group inside
+   * the planner boundaries.
    */
+  const finalItems = Array.from(nextById.values()) as any[];
+
   const minX = Math.min(
-    ...nextItems.map(
-      (item) => item.slot.x
-    )
+    ...finalItems.map((item: any) => item.slot.x)
   );
 
   const minY = Math.min(
-    ...nextItems.map(
-      (item) => item.slot.y
-    )
+    ...finalItems.map((item: any) => item.slot.y)
   );
 
   const maxX = Math.max(
-    ...nextItems.map(
-      (item) =>
-        item.slot.x +
-        item.bounds.width
+    ...finalItems.map(
+      (item: any) => item.slot.x + item.bounds.width
     )
   );
 
   const maxY = Math.max(
-    ...nextItems.map(
-      (item) =>
-        item.slot.y +
-        item.bounds.height
+    ...finalItems.map(
+      (item: any) => item.slot.y + item.bounds.height
     )
   );
 
@@ -2859,28 +2866,20 @@ function redoLayoutChange() {
       ? gridSvgHeight - maxY
       : 0;
 
-  setLayoutOverrides(
-    (prev: any) => {
-      const next = { ...prev };
+  setLayoutOverrides((prev: any) => {
+    const next = { ...prev };
 
-      nextItems.forEach((item) => {
-        next[item.id] = {
-          ...(prev[item.id] || {}),
-          ...item.slot,
+    finalItems.forEach((item: any) => {
+      next[item.id] = {
+        ...(prev[item.id] || {}),
+        ...item.slot,
+        x: item.slot.x + correctionX,
+        y: item.slot.y + correctionY,
+      };
+    });
 
-          x:
-            item.slot.x +
-            correctionX,
-
-          y:
-            item.slot.y +
-            correctionY,
-        };
-      });
-
-      return next;
-    }
-  );
+    return next;
+  });
 }
   function toggleModuleGroupLock(moduleId: string) {
     pushLayoutHistory();
