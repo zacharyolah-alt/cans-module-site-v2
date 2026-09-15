@@ -631,9 +631,13 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
         const y2 =
           size.height -
           endFromFront * SCALE;
-          const isRightEdge =
-  Math.abs(endX - size.width / SCALE) < 0.15;
+          const isStartOnEdge =
+  Math.abs(startX) < 0.15 ||
+  Math.abs(startX - size.width / SCALE) < 0.15;
 
+const isEndOnEdge =
+  Math.abs(endX) < 0.15 ||
+  Math.abs(endX - size.width / SCALE) < 0.15;
        return (
   <g key={`yard-straight-${trackIndex}`}>
     <line
@@ -650,17 +654,29 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
       vectorEffect="non-scaling-stroke"
     />
 
-    {isRightEdge && (
-      <circle
-        cx={x2}
-        cy={y2}
-        r="4"
-        fill="magenta"
-        stroke="black"
-        strokeWidth="1"
-        vectorEffect="non-scaling-stroke"
-      />
-    )}
+   {isStartOnEdge && (
+  <circle
+    cx={x1}
+    cy={y1}
+    r="4"
+    fill="magenta"
+    stroke="black"
+    strokeWidth="1"
+    vectorEffect="non-scaling-stroke"
+  />
+)}
+
+{isEndOnEdge && (
+  <circle
+    cx={x2}
+    cy={y2}
+    r="4"
+    fill="magenta"
+    stroke="black"
+    strokeWidth="1"
+    vectorEffect="non-scaling-stroke"
+  />
+)}
   </g>
         );
       }
