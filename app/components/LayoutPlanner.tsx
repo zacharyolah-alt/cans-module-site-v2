@@ -635,9 +635,6 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
   Math.abs(startX) < 0.15 ||
   Math.abs(startX - size.width / SCALE) < 0.15;
 
-const isEndOnEdge =
-  Math.abs(endX) < 0.15 ||
-  Math.abs(endX - size.width / SCALE) < 0.15;
        return (
   <g key={`yard-straight-${trackIndex}`}>
     <line
@@ -654,29 +651,7 @@ const isEndOnEdge =
       vectorEffect="non-scaling-stroke"
     />
 
-   {isStartOnEdge && (
-  <circle
-    cx={x1}
-    cy={y1}
-    r="4"
-    fill="magenta"
-    stroke="black"
-    strokeWidth="1"
-    vectorEffect="non-scaling-stroke"
-  />
-)}
-
-{isEndOnEdge && (
-  <circle
-    cx={x2}
-    cy={y2}
-    r="4"
-    fill="magenta"
-    stroke="black"
-    strokeWidth="1"
-    vectorEffect="non-scaling-stroke"
-  />
-)}
+   
   </g>
         );
       }
@@ -1114,45 +1089,226 @@ const isEndOnEdge =
                   {permanentNumber || "—"}
                 </div>
 
-                <div
-                  style={{
-                    width: "86px",
-                    height: "64px",
-                    borderRadius: "8px",
-                    overflow: "hidden",
-                    border: "1px solid #ddd",
-                    background: "#eee",
-                  }}
-                >
-                  {m.photo_url ? (
-                    <img
-                      src={m.photo_url}
-                      alt={
-                        m.module_name || "Module"
-                      }
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        display: "block",
-                      }}
+               <div
+  style={{
+    width: "86px",
+    height: "64px",
+    borderRadius: "8px",
+    overflow: "hidden",
+    border: "1px solid #ddd",
+    background: "#fff",
+  }}
+>
+  {(() => {
+    const previewSize = getPlannerSize(m);
+    const previewKind = getPlannerKind(m);
+
+    return (
+      <svg
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${previewSize.width} ${previewSize.height}`}
+        preserveAspectRatio="xMidYMid meet"
+        style={{
+          display: "block",
+          background: "white",
+        }}
+      >
+        <ModuleGeometry
+          module={m}
+          kind={previewKind}
+          size={previewSize}
+          getPolygonGeometry={
+            getPolygonGeometry
+          }
+          getCustomShapeName={
+            getCustomShapeName
+          }
+          isPolygonModule={
+            isPolygonModule
+          }
+        />
+
+        {String(m.module_type || "").trim() === "Yard" &&
+          Array.isArray(m.track_layout) &&
+          m.track_layout.map(
+            (track: any, trackIndex: number) => {
+              const SCALE = 10;
+
+              if (track.type === "straight") {
+                const startX =
+                  Number(track.startX) || 0;
+
+                const endX =
+                  Number(track.endX) || 0;
+
+                const startFromFront =
+                  Number(
+                    track.startY ?? track.y
+                  ) || 0;
+
+                const endFromFront =
+                  Number(
+                    track.endY ?? track.y
+                  ) || startFromFront;
+
+                return (
+                  <line
+                    key={`key-yard-straight-${trackIndex}`}
+                    x1={startX * SCALE}
+                    y1={
+                      previewSize.height -
+                      startFromFront * SCALE
+                    }
+                    x2={endX * SCALE}
+                    y2={
+                      previewSize.height -
+                      endFromFront * SCALE
+                    }
+                    stroke={
+                      track.color === "yellow"
+                        ? "#eab308"
+                        : "#dc2626"
+                    }
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                );
+              }
+
+              if (
+                track.type === "turnout" &&
+                track.turnoutModel === "kato-6"
+              ) {
+                const radiusInches =
+                  718 / 25.4;
+
+                const lengthInches =
+                  186 / 25.4;
+
+                const angleRadians =
+                  (15 * Math.PI) / 180;
+
+                const anchorX =
+                  (Number(track.x) || 0) *
+                  SCALE;
+
+                const anchorY =
+                  previewSize.height -
+                  (Number(track.y) || 0) *
+                    SCALE;
+
+                let directionSign =
+                  track.color === "yellow"
+                    ? -1
+                    : 1;
+
+                if (
+                  track.direction === "reverse"
+                ) {
+                  directionSign *= -1;
+                }
+
+                const straightEndX =
+                  anchorX +
+                  directionSign *
+                    lengthInches *
+                    SCALE;
+
+                const storedYDirection =
+                  directionSign *
+                  (track.hand === "right"
+                    ? -1
+                    : 1);
+
+                const branchDx =
+                  radiusInches *
+                  Math.sin(angleRadians) *
+                  SCALE;
+
+                const branchDy =
+                  radiusInches *
+                  (1 -
+                    Math.cos(
+                      angleRadians
+                    )) *
+                  SCALE;
+
+                const branchEndX =
+                  anchorX +
+                  directionSign *
+                    branchDx;
+
+                const branchEndY =
+                  anchorY -
+                  storedYDirection *
+                    branchDy;
+
+                const radius =
+                  radiusInches * SCALE;
+
+                const sweep =
+                  storedYDirection > 0
+                    ? directionSign > 0
+                      ? 0
+                      : 1
+                    : directionSign > 0
+                    ? 1
+                    : 0;
+
+                const trackColor =
+                  track.color === "yellow"
+                    ? "#eab308"
+                    : "#dc2626";
+
+                const rotationDeg =
+                  -(
+                    Number(
+                      track.rotationDeg
+                    ) || 0
+                  );
+
+                return (
+                  <g
+                    key={`key-yard-turnout-${trackIndex}`}
+                    transform={`rotate(${rotationDeg} ${anchorX} ${anchorY})`}
+                  >
+                    <line
+                      x1={anchorX}
+                      y1={anchorY}
+                      x2={straightEndX}
+                      y2={anchorY}
+                      stroke={trackColor}
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      vectorEffect="non-scaling-stroke"
                     />
-                  ) : (
-                    <div
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "11px",
-                        color: "#777",
-                      }}
-                    >
-                      No photo
-                    </div>
-                  )}
-                </div>
+
+                    <path
+                      d={`
+                        M ${anchorX} ${anchorY}
+                        A ${radius} ${radius}
+                        0 0 ${sweep}
+                        ${branchEndX} ${branchEndY}
+                      `}
+                      fill="none"
+                      stroke={trackColor}
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </g>
+                );
+              }
+
+              return null;
+            }
+          )}
+      </svg>
+    );
+  })()}
+</div>
 
                 <div className="legendText">
                   <strong>
