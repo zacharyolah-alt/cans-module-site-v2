@@ -1682,35 +1682,55 @@ if (
     }
   );
 
-  return uniqueEndpoints.map(
-    (point) => {
-      const rotated = rotatePoint(
-        point.x,
-        point.y,
-        rotation,
-        size
-      );
+ return uniqueEndpoints.map((point) => {
+  let worldX = 0;
+  let worldY = 0;
 
-      const baseDirection =
-        sideDirection[point.side];
+  /*
+   * Use the exact same transformation as the SVG
+   * moduleTransform used to draw the Yard rails.
+   */
+  if (rotation === 90) {
+    worldX =
+      slot.x + size.height - point.y;
+    worldY =
+      slot.y + point.x;
+  } else if (rotation === 180) {
+    worldX =
+      slot.x + size.width - point.x;
+    worldY =
+      slot.y + size.height - point.y;
+  } else if (rotation === 270) {
+    worldX =
+      slot.x + point.y;
+    worldY =
+      slot.y + size.width - point.x;
+  } else {
+    worldX =
+      slot.x + point.x;
+    worldY =
+      slot.y + point.y;
+  }
 
-      const direction =
-        rotateDirection(
-          baseDirection.dx,
-          baseDirection.dy,
-          rotation
-        );
+  const baseDirection =
+    sideDirection[point.side];
 
-      return {
-        x: slot.x + rotated.x,
-        y: slot.y + rotated.y,
-        side: point.side,
-        key: point.key,
-        dx: direction.dx,
-        dy: direction.dy,
-      };
-    }
-  );
+  const direction =
+    rotateDirection(
+      baseDirection.dx,
+      baseDirection.dy,
+      rotation
+    );
+
+  return {
+    x: worldX,
+    y: worldY,
+    side: point.side,
+    key: point.key,
+    dx: direction.dx,
+    dy: direction.dy,
+  };
+});
 }
 if (kind === "bridge") {
   const bridgeCenterY = size.height / 2;
@@ -2631,256 +2651,89 @@ function redoLayoutChange() {
     window.addEventListener("pointercancel", upHandler);
   }
 
- function rotateModule(event: any, m: any, index: number) {
-  event.preventDefault();
-  event.stopPropagation();
+  function rotateModule(event: any, m: any, index: number) {
+    event.preventDefault();
+    event.stopPropagation();
 
-  const connectedIds = getConnectedModuleIds(m.id);
+    const connectedIds = getConnectedModuleIds(m.id);
+    const groupModules = connectedIds
+      .map((id) => layoutModules.find((module: any) => module.id === id))
+      .filter(Boolean);
 
-  const groupModules = connectedIds
-    .map((id) => layoutModules.find((module) => module.id === id))
-    .filter(Boolean);
+    if (groupModules.some((module: any) => layoutLocks[module.id])) return;
+    pushLayoutHistory();
 
-  if (groupModules.some((module: any) => layoutLocks[module.id])) {
-    return;
-  }
+    const currentItems = groupModules.map((module: any) => {
+      const permanentIndex = Math.max(0, (moduleNumberMap[module.id] || 1) - 1);
+      const slot = getPlacedSlot(module, permanentIndex);
+      const size = getLayoutSize(module);
+      const bounds = getRotatedBounds(slot, size);
 
-  pushLayoutHistory();
-
-  const currentItems = groupModules.map((module: any) => {
-    const permanentIndex = Math.max(
-      0,
-      (moduleNumberMap[module.id] || 1) - 1
-    );
-
-    const slot = getPlacedSlot(module, permanentIndex);
-    const size = getLayoutSize(module);
-    const bounds = getRotatedBounds(slot, size);
-
-    return {
-      module,
-      slot,
-      size,
-      center: {
-        x: slot.x + bounds.width / 2,
-        y: slot.y + bounds.height / 2,
-      },
-    };
-  });
-
-  const groupCenter = {
-    x:
-      currentItems.reduce(
-        (sum: number, item: any) => sum + item.center.x,
-        0
-      ) / currentItems.length,
-
-    y:
-      currentItems.reduce(
-        (sum: number, item: any) => sum + item.center.y,
-        0
-      ) / currentItems.length,
-  };
-
-  const nextItems = currentItems.map((item: any) => {
-    const relativeX = item.center.x - groupCenter.x;
-    const relativeY = item.center.y - groupCenter.y;
-
-    const nextCenter = {
-      x: groupCenter.x - relativeY,
-      y: groupCenter.y + relativeX,
-    };
-
-    const nextRotation =
-      ((item.slot.rotation || 0) + 90) % 360;
-
-    const nextBounds =
-      nextRotation === 90 || nextRotation === 270
-        ? {
-            width: item.size.height,
-            height: item.size.width,
-          }
-        : {
-            width: item.size.width,
-            height: item.size.height,
-          };
-
-    return {
-      id: item.module.id,
-      module: item.module,
-      size: item.size,
-      slot: {
-        ...item.slot,
-        x: nextCenter.x - nextBounds.width / 2,
-        y: nextCenter.y - nextBounds.height / 2,
-        rotation: nextRotation,
-      },
-      bounds: nextBounds,
-    };
-  });
-
-  /*
-   * Re-anchor connected modules after rotation.
-   *
-   * The first module stays where the rigid group rotation
-   * placed it. Every directly connected module is then
-   * translated so the exact saved connection endpoints
-   * coincide again.
-   */
-  const nextById = new Map(
-    nextItems.map((item: any) => [item.id, item])
-  );
-
-  const anchored = new Set<string>();
-  const queue: string[] = [];
-
-  if (nextItems.length > 0) {
-    anchored.add(nextItems[0].id);
-    queue.push(nextItems[0].id);
-  }
-
-  while (queue.length > 0) {
-    const anchoredId = queue.shift()!;
-
-    layoutConnections.forEach((connection: any) => {
-      let otherId: string | null = null;
-      let anchoredEndpointKey: string | null = null;
-      let otherEndpointKey: string | null = null;
-
-      if (
-        connection.a === anchoredId &&
-        nextById.has(connection.b)
-      ) {
-        otherId = connection.b;
-        anchoredEndpointKey = connection.aEndpointKey;
-        otherEndpointKey = connection.bEndpointKey;
-      } else if (
-        connection.b === anchoredId &&
-        nextById.has(connection.a)
-      ) {
-        otherId = connection.a;
-        anchoredEndpointKey = connection.bEndpointKey;
-        otherEndpointKey = connection.aEndpointKey;
-      }
-
-      if (
-        !otherId ||
-        !anchoredEndpointKey ||
-        !otherEndpointKey ||
-        anchored.has(otherId)
-      ) {
-        return;
-      }
-
-      const anchoredItem: any = nextById.get(anchoredId);
-      const otherItem: any = nextById.get(otherId);
-
-      if (!anchoredItem || !otherItem) {
-        return;
-      }
-
-      const anchoredEndpoints =
-        getTrackEndpointsForModule(
-          anchoredItem.module,
-          anchoredItem.slot
-        );
-
-      const otherEndpoints =
-        getTrackEndpointsForModule(
-          otherItem.module,
-          otherItem.slot
-        );
-
-      const anchoredPoint = anchoredEndpoints.find(
-        (endpoint: any) =>
-          normalizeEndpointKey(endpoint.key) ===
-          normalizeEndpointKey(anchoredEndpointKey)
-      );
-
-      const otherPoint = otherEndpoints.find(
-        (endpoint: any) =>
-          normalizeEndpointKey(endpoint.key) ===
-          normalizeEndpointKey(otherEndpointKey)
-      );
-
-      if (!anchoredPoint || !otherPoint) {
-        return;
-      }
-
-      const correctionX =
-        anchoredPoint.x - otherPoint.x;
-
-      const correctionY =
-        anchoredPoint.y - otherPoint.y;
-
-      otherItem.slot = {
-        ...otherItem.slot,
-        x: otherItem.slot.x + correctionX,
-        y: otherItem.slot.y + correctionY,
-      };
-
-      nextById.set(otherId, otherItem);
-
-      anchored.add(otherId);
-      queue.push(otherId);
-    });
-  }
-
-  /*
-   * Keep the completed connected group inside
-   * the planner boundaries.
-   */
-  const finalItems = Array.from(nextById.values()) as any[];
-
-  const minX = Math.min(
-    ...finalItems.map((item: any) => item.slot.x)
-  );
-
-  const minY = Math.min(
-    ...finalItems.map((item: any) => item.slot.y)
-  );
-
-  const maxX = Math.max(
-    ...finalItems.map(
-      (item: any) => item.slot.x + item.bounds.width
-    )
-  );
-
-  const maxY = Math.max(
-    ...finalItems.map(
-      (item: any) => item.slot.y + item.bounds.height
-    )
-  );
-
-  const correctionX =
-    minX < 0
-      ? -minX
-      : maxX > gridSvgWidth
-      ? gridSvgWidth - maxX
-      : 0;
-
-  const correctionY =
-    minY < 0
-      ? -minY
-      : maxY > gridSvgHeight
-      ? gridSvgHeight - maxY
-      : 0;
-
-  setLayoutOverrides((prev: any) => {
-    const next = { ...prev };
-
-    finalItems.forEach((item: any) => {
-      next[item.id] = {
-        ...(prev[item.id] || {}),
-        ...item.slot,
-        x: item.slot.x + correctionX,
-        y: item.slot.y + correctionY,
+      return {
+        module,
+        slot,
+        size,
+        center: {
+          x: slot.x + bounds.width / 2,
+          y: slot.y + bounds.height / 2,
+        },
       };
     });
 
-    return next;
-  });
-}
+    const groupCenter = {
+      x: currentItems.reduce((sum, item) => sum + item.center.x, 0) / currentItems.length,
+      y: currentItems.reduce((sum, item) => sum + item.center.y, 0) / currentItems.length,
+    };
+
+    const nextItems = currentItems.map((item) => {
+      const relativeX = item.center.x - groupCenter.x;
+      const relativeY = item.center.y - groupCenter.y;
+      const nextCenter = {
+        x: groupCenter.x - relativeY,
+        y: groupCenter.y + relativeX,
+      };
+      const nextRotation = ((item.slot.rotation || 0) + 90) % 360;
+      const nextBounds =
+        nextRotation === 90 || nextRotation === 270
+          ? { width: item.size.height, height: item.size.width }
+          : { width: item.size.width, height: item.size.height };
+
+      return {
+        id: item.module.id,
+        slot: {
+          ...item.slot,
+          x: nextCenter.x - nextBounds.width / 2,
+          y: nextCenter.y - nextBounds.height / 2,
+          rotation: nextRotation,
+        },
+        bounds: nextBounds,
+      };
+    });
+
+    const minX = Math.min(...nextItems.map((item) => item.slot.x));
+    const minY = Math.min(...nextItems.map((item) => item.slot.y));
+    const maxX = Math.max(...nextItems.map((item) => item.slot.x + item.bounds.width));
+    const maxY = Math.max(...nextItems.map((item) => item.slot.y + item.bounds.height));
+
+    const correctionX = minX < 0 ? -minX : maxX > gridSvgWidth ? gridSvgWidth - maxX : 0;
+    const correctionY = minY < 0 ? -minY : maxY > gridSvgHeight ? gridSvgHeight - maxY : 0;
+
+    setLayoutOverrides((prev: any) => {
+      const next = { ...prev };
+
+      nextItems.forEach((item) => {
+        next[item.id] = {
+          ...(prev[item.id] || {}),
+          ...item.slot,
+          x: item.slot.x + correctionX,
+          y: item.slot.y + correctionY,
+        };
+      });
+
+      return next;
+    });
+  }
+
   function toggleModuleGroupLock(moduleId: string) {
     pushLayoutHistory();
     const connectedIds = getConnectedModuleIds(moduleId);
