@@ -758,7 +758,7 @@ function addStraightFromTurnout(
     // module_type is informational/purpose-only.
     if (hasExplicitCustomShape) return "custom";
     if (usesCustomDimensions) return "custom";
-
+if (moduleType === "bridge") return "bridge";
     if (dimensionsText.startsWith("end cap")) return "endCap";
     if (dimensionsText.startsWith("single")) return "single";
     if (dimensionsText.startsWith("double")) return "double";
