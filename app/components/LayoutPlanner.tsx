@@ -911,7 +911,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                     cx={lockButton.x}
                     cy={lockButton.y}
                     r="10"
-                    fill={layoutLocks[m.id] ? "#777777" : "#b00020"}
+                    fill={layoutLocks[m.id] ? "#1f6fbf" : "#777777"}
                     stroke="#ffffff"
                     strokeWidth="2"
                   />
