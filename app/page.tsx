@@ -939,20 +939,7 @@ const rearTrackCenterMm =
   let width = Math.max(1, Number(customWidthInches) || 24) * LAYOUT_SCALE;
   let height = Math.max(1, Number(customDepthInches) || 14) * LAYOUT_SCALE;
 
-  if (dimensions === 'Single - 308 mm (12.13")') {
-    width = mmToPreview(308);
-    height = mmToPreview(365.1);
-  } else if (dimensions === 'Double - 618 mm (24.33")') {
-    width = mmToPreview(618);
-    height = mmToPreview(365.1);
-  } else if (dimensions === 'Triple - 928 mm (36.54")') {
-    width = mmToPreview(928);
-    height = mmToPreview(365.1);
-  } else if (dimensions === 'Quad - 1238 mm (48.74")') {
-    width = mmToPreview(1238);
-    height = mmToPreview(365.1);
-    } else if (moduleType === "Bridge") {
-
+  if (moduleType === "Bridge") {
   const bridgeDepthMm = 120;
 
   if (bridgeSize === "Single Bridge") {
@@ -967,7 +954,20 @@ const rearTrackCenterMm =
       LAYOUT_SCALE;
   }
 
-   height = mmToPreview(bridgeDepthMm);
+  height = mmToPreview(bridgeDepthMm);
+
+} else if (dimensions === 'Single - 308 mm (12.13")') {
+  width = mmToPreview(308);
+  height = mmToPreview(365.1);
+} else if (dimensions === 'Double - 618 mm (24.33")') {
+  width = mmToPreview(618);
+  height = mmToPreview(365.1);
+} else if (dimensions === 'Triple - 928 mm (36.54")') {
+  width = mmToPreview(928);
+  height = mmToPreview(365.1);
+} else if (dimensions === 'Quad - 1238 mm (48.74")') {
+  width = mmToPreview(1238);
+  height = mmToPreview(365.1);
 
 } else if (moduleType === "NT Junction") {
 
