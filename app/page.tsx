@@ -4024,19 +4024,24 @@ button {
   <label>Module Type</label>
   <select
     value={moduleType}
-    onChange={(e) => {
-      const value = e.target.value;
+onChange={(e) => {
+  const value = e.target.value;
 
-      setModuleType(value);
-      setCornerSize("");
+  setModuleType(value);
+  setCornerSize("");
 
-      if (
-        value === "Inside Corner" ||
-        value === "Outside Corner"
-      ) {
-        setDimensions("");
-      }
-    }}
+  if (
+    value === "Inside Corner" ||
+    value === "Outside Corner"
+  ) {
+    setDimensions("");
+  }
+
+  if (value === "Yard") {
+    setDimensions("Other / custom");
+    setCustomShape("Rectangle");
+  }
+}}
   >
     <option>Straight</option>
     <option>Inside Corner</option>
