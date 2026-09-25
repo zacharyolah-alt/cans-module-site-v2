@@ -491,7 +491,7 @@ export default function LayoutPlanner({ planner }: { planner: any }) {
                     cx={table.width - 28}
                     cy="28"
                     r="12"
-                    fill={layoutLocks[table.id] ? "#777777" : "#b00020"}
+                    fill={layoutLocks[table.id] ? "#1f6fbf" : "#777777"}
                     stroke="#ffffff"
                     strokeWidth="2"
                   />
