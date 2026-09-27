@@ -415,6 +415,62 @@ track_exit_edge: trackExitEdge,
 
     loadModules();
   }
+  async function moveModule(
+  moduleId: string,
+  direction: "up" | "down"
+) {
+  const orderedModules = [...modules].sort(
+    (a, b) =>
+      Number(a.display_order || 0) -
+      Number(b.display_order || 0)
+  );
+
+  const currentIndex = orderedModules.findIndex(
+    (module) => module.id === moduleId
+  );
+
+  if (currentIndex === -1) return;
+
+  const targetIndex =
+    direction === "up"
+      ? currentIndex - 1
+      : currentIndex + 1;
+
+  if (
+    targetIndex < 0 ||
+    targetIndex >= orderedModules.length
+  ) {
+    return;
+  }
+
+  const currentModule = orderedModules[currentIndex];
+  const targetModule = orderedModules[targetIndex];
+
+  const currentOrder = currentModule.display_order;
+  const targetOrder = targetModule.display_order;
+
+  const { error: currentError } = await supabase
+    .from("modules")
+    .update({ display_order: targetOrder })
+    .eq("id", currentModule.id);
+
+  if (currentError) {
+    alert(currentError.message);
+    return;
+  }
+
+  const { error: targetError } = await supabase
+    .from("modules")
+    .update({ display_order: currentOrder })
+    .eq("id", targetModule.id);
+
+  if (targetError) {
+    alert(targetError.message);
+    return;
+  }
+
+  await loadModules();
+}
 function exportToCSV() {
   const headers = [
     "Module Name",
