@@ -6728,26 +6728,114 @@ previewSize.outerRadius ? (
   </>
 ) : (
   <>
-    {[
-      {
-        offset: previewSize.frontTrackCenterOffset,
-        color: "red",
-      },
-      {
-        offset: previewSize.rearTrackCenterOffset,
-        color: "#d4a900",
-      },
-    ].map((track, index) => (
-      <line
-        key={`standard-track-${index}`}
-        x1="0"
-        y1={previewSize.height - track.offset}
-        x2={previewSize.width}
-        y2={previewSize.height - track.offset}
-        stroke={track.color}
-        strokeWidth="2"
-      />
-    ))}
+    {straightTrackArrangement === "S-Curve / Rear Offset" &&
+    standard === "T-Trak" &&
+    moduleType === "Straight" ? (
+      <>
+        {[
+          {
+            offset: previewSize.frontTrackCenterOffset,
+            color: "red",
+          },
+          {
+            offset: previewSize.rearTrackCenterOffset,
+            color: "#d4a900",
+          },
+        ].map((track, index) => {
+          const frontY =
+            previewSize.height - track.offset;
+
+          /*
+           * Rear-offset amount.
+           * Both tracks move together, so their
+           * 33 mm T-TRAK spacing is preserved.
+           */
+          const rearShift =
+            Math.min(
+              previewSize.height * 0.38,
+              previewSize.height -
+                previewSize.rearTrackCenterOffset -
+                12
+            );
+
+          const leftIsFront =
+            straightOffsetDirection ===
+            "Front Left to Rear Right";
+
+          const startY = leftIsFront
+            ? frontY
+            : frontY - rearShift;
+
+          const endY = leftIsFront
+            ? frontY - rearShift
+            : frontY;
+
+          /*
+           * Gentle S transition.
+           * Longer modules automatically receive
+           * a longer, gentler transition.
+           */
+          const straightLead =
+            Math.min(
+              previewSize.width * 0.22,
+              110
+            );
+
+          const curveStartX = straightLead;
+          const curveEndX =
+            previewSize.width - straightLead;
+
+          const controlDistance =
+            Math.max(
+              20,
+              (curveEndX - curveStartX) * 0.42
+            );
+
+          const path = `
+            M 0 ${startY}
+            L ${curveStartX} ${startY}
+            C
+              ${curveStartX + controlDistance} ${startY},
+              ${curveEndX - controlDistance} ${endY},
+              ${curveEndX} ${endY}
+            L ${previewSize.width} ${endY}
+          `;
+
+          return (
+            <path
+              key={`s-curve-track-${index}`}
+              d={path}
+              fill="none"
+              stroke={track.color}
+              strokeWidth="2"
+            />
+          );
+        })}
+      </>
+    ) : (
+      <>
+        {[
+          {
+            offset: previewSize.frontTrackCenterOffset,
+            color: "red",
+          },
+          {
+            offset: previewSize.rearTrackCenterOffset,
+            color: "#d4a900",
+          },
+        ].map((track, index) => (
+          <line
+            key={`standard-track-${index}`}
+            x1="0"
+            y1={previewSize.height - track.offset}
+            x2={previewSize.width}
+            y2={previewSize.height - track.offset}
+            stroke={track.color}
+            strokeWidth="2"
+          />
+        ))}
+      </>
+    )}
   </>
 )}
 
