@@ -4080,7 +4080,63 @@ button {
       </select>
     </div>
   )}
+{moduleType === "Straight" &&
+  dimensions.startsWith("Double") && (
+    <div style={{ marginTop: "12px" }}>
+      <label>
+        <strong>Track Arrangement</strong>
+      </label>
 
+      <select
+        value={straightTrackArrangement}
+        onChange={(e) =>
+          setStraightTrackArrangement(e.target.value)
+        }
+        style={{
+          display: "block",
+          marginTop: "6px",
+          width: "100%",
+        }}
+      >
+        <option value="Standard Straight">
+          Standard Straight
+        </option>
+
+        <option value="S-Curve / Rear Offset">
+          S-Curve / Rear Offset
+        </option>
+      </select>
+
+      {straightTrackArrangement ===
+        "S-Curve / Rear Offset" && (
+        <div style={{ marginTop: "12px" }}>
+          <label>
+            <strong>Offset Direction</strong>
+          </label>
+
+          <select
+            value={straightOffsetDirection}
+            onChange={(e) =>
+              setStraightOffsetDirection(e.target.value)
+            }
+            style={{
+              display: "block",
+              marginTop: "6px",
+              width: "100%",
+            }}
+          >
+            <option value="Front Left to Rear Right">
+              Front at Left → Rear at Right
+            </option>
+
+            <option value="Rear Left to Front Right">
+              Rear at Left → Front at Right
+            </option>
+          </select>
+        </div>
+      )}
+    </div>
+  )}
 <div className="compactField">
   <label>Module Type</label>
   <select
