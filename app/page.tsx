@@ -279,6 +279,8 @@ const svgPlannerRef = useRef<SVGSVGElement | null>(null);
 setStatus("Active");
 setModuleType("Straight");
 setTrackType("Straight");
+setStraightTrackArrangement("Standard Straight");
+setStraightOffsetDirection("Front Left to Rear Right");
 setCornerSize("");
 setBridgeSize("");
 setTrackLayout([]);
@@ -303,7 +305,13 @@ setNotes("");
     setDimensions(m.dimensions || "");
 setStatus(m.status || "Active");
     setModuleType(m.module_type || "Straight");
-    setTrackType(m.track_type || "Straight");
+setTrackType(m.track_type || "Straight");
+setStraightTrackArrangement(
+  m.straight_track_arrangement || "Standard Straight"
+);
+setStraightOffsetDirection(
+  m.straight_offset_direction || "Front Left to Rear Right"
+);
 setCornerSize(m.corner_size || "");
 setBridgeSize(m.bridge_size || "");
 setTrackLayout(
@@ -376,11 +384,13 @@ const savedDimensions =
       owner_name: ownerName || user.email,
       user_id: existingModule?.user_id || user.id,
       photo_url: photo,
-      standard,
-      module_type: moduleType,
-      track_type: trackType,
-      track_layout: trackLayout,
-      bridge_size: bridgeSize,
+     standard,
+module_type: moduleType,
+track_type: trackType,
+straight_track_arrangement: straightTrackArrangement,
+straight_offset_direction: straightOffsetDirection,
+track_layout: trackLayout,
+bridge_size: bridgeSize,
 corner_size: cornerSize,
      dimensions: savedDimensions,
       custom_width_inches: customWidthInches,
