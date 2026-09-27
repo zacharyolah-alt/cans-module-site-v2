@@ -43,7 +43,11 @@ const [trackLayout, setTrackLayout] = useState<any[]>([]);
 const [dimensionFilter, setDimensionFilter] = useState("All");
   const [ownerName, setOwnerName] = useState("");
   const [mobileEditMode, setMobileEditMode] = useState(false);
- 
+ const [straightTrackArrangement, setStraightTrackArrangement] =
+  useState("Standard Straight");
+
+const [straightOffsetDirection, setStraightOffsetDirection] =
+  useState("Front Left to Rear Right");
 const [layoutTables, setLayoutTables] = useState<any[]>([]);
   const [layoutLocks, setLayoutLocks] = useState<any>({});
   const [layoutConnections, setLayoutConnections] = useState<any[]>([]);
