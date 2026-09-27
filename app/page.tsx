@@ -7385,11 +7385,31 @@ previewSize.outerRadius ? (
     <strong>Notes:</strong> {m.additional_notes}
   </p>
 )}
-                          {user && (
+{user && (
   <div className="actions">
-    <button className="editBtn" onClick={() => startEdit(m)}>
+    <button
+      className="grayBtn"
+      onClick={() => moveModule(m.id, "up")}
+      title="Move module up"
+    >
+      ↑ Move Up
+    </button>
+
+    <button
+      className="grayBtn"
+      onClick={() => moveModule(m.id, "down")}
+      title="Move module down"
+    >
+      ↓ Move Down
+    </button>
+
+    <button
+      className="editBtn"
+      onClick={() => startEdit(m)}
+    >
       Edit
     </button>
+
     <button
       className="deleteBtn"
       onClick={() => deleteModule(m.id)}
