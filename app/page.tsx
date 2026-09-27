@@ -4080,8 +4080,13 @@ button {
       </select>
     </div>
   )}
-{moduleType === "Straight" &&
-  dimensions.startsWith("Double") && (
+{standard === "T-Trak" &&
+  moduleType === "Straight" &&
+  (
+    dimensions.startsWith("Double") ||
+    dimensions.startsWith("Triple") ||
+    dimensions === "Other / custom"
+  ) && (
     <div style={{ marginTop: "12px" }}>
       <label>
         <strong>Track Arrangement</strong>
