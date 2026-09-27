@@ -7443,46 +7443,145 @@ previewSize.outerRadius ? (
                 );
               })()}
             </>
-          ) : (
+                  ) : (
             <>
-              {/* Normal Straight / Bridge fallback */}
-              <line
-                x1="0"
-                y1={
-                  height -
-                  FRONT_TRACK_FRONT_EDGE -
-                  TRACK_WIDTH / 2
-                }
-                x2={width}
-                y2={
-                  height -
-                  FRONT_TRACK_FRONT_EDGE -
-                  TRACK_WIDTH / 2
-                }
-                stroke="red"
-                strokeWidth="2"
-              />
+              {m.module_type === "Straight" &&
+              m.straight_track_arrangement ===
+                "S-Curve / Rear Offset" ? (
+                <>
+                  {[
+                    {
+                      offset:
+                        FRONT_TRACK_FRONT_EDGE +
+                        TRACK_WIDTH / 2,
+                      color: "red",
+                    },
+                    {
+                      offset:
+                        FRONT_TRACK_FRONT_EDGE +
+                        TRACK_CENTER_SPACING +
+                        TRACK_WIDTH / 2,
+                      color: "#d4a900",
+                    },
+                  ].map((track, index) => {
+                    const frontY =
+                      height - track.offset;
 
-              <line
-                x1="0"
-                y1={
-                  height -
-                  FRONT_TRACK_FRONT_EDGE -
-                  TRACK_CENTER_SPACING -
-                  TRACK_WIDTH / 2
-                }
-                x2={width}
-                y2={
-                  height -
-                  FRONT_TRACK_FRONT_EDGE -
-                  TRACK_CENTER_SPACING -
-                  TRACK_WIDTH / 2
-                }
-                stroke="#d4a900"
-                strokeWidth="2"
-              />
+                    /*
+                     * Move both tracks together toward
+                     * the rear while preserving their
+                     * normal T-TRAK spacing.
+                     */
+                    const rearShift = Math.min(
+                      height * 0.38,
+                      height -
+                        (FRONT_TRACK_FRONT_EDGE +
+                          TRACK_CENTER_SPACING +
+                          TRACK_WIDTH / 2) -
+                        12
+                    );
+
+                    const leftIsFront =
+                      m.straight_offset_direction !==
+                      "Rear Left to Front Right";
+
+                    const startY = leftIsFront
+                      ? frontY
+                      : frontY - rearShift;
+
+                    const endY = leftIsFront
+                      ? frontY - rearShift
+                      : frontY;
+
+                    const straightLead = Math.min(
+                      width * 0.22,
+                      110
+                    );
+
+                    const curveStartX =
+                      straightLead;
+
+                    const curveEndX =
+                      width - straightLead;
+
+                    const controlDistance =
+                      Math.max(
+                        20,
+                        (curveEndX -
+                          curveStartX) *
+                          0.42
+                      );
+
+                    const path = `
+                      M 0 ${startY}
+                      L ${curveStartX} ${startY}
+                      C
+                        ${
+                          curveStartX +
+                          controlDistance
+                        } ${startY},
+                        ${
+                          curveEndX -
+                          controlDistance
+                        } ${endY},
+                        ${curveEndX} ${endY}
+                      L ${width} ${endY}
+                    `;
+
+                    return (
+                      <path
+                        key={`card-s-curve-${index}`}
+                        d={path}
+                        fill="none"
+                        stroke={track.color}
+                        strokeWidth="2"
+                      />
+                    );
+                  })}
+                </>
+              ) : (
+                <>
+                  {/* Normal Straight / Bridge fallback */}
+                  <line
+                    x1="0"
+                    y1={
+                      height -
+                      FRONT_TRACK_FRONT_EDGE -
+                      TRACK_WIDTH / 2
+                    }
+                    x2={width}
+                    y2={
+                      height -
+                      FRONT_TRACK_FRONT_EDGE -
+                      TRACK_WIDTH / 2
+                    }
+                    stroke="red"
+                    strokeWidth="2"
+                  />
+
+                  <line
+                    x1="0"
+                    y1={
+                      height -
+                      FRONT_TRACK_FRONT_EDGE -
+                      TRACK_CENTER_SPACING -
+                      TRACK_WIDTH / 2
+                    }
+                    x2={width}
+                    y2={
+                      height -
+                      FRONT_TRACK_FRONT_EDGE -
+                      TRACK_CENTER_SPACING -
+                      TRACK_WIDTH / 2
+                    }
+                    stroke="#d4a900"
+                    strokeWidth="2"
+                  />
+                </>
+              )}
             </>
           )}
+        
         </svg>
       );
     })()}
