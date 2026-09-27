@@ -200,10 +200,11 @@ const svgPlannerRef = useRef<SVGSVGElement | null>(null);
   });
 }, [trackLayout]);
   async function loadModules() {
-    const { data, error } = await supabase
-      .from("modules")
-      .select("*")
-      .order("created_at", { ascending: false });
+   const { data, error } = await supabase
+  .from("modules")
+  .select("*")
+  .order("display_order", { ascending: true })
+  .order("created_at", { ascending: true });
 
     if (error) {
       alert(error.message);
