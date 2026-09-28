@@ -2187,6 +2187,102 @@ if (
     },
   ];
 }
+/*
+ * T-TRAK S-Curve / Rear Offset
+ *
+ * Move the planner connection point to the
+ * actual track-pair position at each end.
+ *
+ * The blue connection point remains centered
+ * between the red and yellow tracks.
+ */
+if (
+  String(m.module_type || "")
+    .trim()
+    .toLowerCase() === "straight" &&
+  m.straight_track_arrangement ===
+    "S-Curve / Rear Offset"
+) {
+  const frontTrackCenter =
+    ((38.1 + 25 / 2) / 25.4) *
+    LAYOUT_SCALE;
+
+  const rearTrackCenter =
+    ((38.1 + 25 / 2 + 33) / 25.4) *
+    LAYOUT_SCALE;
+
+  /*
+   * Normal T-TRAK connection point:
+   * midpoint between red and yellow.
+   */
+  const normalConnectionY =
+    size.height -
+    (frontTrackCenter +
+      rearTrackCenter) /
+      2;
+
+  /*
+   * Use the exact same rearward shift
+   * as the S-curve renderer.
+   */
+  const rearShift = Math.min(
+    size.height * 0.38,
+    size.height -
+      rearTrackCenter -
+      12
+  );
+
+  const rearConnectionY =
+    normalConnectionY - rearShift;
+
+  const leftIsFront =
+    m.straight_offset_direction !==
+    "Rear Left to Front Right";
+
+  const sCurvePoints = [
+    {
+      x: 0,
+      y: leftIsFront
+        ? normalConnectionY
+        : rearConnectionY,
+      side: "left",
+    },
+    {
+      x: size.width,
+      y: leftIsFront
+        ? rearConnectionY
+        : normalConnectionY,
+      side: "right",
+    },
+  ];
+
+  return sCurvePoints.map((point) => {
+    const rotated = rotatePoint(
+      point.x,
+      point.y,
+      rotation,
+      size
+    );
+
+    const baseDirection =
+      sideDirection[point.side];
+
+    const direction = rotateDirection(
+      baseDirection.dx,
+      baseDirection.dy,
+      rotation
+    );
+
+    return {
+      x: slot.x + rotated.x,
+      y: slot.y + rotated.y,
+      side: point.side,
+      key: point.side,
+      dx: direction.dx,
+      dy: direction.dy,
+    };
+  });
+}
   const localPoints =
   kind === "endCap"
     ? [
