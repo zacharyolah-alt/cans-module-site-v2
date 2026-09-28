@@ -630,7 +630,7 @@ if (
 ) {
   return null;
 }
-    // Same centerline positions used by the current designer preview:
+     // Same centerline positions used by the current designer preview:
     // 38.1 mm ballast setback + 12.5 mm half-roadbed = 50.6 mm centerline.
     const frontTrackCenter =
       ((38.1 + 25 / 2) / 25.4) * layoutScale;
@@ -638,6 +638,104 @@ if (
     const rearTrackCenter =
       ((38.1 + 25 / 2 + 33) / 25.4) * layoutScale;
 
+    /*
+     * T-TRAK S-Curve / Rear Offset
+     *
+     * Both tracks shift together so their normal
+     * 33 mm spacing is preserved.
+     *
+     * Red always remains the front track.
+     * Yellow always remains the rear track.
+     */
+    if (
+      String(module?.module_type || "")
+        .trim()
+        .toLowerCase() === "straight" &&
+      module?.straight_track_arrangement ===
+        "S-Curve / Rear Offset"
+    ) {
+      const rearShift = Math.min(
+        size.height * 0.38,
+        size.height - rearTrackCenter - 12
+      );
+
+      const leftIsFront =
+        module?.straight_offset_direction !==
+        "Rear Left to Front Right";
+
+      const straightLead = Math.min(
+        size.width * 0.22,
+        110
+      );
+
+      const curveStartX = straightLead;
+      const curveEndX =
+        size.width - straightLead;
+
+      const controlDistance = Math.max(
+        20,
+        (curveEndX - curveStartX) * 0.42
+      );
+
+      const tracks = [
+        {
+          center: frontTrackCenter,
+          color: RED,
+        },
+        {
+          center: rearTrackCenter,
+          color: YELLOW,
+        },
+      ];
+
+      return (
+        <>
+          {tracks.map((track, index) => {
+            const normalY =
+              size.height - track.center;
+
+            const startY = leftIsFront
+              ? normalY
+              : normalY - rearShift;
+
+            const endY = leftIsFront
+              ? normalY - rearShift
+              : normalY;
+
+            const path = `
+              M 0 ${startY}
+              L ${curveStartX} ${startY}
+              C
+                ${
+                  curveStartX +
+                  controlDistance
+                } ${startY},
+                ${
+                  curveEndX -
+                  controlDistance
+                } ${endY},
+                ${curveEndX} ${endY}
+              L ${size.width} ${endY}
+            `;
+
+            return (
+              <path
+                key={`planner-s-curve-${index}`}
+                d={path}
+                fill="none"
+                stroke={track.color}
+                strokeWidth="2"
+                vectorEffect="non-scaling-stroke"
+              />
+            );
+          })}
+        </>
+      );
+    }
+
+    /*
+     * Normal Straight module
+     */
     return (
       <>
         <line
@@ -649,6 +747,7 @@ if (
           strokeWidth="2"
           vectorEffect="non-scaling-stroke"
         />
+
         <line
           x1="0"
           y1={size.height - rearTrackCenter}
