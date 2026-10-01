@@ -3957,106 +3957,124 @@ button {
           )}
         </section>
 
-        <section className="filtersPanel">
-  <h2 className="filtersTitle">Filter Modules</h2>
-
-  <section className="filters">
-
-  {/* STANDARD */}
-  <div className="filterGroup">
-    <p>Standard</p>
-    <div className="buttonRow">
-      {["All", "T-Trak", "N-Trak", "Free-moN", "Other"].map((s) => (
-        <button
-          key={s}
-          className={standardFilter === s ? "activeBtn" : "grayBtn"}
-          onClick={() => setStandardFilter(s)}
-        >
-          {s}
-        </button>
-      ))}
-    </div>
-  </div>
-
-  {/* STATUS */}
-  <div className="filterGroup">
-    <p>Status</p>
-    <div className="buttonRow">
-      {["All", "Planning", "Under Construction", "Active", "Retired"].map((s) => (
-        <button
-          key={s}
-          className={statusFilter === s ? "activeBtn" : "grayBtn"}
-          onClick={() => setStatusFilter(s)}
-        >
-          {s}
-        </button>
-      ))}
-    </div>
-  </div>
-
-  {/* TYPE */}
-  <div className="filterGroup">
-    <p>Type</p>
-    <div className="buttonRow">
-{[
-  "All",
-  "Straight",
-  "Inside Corner",
-  "Outside Corner",
-  "End Cap",
-  "Bridge",
-  "NT Junction",
-  "Yard",
-].map((t) => (
-        <button
-          key={t}
-          className={typeFilter === t ? "activeBtn" : "grayBtn"}
-          onClick={() => setTypeFilter(t)}
-        >
-          {t}
-        </button>
-      ))}
-    </div>
-  </div>
-
-  {/* SIZE */}
-  <div className="filterGroup">
-    <p>Size</p>
-    <div className="buttonRow">
-      {["All", "Single", "Double", "Triple", "Quad"].map((d) => (
-        <button
-          key={d}
-          className={dimensionFilter === d ? "activeBtn" : "grayBtn"}
-          onClick={() => setDimensionFilter(d)}
-        >
-          {d}
-        </button>
-      ))}
-    </div>
-  </div>
-
-  {/* CLEAR */}
- <button
-  className="blackBtn clearBtn"
+<section
+  className="filtersPanel"
   style={{
-    width: "fit-content",
-    justifySelf: "start",
-    padding: "8px 14px",
-    marginTop: "4px",
-  }}
-  onClick={() => {
-    setStandardFilter("All");
-    setStatusFilter("All");
-    setTypeFilter("All");
-    setDimensionFilter("All");
+    padding: "12px 16px",
+    marginBottom: "14px",
   }}
 >
-  Clear Filters
-</button>
+  <h2
+    className="filtersTitle"
+    style={{
+      fontSize: "18px",
+      margin: "0 0 10px 0",
+    }}
+  >
+    Filter Modules
+  </h2>
 
+  <section
+    className="filters"
+    style={{
+      display: "flex",
+      flexWrap: "wrap",
+      gap: "14px 24px",
+      alignItems: "flex-end",
+    }}
+  >
+    {/* STANDARD */}
+    <div className="filterGroup">
+      <p
+        style={{
+          margin: "0 0 5px 0",
+          fontSize: "13px",
+          fontWeight: 700,
+        }}
+      >
+        Standard
+      </p>
+
+      <div className="buttonRow">
+        {[
+          "All",
+          "T-Trak",
+          "N-Trak",
+          "Free-moN",
+          "Other",
+        ].map((s) => (
+          <button
+            key={s}
+            className={
+              standardFilter === s
+                ? "activeBtn"
+                : "grayBtn"
+            }
+            onClick={() =>
+              setStandardFilter(s)
+            }
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    {/* STATUS */}
+    <div className="filterGroup">
+      <p
+        style={{
+          margin: "0 0 5px 0",
+          fontSize: "13px",
+          fontWeight: 700,
+        }}
+      >
+        Status
+      </p>
+
+      <div className="buttonRow">
+        {[
+          "All",
+          "Planning",
+          "Under Construction",
+          "Active",
+          "Retired",
+        ].map((s) => (
+          <button
+            key={s}
+            className={
+              statusFilter === s
+                ? "activeBtn"
+                : "grayBtn"
+            }
+            onClick={() =>
+              setStatusFilter(s)
+            }
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <button
+      className="blackBtn clearBtn"
+      style={{
+        width: "fit-content",
+        padding: "6px 12px",
+        margin: 0,
+      }}
+      onClick={() => {
+        setStandardFilter("All");
+        setStatusFilter("All");
+        setTypeFilter("All");
+        setDimensionFilter("All");
+      }}
+    >
+      Clear
+    </button>
+  </section>
 </section>
-          </section>
-
         {user && (
           <section className="formCard">
             <h2>{editingId ? "Edit Module" : "Add a Module"}</h2>
