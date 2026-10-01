@@ -4117,7 +4117,50 @@ button {
         ))}
       </div>
     </div>
+{/* SORT */}
+<div className="filterGroup">
+  <p
+    style={{
+      margin: "0 0 5px 0",
+      fontSize: "13px",
+      fontWeight: 700,
+    }}
+  >
+    Sort By
+  </p>
 
+  <select
+    value={sortOrder}
+    onChange={(e) =>
+      setSortOrder(e.target.value)
+    }
+    style={{
+      height: "34px",
+      padding: "4px 10px",
+      borderRadius: "6px",
+      border: "1px solid #aaa",
+      background: "white",
+      fontSize: "14px",
+      cursor: "pointer",
+    }}
+  >
+    <option value="Manual Order">
+      Manual Order
+    </option>
+
+    <option value="Newest First">
+      Newest → Oldest
+    </option>
+
+    <option value="Oldest First">
+      Oldest → Newest
+    </option>
+
+    <option value="Module Type">
+      Module Type
+    </option>
+  </select>
+</div>
     <button
       className="blackBtn clearBtn"
       style={{
