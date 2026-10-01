@@ -525,8 +525,8 @@ function exportToCSV() {
 
   URL.revokeObjectURL(url);
 }
-  const filteredModules = useMemo(() => {
-  return modules.filter((m) => {
+const filteredModules = useMemo(() => {
+  const filtered = modules.filter((m) => {
     const term = search.toLowerCase();
 
     const matchesSearch = [
@@ -542,20 +542,80 @@ function exportToCSV() {
       .includes(term);
 
     const matchesStandard =
-      standardFilter === "All" || m.standard === standardFilter;
+      standardFilter === "All" ||
+      m.standard === standardFilter;
 
     const matchesStatus =
-      statusFilter === "All" || m.status === statusFilter;
+      statusFilter === "All" ||
+      m.status === statusFilter;
 
     const matchesType =
-      typeFilter === "All" || m.module_type === typeFilter;
+      typeFilter === "All" ||
+      m.module_type === typeFilter;
 
     const matchesSize =
       dimensionFilter === "All" ||
-      m.dimensions?.startsWith(dimensionFilter + " -");
-    return matchesSearch && matchesStandard && matchesStatus && matchesType && matchesSize;
+      m.dimensions?.startsWith(
+        dimensionFilter + " -"
+      );
+
+    return (
+      matchesSearch &&
+      matchesStandard &&
+      matchesStatus &&
+      matchesType &&
+      matchesSize
+    );
   });
-}, [modules, search, standardFilter, statusFilter, typeFilter, dimensionFilter]);
+
+  return [...filtered].sort((a, b) => {
+    if (sortOrder === "Newest First") {
+      return (
+        Date.parse(b.created_at || "") -
+        Date.parse(a.created_at || "")
+      );
+    }
+
+    if (sortOrder === "Oldest First") {
+      return (
+        Date.parse(a.created_at || "") -
+        Date.parse(b.created_at || "")
+      );
+    }
+
+    if (sortOrder === "Module Type") {
+      const typeCompare = String(
+        a.module_type || ""
+      ).localeCompare(
+        String(b.module_type || "")
+      );
+
+      if (typeCompare !== 0) {
+        return typeCompare;
+      }
+
+      return String(
+        a.module_name || ""
+      ).localeCompare(
+        String(b.module_name || "")
+      );
+    }
+
+    // Manual Order
+    return (
+      Number(a.display_order || 0) -
+      Number(b.display_order || 0)
+    );
+  });
+}, [
+  modules,
+  search,
+  standardFilter,
+  statusFilter,
+  typeFilter,
+  dimensionFilter,
+  sortOrder,
+]);
 
   const LAYOUT_SCALE = 10;
   const FRONT_TRACK_FRONT_EDGE = 15;
