@@ -19,7 +19,7 @@ export default function Page() {
   const [photo, setPhoto] = useState("");
   const [standard, setStandard] = useState("T-Trak");
   const [dimensions, setDimensions] = useState("");
-  const [status, setStatus] = useState("Active");
+  const [status, setStatus] = useState("Planning");
   const [notes, setNotes] = useState("");
   const [customWidthInches, setCustomWidthInches] = useState("24");
 const [customDepthInches, setCustomDepthInches] = useState("14");
@@ -277,7 +277,7 @@ const svgPlannerRef = useRef<SVGSVGElement | null>(null);
     setPhoto("");
     setStandard("T-Trak");
     setDimensions("");
-setStatus("Active");
+setStatus("Planning");
 setModuleType("Straight");
 setTrackType("Straight");
 setStraightTrackArrangement("Standard Straight");
@@ -304,7 +304,7 @@ setNotes("");
     setPhoto(m.photo_url || "");
     setStandard(m.standard || "T-Trak");
     setDimensions(m.dimensions || "");
-setStatus(m.status || "Active");
+setStatus(m.status || "Planning");
     setModuleType(m.module_type || "Straight");
 setTrackType(m.track_type || "Straight");
 setStraightTrackArrangement(
@@ -4095,12 +4095,12 @@ button {
 
       <div className="buttonRow">
         {[
-          "All",
-          "Planning",
-          "Under Construction",
-          "Active",
-          "Retired",
-        ].map((s) => (
+  "All",
+  "Planning",
+  "Under Construction",
+  "Functioning",
+  "Completed",
+].map((s) => (
           <button
             key={s}
             className={
@@ -7171,12 +7171,12 @@ previewSize.outerRadius ? (
                   }}
                 />
               </label>
-              <select value={status} onChange={(e) => setStatus(e.target.value)}>
-                <option>Planning</option>
-                <option>Under Construction</option>
-                <option>Active</option>
-                <option>Retired</option>
-              </select>
+             <select value={status} onChange={(e) => setStatus(e.target.value)}>
+  <option>Planning</option>
+  <option>Under Construction</option>
+  <option>Functioning</option>
+  <option>Completed</option>
+</select>
 
               <input
                 placeholder="Notes"
@@ -7814,7 +7814,7 @@ previewSize.outerRadius ? (
     <span className="typeTag">{m.module_type}</span>
   )}
 
-  <span className="status">{m.status || "Active"}</span>
+  <span className="status">{m.status || "Planning"}</span>
 </div>
                 <h3>{m.module_name}</h3>
                 <p>
