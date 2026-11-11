@@ -5636,9 +5636,7 @@ const innerTrackRadius =
 
 const outerTrackRadius =
   (selectedRadiusPair[1] / 25.4) * LAYOUT_SCALE;
-  const polygonCurveCompatible =
-  trackType === "Straight" ||
-  trackLength <= innerTrackRadius * 2;
+const polygonCurveCompatible = true;
   if (!polygonCurveCompatible) {
   return (
     <div
